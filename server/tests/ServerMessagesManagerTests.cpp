@@ -1,5 +1,4 @@
 #include "gtest/gtest.h"
-#include "definitions.h"
 #include "MessagesManager/ServerMessagesManager.h"
 
 class ServerMessagesManagerFixture : public ::testing::Test {

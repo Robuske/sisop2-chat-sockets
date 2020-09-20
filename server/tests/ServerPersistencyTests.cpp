@@ -1,5 +1,4 @@
 #include "gtest/gtest.h"
-#include "definitions.h"
 #include "Persistency/ServerPersistency.h"
 
 class ServerPersistencyFixture : public ::testing::Test {

@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "definitions.h"
+#include "SharedDefinitions.h"
 #include "UI/ClientUI.h"
 
 class ClientUIFixture : public ::testing::Test {

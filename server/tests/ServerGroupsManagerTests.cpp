@@ -1,5 +1,4 @@
 #include "gtest/gtest.h"
-#include "definitions.h"
 #include "GroupsManager/ServerGroupsManager.h"
 
 class ServerGroupsManagerFixture : public ::testing::Test {

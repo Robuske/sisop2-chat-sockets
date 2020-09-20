@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
-#include "definitions.h"
 #include "CommunicationManager/ServerCommunicationManager.h"
+#include "SharedDefinitions.h"
 
 class ServerCommunicationManagerFixture : public ::testing::Test {
 protected:

@@ -8,5 +8,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 # Google Test config
 add_subdirectory(googletest-libs)
 
+add_subdirectory(shared)
+
 add_subdirectory(client)
 add_subdirectory(server)

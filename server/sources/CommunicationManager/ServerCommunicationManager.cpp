@@ -1,5 +1,5 @@
 #include "ServerCommunicationManager.h"
-#include "definitions.h"
+#include "SharedDefinitions.h"
 
 int ServerCommunicationManager::startServer(int loadMessageCount) {
     return CODE_SUCCESS;

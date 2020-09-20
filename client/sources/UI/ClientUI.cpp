@@ -1,4 +1,4 @@
-#include "definitions.h"
+#include "SharedDefinitions.h"
 #include "ClientUI.h"
 
 int ClientUI::startClient(string userName, string groupName, string serverIPAddress, string port) {
