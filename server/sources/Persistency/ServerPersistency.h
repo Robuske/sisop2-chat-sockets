@@ -1,0 +1,10 @@
+#ifndef SISOP2_T1_SERVERPERSISTENCY_H
+#define SISOP2_T1_SERVERPERSISTENCY_H
+
+
+class ServerPersistency {
+
+};
+
+
+#endif //SISOP2_T1_SERVERPERSISTENCY_H
