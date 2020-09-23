@@ -22,5 +22,5 @@ int main() {
     std::cout << "Qual a porta do servidor?" << std::endl;
     getline(std::cin, port);
 
-    return ClientUI().startClient(username, groupName, serverIPAddress, port);
+    return ClientUI().startClient(username, groupName, serverIPAddress, std::stoul(port));
 }

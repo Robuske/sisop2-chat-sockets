@@ -7,7 +7,7 @@ using std::string;
 
 class ClientUI {
 public:
-    int startClient(string userName, string groupName, string serverIPAddress, string port);
+    int startClient(string userName, string groupName, string serverIPAddress, unsigned short port);
 };
 
 
