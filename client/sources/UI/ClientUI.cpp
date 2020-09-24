@@ -13,19 +13,22 @@
 
 #define PORT 4000
 
+struct ThreadParameter {
+    ClientUI *client;
+    int socket;
+};
+
 pthread_t mySocketReading, mySocketWriting;
 
 char messages[10][256];
 
 int messagesNumber = 0;
 
-char userName[30];
+void* ClientUI::readingMessagesThread(int my_socket) {
 
-void *readingMessagesThread(void *my_socket) {
-
-    char buffer[256];
+//    char buffer[256];
     int n;
-    int sockfd = *(int*) my_socket;
+    int sockfd = my_socket;
 
 
     while(1) {
@@ -42,33 +45,31 @@ void *readingMessagesThread(void *my_socket) {
             messagesNumber++;
 
             for(index = 0; index < messagesNumber; index++) {
-                printf("Message - %d) %s\n", index, messages[index]);
+                printf("Message %d: %s\n", index, messages[index]);
             }
 
         }
     }
-
 }
 
-
-void *writingMessagesThread(void *my_socket) {
-
-    char buffer[256];
-    char message[256];
+void* ClientUI::writingMessagesThread(int my_socket) {
+    string message;
     int n;
-    int sockfd = *(int*) my_socket;
+    int sockfd = my_socket;
 
+    int bufferSize = 256;
+    char finalMessageBuffer[bufferSize];
     while(1) {
-        printf("Enter the message: ");
-        bzero(buffer, 256);
-        fgets(buffer, 256, stdin);
+        message.clear();
+        std::cout << " > ";
+        std::getline(std::cin, message);
 
-        strcpy(message, userName);
-        strcat(message, " - ");
-        strcat(message, buffer);
+        string stringToSend = this->userName + ": " + message;
 
+        bzero(finalMessageBuffer, bufferSize);
+        strcpy(finalMessageBuffer, stringToSend.c_str());
 
-        n = write(sockfd, buffer, 256);
+        n = write(sockfd, finalMessageBuffer, bufferSize);
         if (n < 0)
             printf("ERROR writing to socket\n");
     }
@@ -78,6 +79,7 @@ int ClientUI::startClient(string userName, string groupName, string serverIPAddr
     std::cout << "Cliente iniciado" << std::endl;
     std::cout << userName << "@" << serverIPAddress << ":" << port << "/" << groupName << "/db.txt.chupa" << std::endl;
 
+    this->userName = userName;
     int sockfd, n;
     struct sockaddr_in serv_addr;
     struct hostent *server;
@@ -110,16 +112,28 @@ int ClientUI::startClient(string userName, string groupName, string serverIPAddr
         printf("ERROR writing to socket");
     }
 
-    pthread_create(&mySocketReading, NULL, readingMessagesThread, &sockfd);
-    pthread_create(&mySocketWriting, NULL, writingMessagesThread, &sockfd);
+    ThreadParameter *tp = new ThreadParameter();
+    tp->client = this;
+    tp->socket = sockfd;
 
-
+    pthread_create(&mySocketReading, NULL, ClientUI::staticReadingMessagesThread, tp);
+    pthread_create(&mySocketWriting, NULL, ClientUI::staticWritingMessagesThread, tp);
 
     pthread_join(mySocketReading, NULL);
     pthread_join(mySocketWriting, NULL);
 
-
-
     //close(sockfd);
     return 0;
+}
+
+void * ClientUI::staticReadingMessagesThread(void *threadParm) {
+    ThreadParameter* t = static_cast<ThreadParameter*>(threadParm);
+    t->client->readingMessagesThread(t->socket);
+    return NULL;
+}
+
+void * ClientUI::staticWritingMessagesThread(void *threadParm) {
+    ThreadParameter* t = static_cast<ThreadParameter*>(threadParm);
+    t->client->writingMessagesThread(t->socket);
+    return NULL;
 }
