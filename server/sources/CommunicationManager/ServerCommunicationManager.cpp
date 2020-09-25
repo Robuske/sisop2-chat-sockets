@@ -16,18 +16,18 @@
 int group1Sockets[10] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
 
 
-void *handleNewClientConnecton(void *arg) {
+void *handleNewClientConnection(void *sock) {
 
-    int n;
+    int operationsResult;
     char buffer[256];
-    int newSockFD = *(int*) arg;
+    SocketFD communicationSocket = *(int*) sock;
 
-    while(1) {
+    while(true) {
 
         bzero(buffer, 256);
         /* read from the socket */
-        n = read(newSockFD, buffer, 256);
-        if (n < 0)
+        operationsResult = read(communicationSocket, buffer, 256);
+        if (operationsResult < 0)
             printf("ERROR reading from socket");
 
         printf("Here is the message: %s\n", buffer);
@@ -37,8 +37,8 @@ void *handleNewClientConnecton(void *arg) {
         int socketsIndex = 0;
 
         while (group1Sockets[socketsIndex] != -1){
-            n = write(group1Sockets[socketsIndex],buffer, 256);
-            if (n < 0) {
+            operationsResult = write(group1Sockets[socketsIndex],buffer, 256);
+            if (operationsResult < 0) {
                 printf("ERROR writing to socket");
             }
 
@@ -46,51 +46,58 @@ void *handleNewClientConnecton(void *arg) {
         }
 
         socketsIndex = 0;
-
-        //close(newSockFD);
     }
+}
 
+
+SocketFD ServerCommunicationManager::connectServer() {
+
+    SocketFD connectionSocketFD;
+    struct sockaddr_in serv_addr;
+
+    if ((connectionSocketFD = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+        return SOCKET_CREATION_ERROR;
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(PORT);
+    serv_addr.sin_addr.s_addr = INADDR_ANY;
+    bzero(&(serv_addr.sin_zero), 8);
+
+    if (bind(connectionSocketFD, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
+        return SOCKET_BINDING_ERROR;
+
+    listen(connectionSocketFD, 5);
+
+    return connectionSocketFD;
 }
 
 int ServerCommunicationManager::startServer(int loadMessageCount) {
 
     pthread_t clientConnections[10];
 
-    int sockfd, newsockfd;
+    SocketFD communicationSocketFD, connectionSocketFDResult;
     socklen_t clilen;
-    char buffer[256];
-    struct sockaddr_in serv_addr, cli_addr;
 
-    // Inicianto o soket com ([tipo de conexao(domain) - nesse caso remota], [type - TCP], [protocolo de comunicacao - 0 padrao])
+    struct sockaddr_in cli_addr;
 
-    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-        printf("ERROR opening socket");
-
-    serv_addr.sin_family = AF_INET; // network conection
-    serv_addr.sin_port = htons(PORT); // host to network big endian little endian conversion network port
-    serv_addr.sin_addr.s_addr = INADDR_ANY; // ip address - 127.0.0.1
-    bzero(&(serv_addr.sin_zero), 8);     // i dont know
-
-
-    if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
-        printf("ERROR on binding"); // for binding we use the socket (endpoint) we've just created with the socket address abstraction (used for local and internet connections)
-
-    listen(sockfd, 5);
+    connectionSocketFDResult = this->connectServer();
+    if (connectionSocketFDResult < 0)
+        return connectionSocketFDResult;
 
     int threadIndex = 0;
 
-    while(1) {
+    while(true) {
 
         clilen = sizeof(struct sockaddr_in);
-        if ((newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen)) == -1)
-            printf("ERROR on accept");
+        if ((communicationSocketFD = accept(connectionSocketFDResult, (struct sockaddr *) &cli_addr, &clilen)) == -1)
+            return ACCEPT_SOCKET_CONNECTION_ERROR;
 
-        pthread_create(&clientConnections[threadIndex], NULL, handleNewClientConnecton, &newsockfd);
-        group1Sockets[threadIndex] = newsockfd;
+        pthread_create(&clientConnections[threadIndex], NULL, handleNewClientConnection, &communicationSocketFD);
+        group1Sockets[threadIndex] = communicationSocketFD;
         threadIndex++;
-
     }
 
-    close(sockfd);// Disconecting the server
+
+   // close(sockfd);// Disconecting the server
     return 0;
 }
