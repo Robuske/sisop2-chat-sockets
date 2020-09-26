@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <iostream>
 
 #define PORT 4000
 
@@ -19,18 +20,32 @@ int group1Sockets[10] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
 void *handleNewClientConnection(void *sock) {
 
     int operationsResult;
-    char buffer[256];
+    char buffer[sizeof(PacketHeader)];
     SocketFD communicationSocket = *(int*) sock;
+
+    struct PacketHeader* packetHeader =  (PacketHeader*) malloc(sizeof(PacketHeader));
+    struct Message* message = (Message*) malloc(sizeof(Message));
 
     while(true) {
 
-        bzero(buffer, 256);
+        bzero(packetHeader, sizeof(PacketHeader));
         /* read from the socket */
-        operationsResult = read(communicationSocket, buffer, 256);
+        operationsResult = read(communicationSocket, packetHeader, sizeof(PacketHeader));
         if (operationsResult < 0)
             printf("ERROR reading from socket");
 
-        printf("Here is the message: %s\n", buffer);
+        char payloadBuffer[500];
+        bzero(payloadBuffer, 500);
+
+        operationsResult = read(communicationSocket, payloadBuffer, packetHeader->length);
+        if (operationsResult < 0)
+            printf("ERROR reading from socket");
+
+        bzero(message, sizeof(Message));
+
+        message = (Message*)payloadBuffer;
+
+        std::cout << message->text;
 
         /* write in the socket */
 

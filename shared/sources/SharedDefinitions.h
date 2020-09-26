@@ -1,8 +1,30 @@
 #ifndef SISOP2_T1_SHAREDDEFINITIONS_H
 #define SISOP2_T1_SHAREDDEFINITIONS_H
 
+#include <string>
+
+using std::string;
+
 // Codes
 
 #define CODE_SUCCESS 0
+
+struct Message {
+    uint16_t timestamp;
+    const string group;
+    const string username;
+    const string text;
+};
+
+struct PacketHeader {
+    uint16_t type;
+    uint16_t length;
+};
+
+struct Packet {
+    struct PacketHeader header;
+    const char* _payload;
+};
+
 
 #endif //SISOP2_T1_SHAREDDEFINITIONS_H
