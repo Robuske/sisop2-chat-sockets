@@ -4,7 +4,7 @@
 #include <string>
 
 void handleControlC(int signal) {
-    std::cout << "ctrl+C signal(" + std::to_string(signal) + "), disconnecting client...";
+    std::cout << std::endl << "ctrl+C signal(" + std::to_string(signal) + "), disconnecting client..." << std::endl;
     exit(signal);
 }
 
