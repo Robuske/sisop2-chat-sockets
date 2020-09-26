@@ -23,7 +23,8 @@ void* ClientMessagesManager::readMessagesThread() {
         bzero(messages[messagesNumber], 256);
         readResult = communicationManager.readSocketMessage(messages[messagesNumber]);
         if (readResult < 0) {
-            printf("ERROR reading from socket\n");
+            perror("Error reading from socket\n");
+            std::cout << "Read result: " << readResult;
         } else if (readResult > 0) {
             system("clear");
 
@@ -31,9 +32,9 @@ void* ClientMessagesManager::readMessagesThread() {
 
             messagesNumber++;
 
-            for(index = 0; index < messagesNumber; index++) {
+            for (index = 0; index < messagesNumber; index++) {
                 // Chamar display message do Client UI?
-                printf("Message %d: %s\n", index, messages[index]);
+                std::cout << "Message " << index << ": " << messages[index] << std::endl;
             }
         }
     }
@@ -60,8 +61,10 @@ void* ClientMessagesManager::writeMessagesThread() {
         _message.group = "oi buske";
 
         writeResult = communicationManager.writeSocketMessage(&_message);
-        if (writeResult < 0)
-            printf("ERROR writing to socket\n");
+        if (writeResult < 0) {
+            string errorPrefix = "Error(" + std::to_string(writeResult) + ") writing to socket";
+            perror(errorPrefix.c_str());
+        }
     }
 }
 
@@ -71,13 +74,15 @@ int ClientMessagesManager::startClient(SocketConnectionInfo connectionInfo, User
     pthread_t mySocketReading, mySocketWriting;
 
     this->userName = userInfo.name;
-    socketConnectionResult = communicationManager.connectClient(connectionInfo);
 
-    if(socketConnectionResult < 0) {
-        printf("Error connecting socket");
+    socketConnectionResult = communicationManager.connectClient(connectionInfo);
+    if (socketConnectionResult < 0) {
+        string errorPrefix = "Error(" + std::to_string(socketConnectionResult) + ") connecting client";
+        perror(errorPrefix.c_str());
         return socketConnectionResult;
     }
-    printf("Connection successful");
+
+    std::cout << "Connection successful";
 
     ThreadParameter *tp = new ThreadParameter();
     tp->client = this;
@@ -89,6 +94,8 @@ int ClientMessagesManager::startClient(SocketConnectionInfo connectionInfo, User
     pthread_join(mySocketWriting, NULL);
 
     // Pegar interrupcao do ctrl - c pra fechar o socket e finalizar a conexao (talves uma outra thread?)
+
+
     //close(sockfd);
     return 0;
 }

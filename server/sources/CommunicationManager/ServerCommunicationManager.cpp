@@ -19,7 +19,7 @@ int group1Sockets[10] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
 
 void *handleNewClientConnection(void *sock) {
 
-    int operationsResult;
+    int readWriteOperationResult, socketToWriteIndex = 0;
     char buffer[sizeof(PacketHeader)];
     SocketFD communicationSocket = *(int*) sock;
 
@@ -29,17 +29,21 @@ void *handleNewClientConnection(void *sock) {
     while(true) {
 
         bzero(packetHeader, sizeof(PacketHeader));
-        /* read from the socket */
-        operationsResult = read(communicationSocket, packetHeader, sizeof(PacketHeader));
-        if (operationsResult < 0)
-            printf("ERROR reading from socket");
+
+        readWriteOperationResult = read(communicationSocket, packetHeader, sizeof(PacketHeader));
+        if (readWriteOperationResult < 0) {
+            string errorPrefix = "Error(" + std::to_string(readWriteOperationResult) + ") reading from socket";
+            perror(errorPrefix.c_str());
+        }
 
         char payloadBuffer[500];
         bzero(payloadBuffer, 500);
 
-        operationsResult = read(communicationSocket, payloadBuffer, packetHeader->length);
-        if (operationsResult < 0)
-            printf("ERROR reading from socket");
+        readWriteOperationResult = read(communicationSocket, payloadBuffer, packetHeader->length);
+        if (readWriteOperationResult < 0) {
+            string errorPrefix = "Error(" + std::to_string(readWriteOperationResult) + ") reading from socket";
+            perror(errorPrefix.c_str());
+        }
 
         bzero(message, sizeof(Message));
 
@@ -47,20 +51,19 @@ void *handleNewClientConnection(void *sock) {
 
         std::cout << message->text;
 
-        /* write in the socket */
-
-        int socketsIndex = 0;
-
-        while (group1Sockets[socketsIndex] != -1){
-            operationsResult = write(group1Sockets[socketsIndex],buffer, 256);
-            if (operationsResult < 0) {
-                printf("ERROR writing to socket");
+        /* Write message to all connected clients */
+        int socketToWrite = group1Sockets[socketToWriteIndex];
+        while (socketToWrite != -1) {
+            readWriteOperationResult = write(socketToWrite, buffer, 256);
+            if (readWriteOperationResult < 0) {
+                string errorPrefix = "Error(" + std::to_string(readWriteOperationResult) + ") writing int socket(" + std::to_string(socketToWrite) +")";
+                perror(errorPrefix.c_str());
             }
 
-            socketsIndex++;
+            socketToWriteIndex++;
         }
 
-        socketsIndex = 0;
+        socketToWriteIndex = 0;
     }
 }
 
