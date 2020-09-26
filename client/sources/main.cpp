@@ -3,7 +3,23 @@
 #include "MessagesManager/ClientMessagesManager.h"
 #include <string>
 
+void handleControlC(int signal) {
+    std::cout << "ctrl+C signal(" + std::to_string(signal) + "), disconnecting client...";
+    exit(signal);
+}
+
 int main() {
+    // FIXME: Handle ctrl + C
+    // Q: Do we need a thread to handle this?
+    // I suspect we'll need a thread that does something like:
+    // int keepConnected = 1; // set to 1 when ctrl c
+    // while (keepConnected) {
+        // yield() to leave CPU so we can continue executing whatever
+    // }
+    // disconnect();
+
+    signal(SIGINT, handleControlC);
+
     std::cout << " ::::::: Zap ::::::: " << std::endl;
 
     SocketConnectionInfo connectionInfo;
