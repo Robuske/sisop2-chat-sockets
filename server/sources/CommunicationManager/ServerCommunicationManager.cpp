@@ -15,9 +15,8 @@
 
 std::list<SocketFD> clients;
 
-void *handleNewClientConnection(void *sock) {
 enum eLogLevel { Info, Debug, Error } typedef LogLevel;
-void log(string msg, LogLevel logLevel) {
+void log(LogLevel logLevel, string msg) {
     switch (logLevel) {
         case Info:
             std::cout << "INFO:: " << msg << std::endl;
@@ -33,6 +32,40 @@ void log(string msg, LogLevel logLevel) {
     }
 }
 
+// TODO: Send disconnection message to all remaining client
+void terminateClientConnection(SocketFD socketFileDescriptor, string username) {
+    clients.remove(socketFileDescriptor);
+
+    int readWriteOperationResult;
+    string disconnectionMessage = username + " desconectou!";
+
+    /* Write message to all connected clients */
+    for(std::list<SocketFD>::iterator client = std::begin(clients); client != std::end(clients); ++client) {
+        int socketToWrite = *client;
+        readWriteOperationResult = write(socketToWrite, disconnectionMessage.c_str(), disconnectionMessage.length());
+        if (readWriteOperationResult < 0) {
+            string errorPrefix = "Error(" + std::to_string(readWriteOperationResult) + ") writing into socket(" + std::to_string(socketToWrite) +")";
+            perror(errorPrefix.c_str());
+        }
+    }
+}
+
+bool handleReadResult(int readResult, int socket) {
+    bool isEndOfFile = (readResult == 0);
+    if (isEndOfFile) {
+        string message = "Read result(" + std::to_string(readResult) + ") reading from socket(" + std::to_string(socket) + ")";
+        log(Info, message);
+        return false;
+    } else if (readResult < 0) {
+        string errorPrefix = "Read result(" + std::to_string(readResult) + ") reading from socket(" + std::to_string(socket) + ")";
+        log(Error, errorPrefix);
+        return false;
+    }
+
+    return true;
+}
+
+void *handleNewClientConnection(void *sock) {
     int readWriteOperationResult, socketToWriteIndex = 0;
     SocketFD communicationSocket = *(int*) sock;
     clients.push_back(communicationSocket);
@@ -40,38 +73,37 @@ void log(string msg, LogLevel logLevel) {
     struct PacketHeader* packetHeader =  (PacketHeader*) malloc(sizeof(PacketHeader));
     struct Message* message = (Message*) malloc(sizeof(Message));
 
-    while(true) {
-
+    bool shouldContinue = true;
+    while(shouldContinue) {
+        // Read header
         bzero(packetHeader, sizeof(PacketHeader));
-
         readWriteOperationResult = read(communicationSocket, packetHeader, sizeof(PacketHeader));
-        if (readWriteOperationResult < 0) {
-            string errorPrefix = "Error(" + std::to_string(readWriteOperationResult) + ") reading from socket";
-            perror(errorPrefix.c_str());
+        shouldContinue = handleReadResult(readWriteOperationResult, communicationSocket);
+        if (!shouldContinue) {
+            terminateClientConnection(communicationSocket, message->username);
+            break;
         }
 
-
+        // Read content
+        bzero(message, sizeof(Message));
         readWriteOperationResult = read(communicationSocket, message, packetHeader->length);
-
-        if (readWriteOperationResult < 0) {
-            string errorPrefix = "Error(" + std::to_string(readWriteOperationResult) + ") reading from socket";
-            perror(errorPrefix.c_str());
+        shouldContinue = handleReadResult(readWriteOperationResult, communicationSocket);
+        if (!shouldContinue) {
+            terminateClientConnection(communicationSocket, message->username);
+            break;
         }
 
-        /* Write message to all connected clients */
+        // Write message to all connected clients
         for(std::list<SocketFD>::iterator client = std::begin(clients); client != std::end(clients); ++client) {
             int socketToWrite = *client;
             readWriteOperationResult = write(socketToWrite, message->text.c_str(), message->text.length());
             if (readWriteOperationResult < 0) {
-                string errorPrefix = "Error(" + std::to_string(readWriteOperationResult) + ") writing int socket(" + std::to_string(socketToWrite) +")";
+                string errorPrefix = "Error(" + std::to_string(readWriteOperationResult) + ") writing into socket(" + std::to_string(socketToWrite) +")";
                 perror(errorPrefix.c_str());
             }
         }
-
-        socketToWriteIndex = 0;
     }
 }
-
 
 SocketFD ServerCommunicationManager::setupServerSocket() {
     SocketFD connectionSocketFD;
@@ -93,7 +125,7 @@ SocketFD ServerCommunicationManager::setupServerSocket() {
 }
 
 int ServerCommunicationManager::startServer(int loadMessageCount) {
-
+    // TODO: Change this to std::list
     pthread_t clientConnections[10];
 
     SocketFD communicationSocketFD, connectionSocketFDResult;
