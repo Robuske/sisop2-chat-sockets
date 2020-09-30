@@ -23,8 +23,8 @@ void* ClientMessagesManager::readMessagesThread() {
         bzero(messages[messagesNumber], 256);
         readResult = communicationManager.readSocketMessage(messages[messagesNumber]);
         if (readResult < 0) {
-            perror("Error reading from socket\n");
-            std::cout << "Read result: " << readResult;
+            string errorPrefix = "Error(" + std::to_string(readResult) + ") writing to socket";
+            perror(errorPrefix.c_str());
         } else if (readResult > 0) {
             system("clear");
 
