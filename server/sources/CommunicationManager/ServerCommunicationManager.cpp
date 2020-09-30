@@ -9,18 +9,17 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <iostream>
+#include <list>
 
 #define PORT 4000
 
-// Handle new socket connection thread
-
-int group1Sockets[10] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
-
+std::list<SocketFD> clients;
 
 void *handleNewClientConnection(void *sock) {
 
     int readWriteOperationResult, socketToWriteIndex = 0;
     SocketFD communicationSocket = *(int*) sock;
+    clients.push_back(communicationSocket);
 
     struct PacketHeader* packetHeader =  (PacketHeader*) malloc(sizeof(PacketHeader));
     struct Message* message = (Message*) malloc(sizeof(Message));
@@ -43,21 +42,14 @@ void *handleNewClientConnection(void *sock) {
             perror(errorPrefix.c_str());
         }
 
-        std::cout << message->text;
-
-        /* write in the socket */
-
         /* Write message to all connected clients */
-        int socketToWrite = group1Sockets[socketToWriteIndex];
-        while (socketToWrite != -1) {
+        for(std::list<SocketFD>::iterator client = std::begin(clients); client != std::end(clients); ++client) {
+            int socketToWrite = *client;
             readWriteOperationResult = write(socketToWrite, message->text.c_str(), message->text.length());
             if (readWriteOperationResult < 0) {
                 string errorPrefix = "Error(" + std::to_string(readWriteOperationResult) + ") writing int socket(" + std::to_string(socketToWrite) +")";
                 perror(errorPrefix.c_str());
             }
-
-            socketToWriteIndex++;
-            socketToWrite = group1Sockets[socketToWriteIndex];
         }
 
         socketToWriteIndex = 0;
@@ -102,14 +94,11 @@ int ServerCommunicationManager::startServer(int loadMessageCount) {
     int threadIndex = 0;
 
     while(true) {
-
         clilen = sizeof(struct sockaddr_in);
         if ((communicationSocketFD = accept(connectionSocketFDResult, (struct sockaddr *) &cli_addr, &clilen)) == -1)
             return ACCEPT_SOCKET_CONNECTION_ERROR;
 
         pthread_create(&clientConnections[threadIndex], NULL, handleNewClientConnection, &communicationSocketFD);
-        group1Sockets[threadIndex] = communicationSocketFD;
-        threadIndex++;
     }
 
 
