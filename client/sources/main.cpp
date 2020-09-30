@@ -4,8 +4,7 @@
 #include <string>
 
 int main() {
-    std::cout << " :::: Zap ::::" << std::endl;
-    // Just to do something for now
+    std::cout << " ::::::: Zap ::::::: " << std::endl;
 
     SocketConnectionInfo connectionInfo;
     UserInfo userInfo;
@@ -29,15 +28,12 @@ int main() {
     connectionInfo.port = std::stoul(port);
 
     int sessionResult = ClientMessagesManager().startClient(connectionInfo, userInfo);
-
-
     if(sessionResult > 0) {
-        printf("Success connecting!");
+        std::cout << "Success connecting!" << std::endl;
     } else {
-        printf("Error connecting!");
+        string errorPrefix = "Error(" + std::to_string(sessionResult) + ") connecting: ";
+        perror(errorPrefix.c_str());
     }
-
-    //return ClientUI().startClient(username, groupName, serverIPAddress, std::stoul(port));
 
     return 0;
 }

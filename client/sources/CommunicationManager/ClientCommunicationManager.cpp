@@ -19,12 +19,14 @@ int ClientCommunicationManager::connectClient(SocketConnectionInfo connectionInf
 
     server = gethostbyname(connectionInfo.ipAddress.c_str());
     if (server == NULL) {
-        fprintf(stderr,"ERROR, no such host\n");
+        string errorPrefix = "Error no such host '" + connectionInfo.ipAddress + "'";
+        perror(errorPrefix.c_str());
         return INVALID_HOST_ERROR;
     }
 
     if ((sockFd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-        printf("ERROR opening socket\n");
+        string errorPrefix = "Error(" + std::to_string(sockFd) + ") opening socket";
+        perror(errorPrefix.c_str());
         return SOCKET_CREATION_ERROR;
     }
 
@@ -33,8 +35,10 @@ int ClientCommunicationManager::connectClient(SocketConnectionInfo connectionInf
     serv_addr.sin_addr = *((struct in_addr *)server->h_addr);
     bzero(&(serv_addr.sin_zero), 8);
 
-    if (connect(sockFd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) {
-        printf("ERROR connecting\n");
+    int connectionResult = connect(sockFd,(struct sockaddr *) &serv_addr,sizeof(serv_addr));
+    if (connectionResult < 0) {
+        string errorPrefix = "Error(" + std::to_string(connectionResult) + ") connecting";
+        perror(errorPrefix.c_str());
         return SOCKET_CONNECTION_ERROR;
     }
 
