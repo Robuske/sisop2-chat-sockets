@@ -10,7 +10,7 @@ public:
     int startServer(int loadMessageCount);
 
 private:
-    SocketFD connectServer();
+    SocketFD setupServerSocket();
 };
 
 

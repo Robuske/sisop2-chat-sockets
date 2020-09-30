@@ -57,20 +57,18 @@ void *handleNewClientConnection(void *sock) {
 }
 
 
-SocketFD ServerCommunicationManager::connectServer() {
-
+SocketFD ServerCommunicationManager::setupServerSocket() {
     SocketFD connectionSocketFD;
-    struct sockaddr_in serv_addr;
-
     if ((connectionSocketFD = socket(AF_INET, SOCK_STREAM, 0)) == -1)
         return SOCKET_CREATION_ERROR;
 
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(PORT);
-    serv_addr.sin_addr.s_addr = INADDR_ANY;
-    bzero(&(serv_addr.sin_zero), 8);
+    struct sockaddr_in serverAddress;
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_port = htons(PORT);
+    serverAddress.sin_addr.s_addr = INADDR_ANY;
+    bzero(&(serverAddress.sin_zero), 8);
 
-    if (bind(connectionSocketFD, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
+    if (bind(connectionSocketFD, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0)
         return SOCKET_BINDING_ERROR;
 
     listen(connectionSocketFD, 5);
@@ -83,25 +81,20 @@ int ServerCommunicationManager::startServer(int loadMessageCount) {
     pthread_t clientConnections[10];
 
     SocketFD communicationSocketFD, connectionSocketFDResult;
-    socklen_t clilen;
-
-    struct sockaddr_in cli_addr;
-
-    connectionSocketFDResult = this->connectServer();
+    connectionSocketFDResult = this->setupServerSocket();
     if (connectionSocketFDResult < 0)
         return connectionSocketFDResult;
 
     int threadIndex = 0;
-
+    struct sockaddr_in cli_addr;
+    socklen_t clientSocketLength;
     while(true) {
-        clilen = sizeof(struct sockaddr_in);
-        if ((communicationSocketFD = accept(connectionSocketFDResult, (struct sockaddr *) &cli_addr, &clilen)) == -1)
+        clientSocketLength = sizeof(struct sockaddr_in);
+        if ((communicationSocketFD = accept(connectionSocketFDResult, (struct sockaddr *) &cli_addr, &clientSocketLength)) == -1)
             return ACCEPT_SOCKET_CONNECTION_ERROR;
 
         pthread_create(&clientConnections[threadIndex], NULL, handleNewClientConnection, &communicationSocketFD);
     }
 
-
-   // close(sockfd);// Disconecting the server
     return 0;
 }
