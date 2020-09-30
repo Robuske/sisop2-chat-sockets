@@ -16,6 +16,22 @@
 std::list<SocketFD> clients;
 
 void *handleNewClientConnection(void *sock) {
+enum eLogLevel { Info, Debug, Error } typedef LogLevel;
+void log(string msg, LogLevel logLevel) {
+    switch (logLevel) {
+        case Info:
+            std::cout << "INFO:: " << msg << std::endl;
+            break;
+
+        case Debug:
+            std::cout << "DEBUG:: " << msg << std::endl;
+            break;
+
+        case Error:
+            perror(msg.c_str());
+            break;
+    }
+}
 
     int readWriteOperationResult, socketToWriteIndex = 0;
     SocketFD communicationSocket = *(int*) sock;
