@@ -34,16 +34,12 @@ void *handleNewClientConnection(void *sock) {
         if (operationsResult < 0)
             printf("ERROR reading from socket");
 
-        char payloadBuffer[500];
-        bzero(payloadBuffer, 500);
+        int payloadReadingOperationResult;
 
-        operationsResult = read(communicationSocket, payloadBuffer, packetHeader->length);
-        if (operationsResult < 0)
+        payloadReadingOperationResult = read(communicationSocket, message, packetHeader->length);
+
+        if (payloadReadingOperationResult < 0)
             printf("ERROR reading from socket");
-
-        bzero(message, sizeof(Message));
-
-        message = (Message*)payloadBuffer;
 
         std::cout << message->text;
 
@@ -52,7 +48,7 @@ void *handleNewClientConnection(void *sock) {
         int socketsIndex = 0;
 
         while (group1Sockets[socketsIndex] != -1){
-            operationsResult = write(group1Sockets[socketsIndex],buffer, 256);
+            operationsResult = write(group1Sockets[socketsIndex],message->text.c_str(), message->text.length());
             if (operationsResult < 0) {
                 printf("ERROR writing to socket");
             }

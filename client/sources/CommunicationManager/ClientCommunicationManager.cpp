@@ -47,15 +47,14 @@ int ClientCommunicationManager::writeSocketMessage(struct Message *message) {
     struct Packet packet;
     struct PacketHeader packetHeader;
 
-    int _message = 123;
-
     packetHeader.type = 0;
-    packetHeader.length = 100;
-    packet.header = packetHeader;
-    packet._payload = (char*) malloc(100);
-    packet._payload =  (char*) &_message;
+    packetHeader.length = sizeof(Message);
 
-    return write(this->socketConnectionResult, &packet, sizeof(packet));
+
+   write(this->socketConnectionResult, &packetHeader, sizeof(PacketHeader));
+   write(this->socketConnectionResult, message, sizeof(Message));
+
+   return 1;
 }
 
 int ClientCommunicationManager::readSocketMessage(char* message) {
