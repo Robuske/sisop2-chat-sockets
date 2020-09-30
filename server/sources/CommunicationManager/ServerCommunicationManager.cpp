@@ -57,6 +57,7 @@ void *handleNewClientConnection(void *sock) {
             }
 
             socketToWriteIndex++;
+            socketToWrite = group1Sockets[socketToWriteIndex];
         }
 
         socketToWriteIndex = 0;
