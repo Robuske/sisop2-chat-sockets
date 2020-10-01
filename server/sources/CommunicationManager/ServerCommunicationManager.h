@@ -3,6 +3,16 @@
 
 #include <ServerDefinitions.h>
 #include <SharedDefinitions.h>
+#include <list>
+
+class ServerGroupsManager;
+class ServerCommunicationManager;
+
+struct HandleNewClientArguments {
+    ServerCommunicationManager *communicationManager;
+    ServerGroupsManager *groupsManager;
+    SocketFD newClientSocket;
+};
 
 class ServerCommunicationManager {
 public:
@@ -10,7 +20,16 @@ public:
 
 private:
     SocketFD setupServerSocket();
-};
 
+    std::list<SocketFD> clients;
+
+    static void *staticHandleNewClientConnection(void *newClientArguments);
+
+    void *handleNewClientConnection(HandleNewClientArguments *args);
+
+    bool handleReadResult(int readResult, int socket);
+    void terminateClientConnection(SocketFD socketFileDescriptor, string username);
+
+};
 
 #endif //SISOP2_T1_SERVERCOMMUNICATIONMANAGER_H

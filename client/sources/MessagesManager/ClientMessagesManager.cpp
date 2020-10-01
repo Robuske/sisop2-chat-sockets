@@ -44,7 +44,7 @@ void* ClientMessagesManager::writeMessagesThread() {
     string messageString;
     int writeResult;
 
-    int bufferSize = 10;
+//    int bufferSize = 10;
 //    char finalMessageBuffer[bufferSize];
     while(true) {
         messageString.clear();

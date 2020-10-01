@@ -8,21 +8,9 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <iostream>
-#include <list>
 #include "GroupsManager/ServerGroupsManager.h"
 
 #define PORT 4000
-
-
-
-struct HandleNewClientArguments {
-    ServerCommunicationManager *communicationManager;
-    ServerGroupsManager *groupsManager;
-    SocketFD newClientSocket;
-};
-
-std::list<SocketFD> clients;
 
 enum eLogLevel { Info, Debug, Error } typedef LogLevel;
 void log(LogLevel logLevel, string msg) {
@@ -41,8 +29,15 @@ void log(LogLevel logLevel, string msg) {
     }
 }
 
+// MARK: - Static methods
+void *ServerCommunicationManager::staticHandleNewClientConnection(void *newClientArguments) {
+    HandleNewClientArguments* t = static_cast<HandleNewClientArguments*>(newClientArguments);
+    t->communicationManager->handleNewClientConnection(t);
+    return NULL;
+}
+
 // TODO: Send disconnection message to all remaining client
-void terminateClientConnection(SocketFD socketFileDescriptor, string username) {
+void ServerCommunicationManager::terminateClientConnection(SocketFD socketFileDescriptor, string username) {
     clients.remove(socketFileDescriptor);
 
     int readWriteOperationResult;
@@ -59,7 +54,7 @@ void terminateClientConnection(SocketFD socketFileDescriptor, string username) {
     }
 }
 
-bool handleReadResult(int readResult, int socket) {
+bool ServerCommunicationManager::handleReadResult(int readResult, int socket) {
     bool isEndOfFile = (readResult == 0);
     if (isEndOfFile) {
         string message = "Read result(" + std::to_string(readResult) + ") reading from socket(" + std::to_string(socket) + ")";
@@ -74,11 +69,9 @@ bool handleReadResult(int readResult, int socket) {
     return true;
 }
 
-void *handleNewClientConnection(void *sock) {
+void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArguments *args) {
     int readWriteOperationResult;
-    HandleNewClientArguments args = *(HandleNewClientArguments *) sock;
-    SocketFD communicationSocket = *(int*) sock;
-    communicationSocket = args.newClientSocket;
+    SocketFD communicationSocket = args->newClientSocket;
     clients.push_back(communicationSocket);
 
     PacketHeader* packetHeader =  (PacketHeader*) malloc(sizeof(PacketHeader));
@@ -166,7 +159,7 @@ int ServerCommunicationManager::startServer(int loadMessageCount) {
         args.newClientSocket = communicationSocketFD;
         args.communicationManager = this;
         args.groupsManager = &groupsManager;
-        pthread_create(&clientConnections[threadIndex], NULL, handleNewClientConnection, &args);
+        pthread_create(&clientConnections[threadIndex], NULL, ServerCommunicationManager::staticHandleNewClientConnection, &args);
     }
 
     return 0;

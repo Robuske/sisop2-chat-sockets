@@ -49,7 +49,7 @@ int ClientCommunicationManager::connectClient(SocketConnectionInfo connectionInf
 }
 
 int ClientCommunicationManager::writeSocketMessage(struct Message *message) {
-    struct Packet packet;
+//    struct Packet packet;
     struct PacketHeader packetHeader;
 
     packetHeader.type = 0;
