@@ -94,6 +94,16 @@ Packet ServerCommunicationManager::readPacketFromSocket(SocketFD communicationSo
     }
 }
 
+void sendMessageToClients(string message, std::list<SocketFD> clients) {
+    for(std::list<SocketFD>::iterator client = std::begin(clients); client != std::end(clients); ++client) {
+        int socketToWrite = *client;
+        int readWriteOperationResult = write(socketToWrite, message.c_str(), message.length());
+        if (readWriteOperationResult < 0) {
+            throw -321;
+        }
+    }
+}
+
 void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArguments *args) {
     int readWriteOperationResult;
     SocketFD communicationSocket = args->newClientSocket;
@@ -115,18 +125,10 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
         try {
             PacketHeader packetHeader = readPacketHeaderFromSocket(communicationSocket);
             packet = readPacketFromSocket(communicationSocket, packetHeader.length);
-
-            // GroupManager.writeToGroup();
-            // Write message to all connected clients
-            for(std::list<SocketFD>::iterator client = std::begin(clients); client != std::end(clients); ++client) {
-                int socketToWrite = *client;
-                readWriteOperationResult = write(socketToWrite, packet.payload.text.c_str(), packet.payload.text.length());
-                if (readWriteOperationResult < 0) {
-                    string errorPrefix = "Error(" + std::to_string(readWriteOperationResult) + ") writing into socket(" + std::to_string(socketToWrite) +")";
-                    perror(errorPrefix.c_str());
-                }
-            }
+            sendMessageToClients(packet.payload.text, clients);
         } catch (int errorCode) {
+            string errorPrefix = "Error(" + std::to_string(readWriteOperationResult) + ") writing into socket(" + std::to_string(communicationSocket) +")";
+            log(Error, errorPrefix);
             terminateClientConnection(communicationSocket, packet.payload.username);
             break;
         }
