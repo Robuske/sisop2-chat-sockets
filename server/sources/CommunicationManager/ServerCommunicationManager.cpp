@@ -10,7 +10,7 @@
 #include <netinet/in.h>
 #include "GroupsManager/ServerGroupsManager.h"
 
-#define PORT 4000
+#define PORT 5000
 
 enum eLogLevel { Info, Debug, Error } typedef LogLevel;
 void log(LogLevel logLevel, string msg) {
@@ -36,6 +36,7 @@ void *ServerCommunicationManager::staticHandleNewClientConnection(void *newClien
     return NULL;
 }
 
+// MARK: - Instance methods
 // TODO: Send disconnection message to all remaining client
 void ServerCommunicationManager::terminateClientConnection(SocketFD socketFileDescriptor, string username) {
     clients.remove(socketFileDescriptor);
@@ -69,48 +70,65 @@ bool ServerCommunicationManager::handleReadResult(int readResult, int socket) {
     return true;
 }
 
+PacketHeader ServerCommunicationManager::readPacketHeaderFromSocket(SocketFD communicationSocket) {
+    PacketHeader packetHeader;
+    int readWriteOperationResult = read(communicationSocket, &packetHeader, sizeof(PacketHeader));
+    bool readResult = handleReadResult(readWriteOperationResult, communicationSocket);
+    if (readResult) {
+        return packetHeader;
+    } else {
+        // TODO: Create error constant
+        throw -123;
+    }
+}
+
+Packet ServerCommunicationManager::readPacketFromSocket(SocketFD communicationSocket, int packetSize) {
+    Packet packet;
+    int readOperationResult = read(communicationSocket, &packet, packetSize);
+    bool shouldContinue = handleReadResult(readOperationResult, communicationSocket);
+    if (shouldContinue) {
+        return packet;
+    } else {
+        // TODO: Create error constant
+        throw -123;
+    }
+}
+
 void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArguments *args) {
     int readWriteOperationResult;
     SocketFD communicationSocket = args->newClientSocket;
     clients.push_back(communicationSocket);
 
-    PacketHeader* packetHeader =  (PacketHeader*) malloc(sizeof(PacketHeader));
-    Message* message = (Message*) malloc(sizeof(Message));
-
     // TODO: Handle group creation
 //    GroupManager.handleGroupCreation()
+//    try {
+//        PacketHeader packetHeader = readPacketHeaderFromSocket(communicationSocket);
+//        Packet packet = readPacketFromSocket(communicationSocket, packetHeader.length);
+//    } catch (int errorCode) {
+//        std::cout << "FUDEU" << std::to_string(errorCode);
+//    }
 
+    Packet packet;
 
     bool shouldContinue = true;
     while(shouldContinue) {
-        // Read header
-        bzero(packetHeader, sizeof(PacketHeader));
-        readWriteOperationResult = read(communicationSocket, packetHeader, sizeof(PacketHeader));
-        shouldContinue = handleReadResult(readWriteOperationResult, communicationSocket);
-        if (!shouldContinue) {
-            terminateClientConnection(communicationSocket, message->username);
-            break;
-        }
+        try {
+            PacketHeader packetHeader = readPacketHeaderFromSocket(communicationSocket);
+            packet = readPacketFromSocket(communicationSocket, packetHeader.length);
 
-        // Read content
-        bzero(message, sizeof(Message));
-        readWriteOperationResult = read(communicationSocket, message, packetHeader->length);
-        shouldContinue = handleReadResult(readWriteOperationResult, communicationSocket);
-        if (!shouldContinue) {
-            terminateClientConnection(communicationSocket, message->username);
-            break;
-        }
-
-//        GroupManager.writeToGroup();
-
-        // Write message to all connected clients
-        for(std::list<SocketFD>::iterator client = std::begin(clients); client != std::end(clients); ++client) {
-            int socketToWrite = *client;
-            readWriteOperationResult = write(socketToWrite, message->text.c_str(), message->text.length());
-            if (readWriteOperationResult < 0) {
-                string errorPrefix = "Error(" + std::to_string(readWriteOperationResult) + ") writing into socket(" + std::to_string(socketToWrite) +")";
-                perror(errorPrefix.c_str());
+            // GroupManager.writeToGroup();
+            // Write message to all connected clients
+            for(std::list<SocketFD>::iterator client = std::begin(clients); client != std::end(clients); ++client) {
+                int socketToWrite = *client;
+                readWriteOperationResult = write(socketToWrite, packet.payload.text.c_str(), packet.payload.text.length());
+                if (readWriteOperationResult < 0) {
+                    string errorPrefix = "Error(" + std::to_string(readWriteOperationResult) + ") writing into socket(" + std::to_string(socketToWrite) +")";
+                    perror(errorPrefix.c_str());
+                }
             }
+        } catch (int errorCode) {
+            terminateClientConnection(communicationSocket, packet.payload.username);
+            break;
         }
     }
 

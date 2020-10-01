@@ -29,6 +29,8 @@ private:
 
     bool handleReadResult(int readResult, int socket);
     void terminateClientConnection(SocketFD socketFileDescriptor, string username);
+    PacketHeader readPacketHeaderFromSocket(SocketFD communicationSocket);
+    Packet readPacketFromSocket(SocketFD communicationSocket, int packetSize);
 
 };
 

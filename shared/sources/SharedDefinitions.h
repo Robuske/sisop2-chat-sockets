@@ -17,6 +17,11 @@ struct tUserInfo {
     string group;
 } typedef UserInfo;
 
+struct PacketHeader {
+    uint16_t type;
+    uint16_t length;
+};
+
 struct Message {
     uint16_t timestamp;
     string group;
@@ -24,14 +29,8 @@ struct Message {
     string text;
 };
 
-struct PacketHeader {
-    uint16_t type;
-    uint16_t length;
-};
-
 struct Packet {
-    struct PacketHeader header;
-    const char* _payload;
+    Message payload;
 };
 
 
