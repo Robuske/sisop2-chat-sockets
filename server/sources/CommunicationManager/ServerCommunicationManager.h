@@ -2,8 +2,7 @@
 #define SISOP2_T1_SERVERCOMMUNICATIONMANAGER_H
 
 #include <ServerDefinitions.h>
-
-typedef int SocketFD;
+#include <SharedDefinitions.h>
 
 class ServerCommunicationManager {
 public:

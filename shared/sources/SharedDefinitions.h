@@ -9,6 +9,14 @@ using std::string;
 
 #define CODE_SUCCESS 0
 
+typedef int SocketFD;
+
+
+struct tUserInfo {
+    string name;
+    string group;
+} typedef UserInfo;
+
 struct Message {
     uint16_t timestamp;
     const string group;
@@ -27,4 +35,4 @@ struct Packet {
 };
 
 
-#endif //SISOP2_T1_SHAREDDEFINITIONS_H
+#endif SISOP2_T1_SHAREDDEFINITIONS_H

@@ -10,6 +10,7 @@
 #include <netinet/in.h>
 #include <iostream>
 #include <list>
+#include "GroupsManager/ServerGroupsManager.h"
 
 #define PORT 4000
 
@@ -67,11 +68,17 @@ bool handleReadResult(int readResult, int socket) {
 
 void *handleNewClientConnection(void *sock) {
     int readWriteOperationResult, socketToWriteIndex = 0;
+    struct HandleNewClientArguments args = *(HandleNewClientArguments*)sock;
     SocketFD communicationSocket = *(int*) sock;
+    communicationSocket = args.newClientSocket;
     clients.push_back(communicationSocket);
 
     struct PacketHeader* packetHeader =  (PacketHeader*) malloc(sizeof(PacketHeader));
     struct Message* message = (Message*) malloc(sizeof(Message));
+
+    // TODO: Handle group creation
+//    GroupManager.handleGroupCreation()
+
 
     bool shouldContinue = true;
     while(shouldContinue) {
@@ -92,6 +99,8 @@ void *handleNewClientConnection(void *sock) {
             terminateClientConnection(communicationSocket, message->username);
             break;
         }
+
+//        GroupManager.writeToGroup();
 
         // Write message to all connected clients
         for(std::list<SocketFD>::iterator client = std::begin(clients); client != std::end(clients); ++client) {
@@ -124,7 +133,15 @@ SocketFD ServerCommunicationManager::setupServerSocket() {
     return connectionSocketFD;
 }
 
+struct HandleNewClientArguments {
+    ServerCommunicationManager *communicationManager;
+    ServerGroupsManager *groupsManager;
+    SocketFD newClientSocket;
+};
+
 int ServerCommunicationManager::startServer(int loadMessageCount) {
+    ServerGroupsManager groupsManager = ServerGroupsManager(loadMessageCount, this);
+
     // TODO: Change this to std::list
     pthread_t clientConnections[10];
 
@@ -141,7 +158,11 @@ int ServerCommunicationManager::startServer(int loadMessageCount) {
         if ((communicationSocketFD = accept(connectionSocketFDResult, (struct sockaddr *) &cli_addr, &clientSocketLength)) == -1)
             return ACCEPT_SOCKET_CONNECTION_ERROR;
 
-        pthread_create(&clientConnections[threadIndex], NULL, handleNewClientConnection, &communicationSocketFD);
+        struct HandleNewClientArguments args;
+        args.newClientSocket = communicationSocketFD;
+        args.communicationManager = this;
+        args.groupsManager = &groupsManager;
+        pthread_create(&clientConnections[threadIndex], NULL, handleNewClientConnection, &args);
     }
 
     return 0;

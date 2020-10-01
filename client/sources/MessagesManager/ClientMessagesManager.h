@@ -4,17 +4,13 @@
 #include <string>
 #include "CommunicationManager/ClientCommunicationManager.h"
 #include <ClientDefinitions.h>
+#include "SharedDefinitions.h"
 
 #define PORT 4000
 
 using std::string;
 
 typedef int SocketFD;
-
-struct UserInfo {
-    string name;
-    string group;
-};
 
 class ClientMessagesManager {
 
@@ -31,4 +27,4 @@ private:
 };
 
 
-#endif //SISOP2_T1_CLIENTMESSAGESMANAGER_H
+#endif SISOP2_T1_CLIENTMESSAGESMANAGER_H
