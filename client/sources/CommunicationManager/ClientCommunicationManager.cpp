@@ -1,4 +1,5 @@
 #include "ClientCommunicationManager.h"
+#include "SharedDefinitions.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,7 +54,6 @@ int ClientCommunicationManager::writeSocketMessage(struct Message *message) {
 
     packetHeader.type = 0;
     packetHeader.length = sizeof(Message);
-
 
    write(this->socketConnectionResult, &packetHeader, sizeof(PacketHeader));
    write(this->socketConnectionResult, message, sizeof(Message));

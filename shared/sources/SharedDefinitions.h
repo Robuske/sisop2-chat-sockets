@@ -11,7 +11,6 @@ using std::string;
 
 typedef int SocketFD;
 
-
 struct tUserInfo {
     string name;
     string group;
@@ -19,9 +18,9 @@ struct tUserInfo {
 
 struct Message {
     uint16_t timestamp;
-    const string group;
-    const string username;
-    const string text;
+    string group;
+    string username;
+    string text;
 };
 
 struct PacketHeader {
@@ -35,4 +34,4 @@ struct Packet {
 };
 
 
-#endif SISOP2_T1_SHAREDDEFINITIONS_H
+#endif // SISOP2_T1_SHAREDDEFINITIONS_H

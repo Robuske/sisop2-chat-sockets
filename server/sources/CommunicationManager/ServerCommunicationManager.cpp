@@ -14,6 +14,14 @@
 
 #define PORT 4000
 
+
+
+struct HandleNewClientArguments {
+    ServerCommunicationManager *communicationManager;
+    ServerGroupsManager *groupsManager;
+    SocketFD newClientSocket;
+};
+
 std::list<SocketFD> clients;
 
 enum eLogLevel { Info, Debug, Error } typedef LogLevel;
@@ -67,14 +75,14 @@ bool handleReadResult(int readResult, int socket) {
 }
 
 void *handleNewClientConnection(void *sock) {
-    int readWriteOperationResult, socketToWriteIndex = 0;
-    struct HandleNewClientArguments args = *(HandleNewClientArguments*)sock;
+    int readWriteOperationResult;
+    HandleNewClientArguments args = *(HandleNewClientArguments *) sock;
     SocketFD communicationSocket = *(int*) sock;
     communicationSocket = args.newClientSocket;
     clients.push_back(communicationSocket);
 
-    struct PacketHeader* packetHeader =  (PacketHeader*) malloc(sizeof(PacketHeader));
-    struct Message* message = (Message*) malloc(sizeof(Message));
+    PacketHeader* packetHeader =  (PacketHeader*) malloc(sizeof(PacketHeader));
+    Message* message = (Message*) malloc(sizeof(Message));
 
     // TODO: Handle group creation
 //    GroupManager.handleGroupCreation()
@@ -112,6 +120,8 @@ void *handleNewClientConnection(void *sock) {
             }
         }
     }
+
+    return NULL;
 }
 
 SocketFD ServerCommunicationManager::setupServerSocket() {
@@ -132,12 +142,6 @@ SocketFD ServerCommunicationManager::setupServerSocket() {
 
     return connectionSocketFD;
 }
-
-struct HandleNewClientArguments {
-    ServerCommunicationManager *communicationManager;
-    ServerGroupsManager *groupsManager;
-    SocketFD newClientSocket;
-};
 
 int ServerCommunicationManager::startServer(int loadMessageCount) {
     ServerGroupsManager groupsManager = ServerGroupsManager(loadMessageCount, this);

@@ -41,21 +41,21 @@ void* ClientMessagesManager::readMessagesThread() {
 }
 
 void* ClientMessagesManager::writeMessagesThread() {
-    string message;
+    string messageString;
     int writeResult;
 
     int bufferSize = 10;
-    char finalMessageBuffer[bufferSize];
+//    char finalMessageBuffer[bufferSize];
     while(true) {
-        message.clear();
+        messageString.clear();
         std::cout << " > ";
-        std::getline(std::cin, message);
+        std::getline(std::cin, messageString);
 
        // bzero(finalMessageBuffer, bufferSize);
        // strcpy(finalMessageBuffer, stringToSend.c_str());
 
         struct Message _message;
-        _message.text = message;
+        _message.text = messageString;
         _message.username = this->userName;
         _message.timestamp = 0;
         _message.group = "oi buske";
