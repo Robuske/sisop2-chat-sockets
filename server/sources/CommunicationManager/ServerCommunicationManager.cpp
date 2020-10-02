@@ -10,7 +10,7 @@
 #include <netinet/in.h>
 #include "GroupsManager/ServerGroupsManager.h"
 
-#define PORT 4000
+#define PORT 3000
 
 enum eLogLevel { Info, Debug, Error } typedef LogLevel;
 void log(LogLevel logLevel, const string& msg) {
@@ -39,12 +39,18 @@ void *ServerCommunicationManager::staticHandleNewClientConnection(void *newClien
 // MARK: - Instance methods
 // TODO: Send disconnection message to all remaining client
 void ServerCommunicationManager::terminateClientConnection(SocketFD socketFileDescriptor, string username) {
+    // TODO: Do we need to close the socket here?
+    // close(socketFileDescriptor);
     clients.remove(socketFileDescriptor);
 
     int readWriteOperationResult;
     string disconnectionMessage = username + " desconectou!";
-
-    /* Write message to all connected clients */
+    // TODO: We should notify only the clients of a particular group, not all clients
+    // BUSKE: Pq a gente nao tem o groupsManager na instancia?
+    // Estamos apenas passando como argumento na staticHandleNewClientConnection
+    // Doug falou que tu explicou algo pra ele.
+    // this->groupsManager->handleUserDisconnection(socketFileDescriptor);
+    // This for was moved to handleUserDisconnection.
     for(std::list<SocketFD>::iterator client = std::begin(clients); client != std::end(clients); ++client) {
         int socketToWrite = *client;
         readWriteOperationResult = write(socketToWrite, disconnectionMessage.c_str(), disconnectionMessage.length());
@@ -55,6 +61,7 @@ void ServerCommunicationManager::terminateClientConnection(SocketFD socketFileDe
     }
 }
 
+// TODO: This will die in favor of using throw where it's being used
 bool ServerCommunicationManager::handleReadResult(int readResult, int socket) {
     bool isEndOfFile = (readResult == 0);
     if (isEndOfFile) {
@@ -70,34 +77,42 @@ bool ServerCommunicationManager::handleReadResult(int readResult, int socket) {
     return true;
 }
 
+// TODO: Make this global?
+// TODO: Move this somewhere?
+#define ERROR_TERMINATE_CONNECTION -7
+#define ERROR_CLIENT_DISCONNECTED -134
+
+// TODO: readPacketHeaderFromSocket and readPacketFromSocket can be refactored, the only difference is the type of what we're reading
 PacketHeader ServerCommunicationManager::readPacketHeaderFromSocket(SocketFD communicationSocket) {
     PacketHeader packetHeader;
-    int readWriteOperationResult = read(communicationSocket, &packetHeader, sizeof(PacketHeader));
-    bool readResult = handleReadResult(readWriteOperationResult, communicationSocket);
-    if (readResult) {
-        return packetHeader;
+    int readOperationResult = read(communicationSocket, &packetHeader, sizeof(PacketHeader));
+    if (readOperationResult == 0) {
+        throw ERROR_CLIENT_DISCONNECTED;
+    } else if (readOperationResult < 0) {
+        throw readOperationResult;
     } else {
-        // TODO: Create error constant
-        throw -123;
+        return packetHeader;
     }
 }
 
 Packet ServerCommunicationManager::readPacketFromSocket(SocketFD communicationSocket, int packetSize) {
     Packet packet;
     int readOperationResult = read(communicationSocket, &packet, packetSize);
-    bool shouldContinue = handleReadResult(readOperationResult, communicationSocket);
-    if (shouldContinue) {
-        return packet;
+    if (readOperationResult == 0) {
+        throw ERROR_CLIENT_DISCONNECTED;
+    } else if (readOperationResult < 0) {
+        throw readOperationResult;
     } else {
-        // TODO: Create error constant
-        throw -123;
+        return packet;
     }
 }
 
+// TODO: Change `string message` to be a `Message message`
 void ServerCommunicationManager::sendMessageToClients(const string& message, const std::list<UserConnection>& userConnections) {
     for (const UserConnection& userConnection:userConnections) {
         int readWriteOperationResult = write(userConnection.socket, message.c_str(), message.length());
         if (readWriteOperationResult < 0) {
+            // TODO: Create constant
             throw -321;
         }
     }
@@ -105,6 +120,7 @@ void ServerCommunicationManager::sendMessageToClients(const string& message, con
 
 void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArguments *args) {
     SocketFD communicationSocket = args->newClientSocket;
+    // TODO: Add client to correct list in a group
     clients.push_back(communicationSocket);
 
     Packet packet;
@@ -121,9 +137,12 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
                 args->groupsManager->sendMessage(packet.payload);
             }
         } catch (int errorCode) {
-            string errorPrefix = "Error(" + std::to_string(errorCode) + ") from socket(" + std::to_string(communicationSocket) +")";
+            string errorPrefix =
+                    "Error(" + std::to_string(errorCode) + ") from socket(" + std::to_string(communicationSocket) + ")";
             log(Error, errorPrefix);
-            terminateClientConnection(communicationSocket, packet.payload.username);
+            if (errorCode == ERROR_CLIENT_DISCONNECTED) {
+                terminateClientConnection(communicationSocket, packet.payload.username);
+            };
             break;
         }
     }
@@ -145,6 +164,7 @@ SocketFD ServerCommunicationManager::setupServerSocket() {
     if (bind(connectionSocketFD, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0)
         return SOCKET_BINDING_ERROR;
 
+    // TODO: Magic number 5? Fix it!
     listen(connectionSocketFD, 5);
 
     return connectionSocketFD;
@@ -160,9 +180,8 @@ int ServerCommunicationManager::startServer(int loadMessageCount) {
 
     // TODO: Change this to std::list
     pthread_t clientConnections[10];
-
     int threadIndex = 0;
-    struct sockaddr_in cli_addr;
+    struct sockaddr_in cli_addr; // TODO: Add a more suggestive name
     socklen_t clientSocketLength;
     while(true) {
         clientSocketLength = sizeof(struct sockaddr_in);

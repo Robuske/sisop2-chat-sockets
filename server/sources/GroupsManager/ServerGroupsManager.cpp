@@ -48,6 +48,32 @@ void ServerGroupsManager::handleUserConnection(const string& username, SocketFD 
     communicationManager->sendMessageToClients(joinMessage, userConnectionsToSendConnectionMessage);
 }
 
+// This can throw
+void ServerGroupsManager::handleUserDisconnection(SocketFD socket) {
+    std::list<UserConnection> userConnectionsToSendConnectionMessage;
+    // TODO: Improve variable naming
+    string disconnectedUsername;
+    bool groupFound = false;
+    for (Group &currentGroup:groups) {
+        for (UserConnection &currentUserConnection:currentGroup.clients) {
+            if (currentUserConnection.socket == socket) {
+                groupFound = true;
+                currentGroup.clients.remove(currentUserConnection);
+                userConnectionsToSendConnectionMessage = currentGroup.clients;
+                disconnectedUsername = currentUserConnection.username;
+                break;
+            }
+        }
+    }
+
+    if (!groupFound) {
+        throw ERROR_GROUP_NOT_FOUND;
+    }
+
+    const string joinMessage = disconnectedUsername + " desconectou!";
+    communicationManager->sendMessageToClients(joinMessage, userConnectionsToSendConnectionMessage);
+}
+
 ServerGroupsManager::ServerGroupsManager(int numberOfMessagesToLoadWhenUserJoined, ServerCommunicationManager *communicationManager) {
     this->numberOfMessagesToLoadWhenUserJoined = numberOfMessagesToLoadWhenUserJoined;
     this->communicationManager = communicationManager;

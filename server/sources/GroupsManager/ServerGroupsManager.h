@@ -28,6 +28,10 @@ public:
     ServerGroupsManager(int numberOfMessagesToLoadWhenUserJoined, ServerCommunicationManager *communicationManager);
     void handleUserConnection(const string& username, SocketFD socket, const string& group);
     void sendMessage(const Message& message);
+
+    void handleUserDisconnection(const string &username, SocketFD socket, const string &groupName);
+
+    void handleUserDisconnection(SocketFD socket);
 };
 
 
