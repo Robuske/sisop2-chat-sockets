@@ -13,7 +13,7 @@ void ServerGroupsManager::sendMessage(const Message& message) {
     }
 
     if (!groupFound) {
-        throw -333;
+        throw ERROR_GROUP_NOT_FOUND;
     }
 
     communicationManager->sendMessageToClients(message.text, groupToSendMessage.clients);
