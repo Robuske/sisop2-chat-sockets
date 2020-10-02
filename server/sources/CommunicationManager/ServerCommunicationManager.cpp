@@ -10,7 +10,7 @@
 #include <netinet/in.h>
 #include "GroupsManager/ServerGroupsManager.h"
 
-#define PORT 5000
+#define PORT 4000
 
 enum eLogLevel { Info, Debug, Error } typedef LogLevel;
 void log(LogLevel logLevel, string msg) {
@@ -94,14 +94,20 @@ Packet ServerCommunicationManager::readPacketFromSocket(SocketFD communicationSo
     }
 }
 
-void sendMessageToClients(string message, std::list<SocketFD> clients) {
-    for(std::list<SocketFD>::iterator client = std::begin(clients); client != std::end(clients); ++client) {
-        int socketToWrite = *client;
-        int readWriteOperationResult = write(socketToWrite, message.c_str(), message.length());
+void ServerCommunicationManager::sendMessageToClients(string message, std::list<UserConnection> userConnections) {
+    for (UserConnection userConnection:userConnections) {
+        int readWriteOperationResult = write(userConnection.socket, message.c_str(), message.length());
         if (readWriteOperationResult < 0) {
             throw -321;
         }
     }
+//    for(std::list<SocketFD>::iterator client = std::begin(clients); client != std::end(clients); ++client) {
+//        int socketToWrite = *client;
+//        int readWriteOperationResult = write(socketToWrite, message.c_str(), message.length());
+//        if (readWriteOperationResult < 0) {
+//            throw -321;
+//        }
+//    }
 }
 
 void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArguments *args) {
@@ -119,13 +125,18 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
 //    }
 
     Packet packet;
-
     bool shouldContinue = true;
     while(shouldContinue) {
         try {
             PacketHeader packetHeader = readPacketHeaderFromSocket(communicationSocket);
             packet = readPacketFromSocket(communicationSocket, packetHeader.length);
-            sendMessageToClients(packet.payload.text, clients);
+            if (packetHeader.type == TypeConnection) {
+                args->groupsManager->handleUserConnection(packet.payload.username,
+                                                          communicationSocket,
+                                                          packet.payload.group);
+            } else if (packetHeader.type == TypeMessage) {
+                args->groupsManager->sendMessage(packet.payload);
+            }
         } catch (int errorCode) {
             string errorPrefix = "Error(" + std::to_string(readWriteOperationResult) + ") writing into socket(" + std::to_string(communicationSocket) +")";
             log(Error, errorPrefix);
@@ -159,13 +170,13 @@ SocketFD ServerCommunicationManager::setupServerSocket() {
 int ServerCommunicationManager::startServer(int loadMessageCount) {
     ServerGroupsManager groupsManager = ServerGroupsManager(loadMessageCount, this);
 
-    // TODO: Change this to std::list
-    pthread_t clientConnections[10];
-
     SocketFD communicationSocketFD, connectionSocketFDResult;
     connectionSocketFDResult = this->setupServerSocket();
     if (connectionSocketFDResult < 0)
         return connectionSocketFDResult;
+
+    // TODO: Change this to std::list
+    pthread_t clientConnections[10];
 
     int threadIndex = 0;
     struct sockaddr_in cli_addr;

@@ -11,11 +11,11 @@ int main() {
 
     string username;
     std::cout << "Como quer ser chamado?" << std::endl;
-    getline(std::cin, userInfo.name);
+    getline(std::cin, userInfo.username);
 
     string groupName;
     std::cout << "Qual grupo deseja entrar?" << std::endl;
-    getline(std::cin, userInfo.group);
+    getline(std::cin, userInfo.groupName);
 
     string serverIPAddress;
     std::cout << "Qual o IP do servidor?" << std::endl;

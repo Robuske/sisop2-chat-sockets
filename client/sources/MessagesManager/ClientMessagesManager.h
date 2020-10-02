@@ -18,7 +18,7 @@ public:
     int startClient(SocketConnectionInfo connectionInfo, UserInfo userInfo);
 
 private:
-    string userName;
+    UserInfo userInfo;
     ClientCommunicationManager communicationManager;
     void *readMessagesThread();
     static void *staticReadMessagesThread(void *threadParm);

@@ -7,6 +7,7 @@
 
 class ServerGroupsManager;
 class ServerCommunicationManager;
+struct UserConnection;
 
 struct HandleNewClientArguments {
     ServerCommunicationManager *communicationManager;
@@ -18,8 +19,11 @@ class ServerCommunicationManager {
 public:
     int startServer(int loadMessageCount);
 
+    void sendMessageToClients(string message, std::list<UserConnection> userConnections);
+
 private:
     SocketFD setupServerSocket();
+//    ServerGroupsManager *groupsManager;
 
     std::list<SocketFD> clients;
 

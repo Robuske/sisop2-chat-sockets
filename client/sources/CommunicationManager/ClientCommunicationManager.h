@@ -3,6 +3,7 @@
 
 #include <string>
 #include <ClientDefinitions.h>
+#include <SharedDefinitions.h>
 
 #define PORT 4000
 
@@ -24,6 +25,8 @@ public:
     SocketFD connectClient(SocketConnectionInfo connectionInfo);
     int writeSocketMessage(struct Message *message);
     int readSocketMessage(char *message);
+
+    int writeConnectionMessageToSocket(Message *message);
 };
 
 

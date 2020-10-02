@@ -12,13 +12,15 @@ using std::string;
 
 typedef int SocketFD;
 
+enum PacketHeaderType { TypeConnection, TypeMessage };
+
 struct tUserInfo {
-    string name;
-    string group;
+    string username;
+    string groupName;
 } typedef UserInfo;
 
 struct PacketHeader {
-    uint16_t type;
+    PacketHeaderType type;
     uint16_t length;
 };
 

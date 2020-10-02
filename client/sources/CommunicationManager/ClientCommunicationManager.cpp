@@ -52,13 +52,27 @@ int ClientCommunicationManager::writeSocketMessage(struct Message *message) {
 //    struct Packet packet;
     struct PacketHeader packetHeader;
 
-    packetHeader.type = 0;
+    packetHeader.type = TypeMessage;
     packetHeader.length = sizeof(Message);
 
-   write(this->socketConnectionResult, &packetHeader, sizeof(PacketHeader));
-   write(this->socketConnectionResult, message, sizeof(Message));
+    write(this->socketConnectionResult, &packetHeader, sizeof(PacketHeader));
+    write(this->socketConnectionResult, message, sizeof(Message));
 
-   return 1;
+    return 1;
+}
+
+int ClientCommunicationManager::writeConnectionMessageToSocket(struct Message *message) {
+    struct PacketHeader packetHeader;
+    packetHeader.type = TypeConnection;
+    packetHeader.length = sizeof(Packet);
+
+    struct Packet packet;
+    packet.payload = *message;
+
+    write(this->socketConnectionResult, &packetHeader, sizeof(PacketHeader));
+    write(this->socketConnectionResult, &packet, sizeof(Packet));
+
+    return 1;
 }
 
 int ClientCommunicationManager::readSocketMessage(char* message) {

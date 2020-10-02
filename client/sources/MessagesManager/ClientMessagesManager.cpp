@@ -44,8 +44,11 @@ void* ClientMessagesManager::writeMessagesThread() {
     string messageString;
     int writeResult;
 
-//    int bufferSize = 10;
-//    char finalMessageBuffer[bufferSize];
+    Message connectionMessage;
+    connectionMessage.username = userInfo.username;
+    connectionMessage.group = userInfo.groupName;
+    communicationManager.writeConnectionMessageToSocket(&connectionMessage);
+
     while(true) {
         messageString.clear();
         std::cout << " > ";
@@ -54,13 +57,13 @@ void* ClientMessagesManager::writeMessagesThread() {
        // bzero(finalMessageBuffer, bufferSize);
        // strcpy(finalMessageBuffer, stringToSend.c_str());
 
-        struct Message _message;
-        _message.text = messageString;
-        _message.username = this->userName;
-        _message.timestamp = 0;
-        _message.group = "oi buske";
+        struct Message message;
+        message.text = messageString;
+        message.username = userInfo.username;
+        message.timestamp = 0;
+        message.group = userInfo.groupName;
 
-        writeResult = communicationManager.writeSocketMessage(&_message);
+        writeResult = communicationManager.writeSocketMessage(&message);
         if (writeResult < 0) {
             string errorPrefix = "Error(" + std::to_string(writeResult) + ") writing to socket";
             perror(errorPrefix.c_str());
@@ -73,7 +76,7 @@ int ClientMessagesManager::startClient(SocketConnectionInfo connectionInfo, User
     int socketConnectionResult;
     pthread_t mySocketReading, mySocketWriting;
 
-    this->userName = userInfo.name;
+    this->userInfo = userInfo;
 
     socketConnectionResult = communicationManager.connectClient(connectionInfo);
     if (socketConnectionResult < 0) {
@@ -95,8 +98,6 @@ int ClientMessagesManager::startClient(SocketConnectionInfo connectionInfo, User
 
     // Pegar interrupcao do ctrl - c pra fechar o socket e finalizar a conexao (talves uma outra thread?)
 
-
-    //close(sockfd);
     return 0;
 }
 
