@@ -8,6 +8,10 @@
 struct UserConnection {
     string username;
     SocketFD socket;
+
+    bool operator==(const struct UserConnection& a) const {
+        return ( a.socket == this->socket && a.username == this->username );
+    }
 };
 
 struct Group {
