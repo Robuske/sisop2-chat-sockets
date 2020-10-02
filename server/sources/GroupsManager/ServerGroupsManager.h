@@ -22,9 +22,9 @@ private:
     std::list<Group> groups;
 
 public:
-    void handleUserConnection(string username, SocketFD socket, string group);
     ServerGroupsManager(int numberOfMessagesToLoadWhenUserJoined, ServerCommunicationManager *communicationManager);
-    void sendMessage(Message message);
+    void handleUserConnection(const string& username, SocketFD socket, const string& group);
+    void sendMessage(const Message& message);
 };
 
 

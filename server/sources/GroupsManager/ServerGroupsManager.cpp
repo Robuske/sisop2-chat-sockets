@@ -1,10 +1,10 @@
 #include "ServerGroupsManager.h"
 
-void ServerGroupsManager::sendMessage(Message message) {
+void ServerGroupsManager::sendMessage(const Message& message) {
     bool groupFound = false;
     string groupName = message.group;
     Group groupToSendMessage;
-    for (Group currentGroup: groups) {
+    for (const Group& currentGroup: groups) {
         if (currentGroup.name == groupName) {
             groupToSendMessage = currentGroup;
             groupFound = true;

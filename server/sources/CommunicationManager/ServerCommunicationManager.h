@@ -19,16 +19,14 @@ class ServerCommunicationManager {
 public:
     int startServer(int loadMessageCount);
 
-    void sendMessageToClients(string message, std::list<UserConnection> userConnections);
+    void sendMessageToClients(const string& message, const std::list<UserConnection>& userConnections);
 
 private:
     SocketFD setupServerSocket();
-//    ServerGroupsManager *groupsManager;
 
     std::list<SocketFD> clients;
 
     static void *staticHandleNewClientConnection(void *newClientArguments);
-
     void *handleNewClientConnection(HandleNewClientArguments *args);
 
     bool handleReadResult(int readResult, int socket);

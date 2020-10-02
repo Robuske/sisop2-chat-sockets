@@ -13,7 +13,7 @@
 #define PORT 4000
 
 enum eLogLevel { Info, Debug, Error } typedef LogLevel;
-void log(LogLevel logLevel, string msg) {
+void log(LogLevel logLevel, const string& msg) {
     switch (logLevel) {
         case Info:
             std::cout << "INFO:: " << msg << std::endl;
@@ -31,7 +31,7 @@ void log(LogLevel logLevel, string msg) {
 
 // MARK: - Static methods
 void *ServerCommunicationManager::staticHandleNewClientConnection(void *newClientArguments) {
-    HandleNewClientArguments* t = static_cast<HandleNewClientArguments*>(newClientArguments);
+    auto* t = static_cast<HandleNewClientArguments*>(newClientArguments);
     t->communicationManager->handleNewClientConnection(t);
     return NULL;
 }
@@ -94,35 +94,19 @@ Packet ServerCommunicationManager::readPacketFromSocket(SocketFD communicationSo
     }
 }
 
-void ServerCommunicationManager::sendMessageToClients(string message, std::list<UserConnection> userConnections) {
-    for (UserConnection userConnection:userConnections) {
+void ServerCommunicationManager::sendMessageToClients(const string& message, const std::list<UserConnection>& userConnections) {
+    for (const UserConnection& userConnection:userConnections) {
         int readWriteOperationResult = write(userConnection.socket, message.c_str(), message.length());
         if (readWriteOperationResult < 0) {
             throw -321;
         }
     }
-//    for(std::list<SocketFD>::iterator client = std::begin(clients); client != std::end(clients); ++client) {
-//        int socketToWrite = *client;
-//        int readWriteOperationResult = write(socketToWrite, message.c_str(), message.length());
-//        if (readWriteOperationResult < 0) {
-//            throw -321;
-//        }
-//    }
 }
 
 void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArguments *args) {
     int readWriteOperationResult;
     SocketFD communicationSocket = args->newClientSocket;
     clients.push_back(communicationSocket);
-
-    // TODO: Handle group creation
-//    GroupManager.handleGroupCreation()
-//    try {
-//        PacketHeader packetHeader = readPacketHeaderFromSocket(communicationSocket);
-//        Packet packet = readPacketFromSocket(communicationSocket, packetHeader.length);
-//    } catch (int errorCode) {
-//        std::cout << "FUDEU" << std::to_string(errorCode);
-//    }
 
     Packet packet;
     bool shouldContinue = true;
