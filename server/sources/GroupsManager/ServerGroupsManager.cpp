@@ -25,13 +25,13 @@ void ServerGroupsManager::handleUserConnection(const string& username, SocketFD 
     userConnection.username = username;
     userConnection.socket = socket;
 
-    std::list<UserConnection> userConnections;
+    std::list<UserConnection> userConnectionsToSendConnectionMessage;
     bool groupFound = false;
     for (Group &currentGroup:groups) {
         if (currentGroup.name == groupName) {
             groupFound = true;
             currentGroup.clients.push_back(userConnection);
-            userConnections = currentGroup.clients;
+            userConnectionsToSendConnectionMessage = currentGroup.clients;
             break;
         }
     }
@@ -41,11 +41,11 @@ void ServerGroupsManager::handleUserConnection(const string& username, SocketFD 
         newGroup.name = groupName;
         newGroup.clients.push_back(userConnection);
         groups.push_back(newGroup);
-        userConnections = newGroup.clients;
+        userConnectionsToSendConnectionMessage = newGroup.clients;
     }
 
     const string joinMessage = username + " conectou!";
-    communicationManager->sendMessageToClients(joinMessage, userConnections);
+    communicationManager->sendMessageToClients(joinMessage, userConnectionsToSendConnectionMessage);
 }
 
 ServerGroupsManager::ServerGroupsManager(int numberOfMessagesToLoadWhenUserJoined, ServerCommunicationManager *communicationManager) {
