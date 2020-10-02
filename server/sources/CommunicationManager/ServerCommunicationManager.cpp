@@ -104,7 +104,6 @@ void ServerCommunicationManager::sendMessageToClients(const string& message, con
 }
 
 void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArguments *args) {
-    int readWriteOperationResult;
     SocketFD communicationSocket = args->newClientSocket;
     clients.push_back(communicationSocket);
 
@@ -122,7 +121,7 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
                 args->groupsManager->sendMessage(packet.payload);
             }
         } catch (int errorCode) {
-            string errorPrefix = "Error(" + std::to_string(readWriteOperationResult) + ") writing into socket(" + std::to_string(communicationSocket) +")";
+            string errorPrefix = "Error(" + std::to_string(errorCode) + ") from socket(" + std::to_string(communicationSocket) +")";
             log(Error, errorPrefix);
             terminateClientConnection(communicationSocket, packet.payload.username);
             break;
