@@ -2,10 +2,8 @@
 #include "CommunicationManager/ServerCommunicationManager.h"
 
 int main(int argc, char *argv[]) {
-    std::cout << "Hello, I am the Server" << std::endl;
-
-    if (argc > 2) {
-        std::cout << "Usage: server loadMessageCount";
+    if (argc != 2) {
+        std::cout << "Usage: server <number of message to load (squared?)>";
     }
 
     int loadMessageCount = atoi(argv[1]);
