@@ -82,7 +82,27 @@ bool ServerCommunicationManager::handleReadResult(int readResult, int socket) {
 #define ERROR_TERMINATE_CONNECTION -7
 #define ERROR_CLIENT_DISCONNECTED -134
 
-// TODO: readPacketHeaderFromSocket and readPacketFromSocket can be refactored, the only difference is the type of what we're reading
+// TODO: readPacketHeaderFromSocket and readPacketFromSocket can be refactored, the only difference is the type of what we're reading.
+// I tried the code below but the server was crashing when a user connects:
+//void readSocket(SocketFD socket, size_t length, void* dst) {
+//    int readOperationResult = read(socket, dst, length);
+//    if (readOperationResult == 0) {
+//        throw ERROR_CLIENT_DISCONNECTED;
+//    } else if (readOperationResult < 0) {
+//        throw readOperationResult;
+//    }
+//}
+//
+//PacketHeader ServerCommunicationManager::readPacketHeaderFromSocket(SocketFD communicationSocket) {
+//    PacketHeader packetHeader;
+//    readSocket(communicationSocket, sizeof(PacketHeader), &packetHeader);
+//}
+//
+//Packet ServerCommunicationManager::readPacketFromSocket(SocketFD communicationSocket, int packetSize) {
+//    Packet packet;
+//    readSocket(communicationSocket, packetSize, &packet);
+//}
+
 PacketHeader ServerCommunicationManager::readPacketHeaderFromSocket(SocketFD communicationSocket) {
     PacketHeader packetHeader;
     int readOperationResult = read(communicationSocket, &packetHeader, sizeof(PacketHeader));
