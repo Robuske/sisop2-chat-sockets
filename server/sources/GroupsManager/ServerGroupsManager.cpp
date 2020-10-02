@@ -20,35 +20,33 @@ void ServerGroupsManager::sendMessage(const Message& message) {
 }
 
 // This can throw
-void ServerGroupsManager::handleUserConnection(string username, SocketFD socket, string groupName) {
+void ServerGroupsManager::handleUserConnection(const string& username, SocketFD socket, const string& groupName) {
+    UserConnection userConnection;
+    userConnection.username = username;
+    userConnection.socket = socket;
+
+    std::list<UserConnection> userConnections;
     bool groupFound = false;
-    Group groupToAddUser;
-    for (Group currentGroup:groups) {
+    for (Group &currentGroup:groups) {
         if (currentGroup.name == groupName) {
-            groupToAddUser = currentGroup;
             groupFound = true;
+            currentGroup.clients.push_back(userConnection);
+            userConnections = currentGroup.clients;
             break;
         }
     }
 
     if (!groupFound) {
-        groupToAddUser = Group();
-        groupToAddUser.name = groupName;
+        Group newGroup = Group();
+        newGroup.name = groupName;
+        newGroup.clients.push_back(userConnection);
+        groups.push_back(newGroup);
+        userConnections = newGroup.clients;
     }
 
-    UserConnection userConection;
-    userConection.username = username;
-    userConection.socket = socket;
-    groupToAddUser.clients.push_back(userConection);
-    if (!groupFound) {
-        // TODO: groupToAddUser is not correctly appearing in this.groups
-        // Only 1 client is receiving messages
-        // Pegar o ponteiro direito dessa bosta. Vamos ver amanha.
-        groups.push_back(groupToAddUser);
-    }
-    string joinMessage = username + " conectou!";
-    communicationManager->sendMessageToClients(joinMessage, groupToAddUser.clients);
-};
+    const string joinMessage = username + " conectou!";
+    communicationManager->sendMessageToClients(joinMessage, userConnections);
+}
 
 ServerGroupsManager::ServerGroupsManager(int numberOfMessagesToLoadWhenUserJoined, ServerCommunicationManager *communicationManager) {
     this->numberOfMessagesToLoadWhenUserJoined = numberOfMessagesToLoadWhenUserJoined;
