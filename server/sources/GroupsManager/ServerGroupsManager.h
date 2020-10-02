@@ -3,7 +3,6 @@
 
 #include "SharedDefinitions.h"
 #include "CommunicationManager/ServerCommunicationManager.h"
-#include <list>
 
 struct UserConnection {
     string username;
