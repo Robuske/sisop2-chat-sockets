@@ -7,24 +7,51 @@ int main(int argc, char *argv[]) {
 
     std::cout << " ::::::: Zap ::::::: " << std::endl;
 
-    string username, groupName, serverIPAddress, port;
-    if (argc == 5) {
-        username = argv[1];
-        groupName = argv[2];
-        serverIPAddress = argv[3];
-        port = argv[4];
-    } else {
-        std::cout << "Como quer ser chamado?" << std::endl;
-        getline(std::cin, username);
+    // Initialize random seed
+    srand (time(NULL));
 
-        std::cout << "Qual grupo deseja entrar?" << std::endl;
-        getline(std::cin, groupName);
+    // Generate random number between 1 and 50
+    int random = rand() % 50;
+    string username = "Client " + std::to_string(random + 1);
+    string groupName = "Group " + std::to_string(random%2 + 1);
+    string serverIPAddress = "localhost";
+    string port = std::to_string(PORT);
+    switch (argc) {
+        case 2:
+            username = argv[1];
+            break;
 
-        std::cout << "Qual o IP do servidor?" << std::endl;
-        getline(std::cin, serverIPAddress);
+        case 3:
+            username = argv[1];
+            groupName = argv[2];
+            break;
 
-        std::cout << "Qual a porta do servidor?" << std::endl;
-        getline(std::cin, port);
+        case 4:
+            username = argv[1];
+            groupName = argv[2];
+            serverIPAddress = argv[3];
+            break;
+
+        case 5:
+            username = argv[1];
+            groupName = argv[2];
+            serverIPAddress = argv[3];
+            port = argv[4];
+            break;
+
+        default:
+            std::cout << "Como quer ser chamado?" << std::endl;
+            getline(std::cin, username);
+
+            std::cout << "Qual grupo deseja entrar?" << std::endl;
+            getline(std::cin, groupName);
+
+            std::cout << "Qual o IP do servidor?" << std::endl;
+            getline(std::cin, serverIPAddress);
+
+            std::cout << "Qual a porta do servidor?" << std::endl;
+            getline(std::cin, port);
+            break;
     }
 
     UserInfo userInfo;
