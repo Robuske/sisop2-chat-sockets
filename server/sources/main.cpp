@@ -4,6 +4,7 @@
 int main(int argc, char *argv[]) {
     if (argc != 2) {
         std::cout << "Usage: server <number of message to load (squared?)>";
+        exit(EXIT_FAILURE);
     }
 
     int loadMessageCount = atoi(argv[1]);
