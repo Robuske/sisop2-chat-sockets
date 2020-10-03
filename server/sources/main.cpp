@@ -7,8 +7,18 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    int loadMessageCount = atoi(argv[1]);
-    std::cout << "Starting server with " << std::to_string(loadMessageCount) << " messages " << std::endl;
+    int inputArgument = atoi(argv[1]);
+    int loadMessageCount = inputArgument * inputArgument;
+    std::cout << "Starting Zap server" << std::endl;
+    std::cout << "Port: " << PORT << std::endl;
+    std::cout << "# message to load: " << std::to_string(loadMessageCount) << std::endl;
 
-    return ServerCommunicationManager().startServer(loadMessageCount);
+    int startServerResult = ServerCommunicationManager().startServer(loadMessageCount);
+    if (startServerResult < 0) {
+        string errorPrefix = "Error(" + std::to_string(startServerResult) + ") starting server";
+        perror(errorPrefix.c_str());
+        return EXIT_FAILURE;
+    } else {
+        return EXIT_SUCCESS;
+    }
 }
