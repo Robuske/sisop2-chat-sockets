@@ -2,6 +2,7 @@
 #include "UI/ClientUI.h"
 #include "MessagesManager/ClientMessagesManager.h"
 #include <string>
+#include "SharedDefinitions.h"
 int main(int argc, char *argv[]) {
 
     std::cout << " ::::::: Zap ::::::: " << std::endl;
@@ -33,7 +34,9 @@ int main(int argc, char *argv[]) {
     SocketConnectionInfo connectionInfo;
     connectionInfo.ipAddress = serverIPAddress;
 
+    // TODO: Use correct port
     connectionInfo.port = std::stoul(port);
+    connectionInfo.port = PORT;
 
     int sessionResult = ClientMessagesManager().startClient(connectionInfo, userInfo);
     if(sessionResult > 0) {
