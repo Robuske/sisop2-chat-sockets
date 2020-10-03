@@ -10,8 +10,6 @@
 #include <netinet/in.h>
 #include "GroupsManager/ServerGroupsManager.h"
 
-#define PORT 3000
-
 enum eLogLevel { Info, Debug, Error } typedef LogLevel;
 void log(LogLevel logLevel, const string& msg) {
     switch (logLevel) {

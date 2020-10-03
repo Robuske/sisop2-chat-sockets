@@ -6,6 +6,12 @@
 
 using std::string;
 
+// TODO:
+//  The PORT is here so we can share with client and don't to change the PORT every time we run the server.
+//  Sometimes the port hangs and the server won't start until the OS close the release the resource
+//  This should live in ServerDefinitions.h
+#define PORT 2000
+
 // Codes
 
 #define CODE_SUCCESS 0

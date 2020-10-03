@@ -5,8 +5,6 @@
 #include <ClientDefinitions.h>
 #include <SharedDefinitions.h>
 
-#define PORT 4000
-
 using std::string;
 
 typedef int SocketFD;
