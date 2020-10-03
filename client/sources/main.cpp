@@ -2,28 +2,36 @@
 #include "UI/ClientUI.h"
 #include "MessagesManager/ClientMessagesManager.h"
 #include <string>
+int main(int argc, char *argv[]) {
 
-int main() {
     std::cout << " ::::::: Zap ::::::: " << std::endl;
 
-    SocketConnectionInfo connectionInfo;
+    string username, groupName, serverIPAddress, port;
+    if (argc == 5) {
+        username = argv[1];
+        groupName = argv[2];
+        serverIPAddress = argv[3];
+        port = argv[4];
+    } else {
+        std::cout << "Como quer ser chamado?" << std::endl;
+        getline(std::cin, username);
+
+        std::cout << "Qual grupo deseja entrar?" << std::endl;
+        getline(std::cin, groupName);
+
+        std::cout << "Qual o IP do servidor?" << std::endl;
+        getline(std::cin, serverIPAddress);
+
+        std::cout << "Qual a porta do servidor?" << std::endl;
+        getline(std::cin, port);
+    }
+
     UserInfo userInfo;
+    userInfo.username = username;
+    userInfo.groupName = groupName;
 
-    string username;
-    std::cout << "Como quer ser chamado?" << std::endl;
-    getline(std::cin, userInfo.username);
-
-    string groupName;
-    std::cout << "Qual grupo deseja entrar?" << std::endl;
-    getline(std::cin, userInfo.groupName);
-
-    string serverIPAddress;
-    std::cout << "Qual o IP do servidor?" << std::endl;
-    getline(std::cin, connectionInfo.ipAddress);
-
-    string port;
-    std::cout << "Qual a porta do servidor?" << std::endl;
-    getline(std::cin, port);
+    SocketConnectionInfo connectionInfo;
+    connectionInfo.ipAddress = serverIPAddress;
 
     connectionInfo.port = std::stoul(port);
 
