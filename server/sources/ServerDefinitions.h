@@ -2,10 +2,13 @@
 #define SISOP2_T1_SERVERDEFINITIONS_H
 
 #define SUCCESSFUL_OPERATION 1
+
+// TODO: Make error constants start with ERROR_ so it's easier to leverage code completion.
 #define SOCKET_CREATION_ERROR -1
 #define SOCKET_BINDING_ERROR -2
 #define ACCEPT_SOCKET_CONNECTION_ERROR -3
 
+#define ERROR_GROUP_NOT_FOUND -17
 
 
 #endif //SISOP2_T1_SERVERDEFINITIONS_H
