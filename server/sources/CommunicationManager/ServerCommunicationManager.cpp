@@ -199,11 +199,11 @@ int ServerCommunicationManager::startServer(int loadMessageCount) {
     // TODO: Change this to std::list
     pthread_t clientConnections[10];
     int threadIndex = 0;
-    struct sockaddr_in cli_addr; // TODO: Add a more suggestive name
+    struct sockaddr_in clientAddress;
     socklen_t clientSocketLength;
     while(true) {
         clientSocketLength = sizeof(struct sockaddr_in);
-        if ((communicationSocketFD = accept(connectionSocketFDResult, (struct sockaddr *) &cli_addr, &clientSocketLength)) == -1)
+        if ((communicationSocketFD = accept(connectionSocketFDResult, (struct sockaddr *) &clientAddress, &clientSocketLength)) == -1)
             return ACCEPT_SOCKET_CONNECTION_ERROR;
 
         struct HandleNewClientArguments args;
