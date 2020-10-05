@@ -182,8 +182,14 @@ SocketFD ServerCommunicationManager::setupServerSocket() {
     if (bind(connectionSocketFD, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0)
         return SOCKET_BINDING_ERROR;
 
-    // TODO: Magic number 5? Fix it!
-    listen(connectionSocketFD, 5);
+    //    The backlog argument defines the maximum length to which the queue of
+    //    pending connections for sockfd may grow.  If a connection request
+    //    arrives when the queue is full, the client may receive an error with
+    //    an indication of ECONNREFUSED or, if the underlying protocol supports
+    //    retransmission, the request may be ignored so that a later reattempt
+    //    at connection succeeds.
+    int backlog = 100;
+    listen(connectionSocketFD, backlog);
 
     return connectionSocketFD;
 }
