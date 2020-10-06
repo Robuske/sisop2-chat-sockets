@@ -143,13 +143,13 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
                 } catch (int errorCode) {
                     if (errorCode == ERROR_SOCKET_CLOSE) {
                         string errorPrefix =
-                                "Error(" + std::to_string(errorCode) + ") closing socket(" + std::to_string(communicationSocket) + ")";
+                                "Error(" + std::to_string(errno) + ") closing socket(" + std::to_string(communicationSocket) + ")";
                         log(Error, errorPrefix);
                     }
                 }
             } else {
                 string errorPrefix =
-                        "Error(" + std::to_string(errorCode) + ") from socket(" + std::to_string(communicationSocket) + ")";
+                        "Error(" + std::to_string(errno) + ") from socket(" + std::to_string(communicationSocket) + ")";
                 log(Error, errorPrefix);
             }
             break;
