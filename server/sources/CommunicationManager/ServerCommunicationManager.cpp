@@ -37,7 +37,6 @@ void *ServerCommunicationManager::staticHandleNewClientConnection(void *newClien
 // MARK: - Instance methods
 // TODO: Send disconnection message to all remaining client
 void ServerCommunicationManager::terminateClientConnection(SocketFD socketFileDescriptor, string username) {
-    // TODO: Do we need to close the socket here?
     int closeReturn = close(socketFileDescriptor);
     if (closeReturn < 0) {
         throw ERROR_SOCKET_CLOSE;
