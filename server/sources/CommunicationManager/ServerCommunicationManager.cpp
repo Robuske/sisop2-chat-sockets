@@ -9,6 +9,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include "GroupsManager/ServerGroupsManager.h"
+#include "Persistency/ServerPersistency.h"
 
 enum eLogLevel { Info, Debug, Error } typedef LogLevel;
 void log(LogLevel logLevel, const string& msg) {
@@ -152,6 +153,7 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
                                                           communicationSocket,
                                                           packet.payload.group);
             } else if (packetHeader.type == TypeMessage) {
+                ServerPersistency().saveMessage(&packet.payload);
                 args->groupsManager->sendMessage(packet.payload);
             }
         } catch (int errorCode) {
