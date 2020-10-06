@@ -51,7 +51,6 @@ void ServerGroupsManager::handleUserConnection(const string& username, SocketFD 
 // This can throw
 void ServerGroupsManager::handleUserDisconnection(SocketFD socket) {
     std::list<UserConnection> userConnectionsToSendConnectionMessage;
-    // TODO: Improve variable naming
     string disconnectedUsername;
     bool groupFound = false;
     for (Group &currentGroup:groups) {
