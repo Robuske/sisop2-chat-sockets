@@ -59,10 +59,9 @@ void ServerCommunicationManager::terminateClientConnection(SocketFD socketFileDe
     }
 }
 
-// TODO: Make this global?
-
 // TODO: readPacketHeaderFromSocket and readPacketFromSocket can be refactored, the only difference is the type of what we're reading.
-// I tried the code below but the server was crashing when a user connects:
+//  Maybe we can move this to shared so the client can also use this code
+//  I tried the code below but the server was crashing when a user connects:
 //void readSocket(SocketFD socket, size_t length, void* dst) {
 //    int readOperationResult = read(socket, dst, length);
 //    if (readOperationResult == 0) {
