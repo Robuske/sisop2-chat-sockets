@@ -171,7 +171,7 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
 SocketFD ServerCommunicationManager::setupServerSocket() {
     SocketFD connectionSocketFD;
     if ((connectionSocketFD = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-        return SOCKET_CREATION_ERROR;
+        return ERROR_SOCKET_CREATION;
 
     struct sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
@@ -180,7 +180,7 @@ SocketFD ServerCommunicationManager::setupServerSocket() {
     bzero(&(serverAddress.sin_zero), 8);
 
     if (bind(connectionSocketFD, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0)
-        return SOCKET_BINDING_ERROR;
+        return ERROR_SOCKET_BINDING;
 
     //    The backlog argument defines the maximum length to which the queue of
     //    pending connections for sockfd may grow.  If a connection request
@@ -210,7 +210,7 @@ int ServerCommunicationManager::startServer(int loadMessageCount) {
     while(true) {
         clientSocketLength = sizeof(struct sockaddr_in);
         if ((communicationSocketFD = accept(connectionSocketFDResult, (struct sockaddr *) &clientAddress, &clientSocketLength)) == -1)
-            return ACCEPT_SOCKET_CONNECTION_ERROR;
+            return ERROR_SOCKET_ACCEPT_CONNECTION;
 
         struct HandleNewClientArguments args;
         args.newClientSocket = communicationSocketFD;
