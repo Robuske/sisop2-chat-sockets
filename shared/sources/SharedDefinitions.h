@@ -6,6 +6,9 @@
 
 using std::string;
 
+#define ERROR_SOCKET_CREATION -2
+#define ERROR_SOCKET_WRITE -18
+
 // TODO:
 //  The PORT is here so we can share with client and don't to change the PORT every time we run the server.
 //  Sometimes the port hangs and the server won't start until the OS close the release the resource
