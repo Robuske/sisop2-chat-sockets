@@ -60,9 +60,6 @@ void ServerCommunicationManager::terminateClientConnection(SocketFD socketFileDe
 }
 
 // TODO: Make this global?
-// TODO: Move this somewhere?
-#define ERROR_TERMINATE_CONNECTION -7
-#define ERROR_CLIENT_DISCONNECTED -134
 
 // TODO: readPacketHeaderFromSocket and readPacketFromSocket can be refactored, the only difference is the type of what we're reading.
 // I tried the code below but the server was crashing when a user connects:
@@ -114,8 +111,7 @@ void ServerCommunicationManager::sendMessageToClients(const string& message, con
     for (const UserConnection& userConnection:userConnections) {
         int readWriteOperationResult = write(userConnection.socket, message.c_str(), message.length());
         if (readWriteOperationResult < 0) {
-            // TODO: Create constant
-            throw -321;
+            throw ERROR_SOCKET_WRITE;
         }
     }
 }
