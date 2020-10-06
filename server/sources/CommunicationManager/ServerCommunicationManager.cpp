@@ -59,22 +59,6 @@ void ServerCommunicationManager::terminateClientConnection(SocketFD socketFileDe
     }
 }
 
-// TODO: This will die in favor of using throw where it's being used
-bool ServerCommunicationManager::handleReadResult(int readResult, int socket) {
-    bool isEndOfFile = (readResult == 0);
-    if (isEndOfFile) {
-        string message = "Read result(" + std::to_string(readResult) + ") reading from socket(" + std::to_string(socket) + ")";
-        log(Info, message);
-        return false;
-    } else if (readResult < 0) {
-        string errorPrefix = "Read result(" + std::to_string(readResult) + ") reading from socket(" + std::to_string(socket) + ")";
-        log(Error, errorPrefix);
-        return false;
-    }
-
-    return true;
-}
-
 // TODO: Make this global?
 // TODO: Move this somewhere?
 #define ERROR_TERMINATE_CONNECTION -7
