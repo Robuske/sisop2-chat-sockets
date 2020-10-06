@@ -8,7 +8,8 @@ int ServerPersistency::saveMessage(Message* message) {
     string path = message->group;
     string fileExtension = ".txt";
     path.append(fileExtension);
-    std::ofstream file(path.c_str()); //open in constructor
+    // Opening file in append mode
+    std::ofstream file(path.c_str(), std::ios::app);
     const char* data = (char*)message;
     file.write(data, sizeof(Message));
     file.close();
@@ -29,8 +30,8 @@ int ServerPersistency::readMessage(string group, Message* messages, int messageC
     string fileExtension = ".txt";
     path.append(fileExtension);
     std::ifstream file(path.c_str()); //open in constructor
-    // checking file size to avoid reading errors
 
+    // checking file size to avoid reading errors
     const auto begin = file.tellg();
     file.seekg (0, std::ios::end);
     const auto end = file.tellg();
