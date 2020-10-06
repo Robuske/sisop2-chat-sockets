@@ -60,7 +60,7 @@ void* ClientMessagesManager::writeMessagesThread() {
         struct Message message;
         message.text = messageString;
         message.username = userInfo.username;
-        message.timestamp = 0;
+        message.timestamp = 1234;
         message.group = userInfo.groupName;
 
         writeResult = communicationManager.writeSocketMessage(&message);

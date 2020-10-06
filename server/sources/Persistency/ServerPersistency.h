@@ -6,10 +6,9 @@
 
 class ServerPersistency {
 
-
 public:
     int saveMessage(Message* message);
-    int readMessage(string group);
+    int readMessage(string group, Message* messages, int messageCount);
 };
 
 

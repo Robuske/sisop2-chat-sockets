@@ -132,7 +132,9 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
                                                           communicationSocket,
                                                           packet.payload.group);
             } else if (packetHeader.type == TypeMessage) {
+                Message messages[4];
                 ServerPersistency().saveMessage(&packet.payload);
+                ServerPersistency().readMessage(packet.payload.group, messages, 4);
                 args->groupsManager->sendMessage(packet.payload);
             }
         } catch (int errorCode) {
