@@ -13,7 +13,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, macOS-latest]
         build_type: [Debug, Release]
-    name: Build on system ${{ matrix.os }} with build type ${{ matrix.build_type }}
+
+    name: Build ${{ matrix.os }} - ${{ matrix.build_type }}
     runs-on: ${{ matrix.os }}
     env:
       BUILD_TYPE: ${{ matrix.build_type }}
@@ -39,13 +40,11 @@ jobs:
     - name: Build Server
       working-directory: ${{runner.workspace}}/build
       shell: bash
-      # Execute the build.  You can specify a specific target with "--target <NAME>"
       run: cmake --build . --config $BUILD_TYPE --target server
     
     - name: Build Client
       working-directory: ${{runner.workspace}}/build
       shell: bash
-      # Execute the build.  You can specify a specific target with "--target <NAME>"
       run: cmake --build . --config $BUILD_TYPE --target client
 
 #     - name: Test
