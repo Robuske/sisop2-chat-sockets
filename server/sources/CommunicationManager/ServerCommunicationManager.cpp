@@ -187,7 +187,7 @@ int ServerCommunicationManager::startServer(int loadMessageCount) {
     if (connectionSocketFDResult < 0)
         return connectionSocketFDResult;
 
-    // TODO: Change this to std::list
+    // TODO: Server não deveria ter isso, só o GroupsManager deveria controlar isso, mas no momento estamos usando pra desconectar users
     pthread_t clientConnections[10];
     int threadIndex = 0;
     struct sockaddr_in clientAddress;
