@@ -1,9 +1,9 @@
 #ifndef SISOP2_T1_CLIENTCOMMUNICATIONMANAGER_H
 #define SISOP2_T1_CLIENTCOMMUNICATIONMANAGER_H
 
+#include "ClientDefinitions.h"
+#include "SharedDefinitions.h"
 #include <string>
-#include <ClientDefinitions.h>
-#include <SharedDefinitions.h>
 
 using std::string;
 

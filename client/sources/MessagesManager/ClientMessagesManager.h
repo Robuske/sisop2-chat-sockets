@@ -1,10 +1,10 @@
 #ifndef SISOP2_T1_CLIENTMESSAGESMANAGER_H
 #define SISOP2_T1_CLIENTMESSAGESMANAGER_H
 
-#include <string>
+#include "ClientDefinitions.h"
 #include "CommunicationManager/ClientCommunicationManager.h"
-#include <ClientDefinitions.h>
 #include "SharedDefinitions.h"
+#include <string>
 
 using std::string;
 

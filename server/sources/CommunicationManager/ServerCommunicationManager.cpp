@@ -1,14 +1,10 @@
-#include "ServerCommunicationManager.h"
-#include "SharedDefinitions.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <pthread.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include "GroupsManager/ServerGroupsManager.h"
+#include "ServerCommunicationManager.h"
+#include <iostream>
+#include <netinet/in.h>
+#include <pthread.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 enum eLogLevel { Info, Debug, Error } typedef LogLevel;
 void log(LogLevel logLevel, const string& msg) {
