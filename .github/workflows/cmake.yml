@@ -7,6 +7,8 @@ on:
 jobs:
   build:
     strategy:
+      # É rodado na ordem que esta definido na matrix, e como o mac é mais custoso isso força ele esperar passar no ubuntu (se um falha ele não roda os seguintes)
+      max-parallel: 2
       matrix:
         os: [ubuntu-latest, macOS-latest]
         build_type: [Debug, Release]
