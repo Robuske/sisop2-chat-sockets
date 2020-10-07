@@ -22,13 +22,13 @@ int ClientCommunicationManager::connectClient(SocketConnectionInfo connectionInf
     if (server == NULL) {
         string errorPrefix = "Error no such host '" + connectionInfo.ipAddress + "'";
         perror(errorPrefix.c_str());
-        return INVALID_HOST_ERROR;
+        return ERROR_INVALID_HOST;
     }
 
     if ((sockFd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         string errorPrefix = "Error(" + std::to_string(sockFd) + ") opening socket";
         perror(errorPrefix.c_str());
-        return SOCKET_CREATION_ERROR;
+        return ERROR_SOCKET_CREATION;
     }
 
     serv_addr.sin_family = AF_INET;
@@ -40,7 +40,7 @@ int ClientCommunicationManager::connectClient(SocketConnectionInfo connectionInf
     if (connectionResult < 0) {
         string errorPrefix = "Error(" + std::to_string(connectionResult) + ") connecting";
         perror(errorPrefix.c_str());
-        return SOCKET_CONNECTION_ERROR;
+        return ERROR_SOCKET_CONNECTION;
     }
 
     this->socketConnectionResult = sockFd;

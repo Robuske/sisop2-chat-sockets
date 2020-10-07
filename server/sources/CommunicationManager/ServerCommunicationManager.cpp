@@ -37,8 +37,10 @@ void *ServerCommunicationManager::staticHandleNewClientConnection(void *newClien
 // MARK: - Instance methods
 // TODO: Send disconnection message to all remaining client
 void ServerCommunicationManager::terminateClientConnection(SocketFD socketFileDescriptor, string username) {
-    // TODO: Do we need to close the socket here?
-    // close(socketFileDescriptor);
+    int closeReturn = close(socketFileDescriptor);
+    if (closeReturn < 0) {
+        throw ERROR_SOCKET_CLOSE;
+    }
     clients.remove(socketFileDescriptor);
 
     int readWriteOperationResult;
@@ -59,29 +61,9 @@ void ServerCommunicationManager::terminateClientConnection(SocketFD socketFileDe
     }
 }
 
-// TODO: This will die in favor of using throw where it's being used
-bool ServerCommunicationManager::handleReadResult(int readResult, int socket) {
-    bool isEndOfFile = (readResult == 0);
-    if (isEndOfFile) {
-        string message = "Read result(" + std::to_string(readResult) + ") reading from socket(" + std::to_string(socket) + ")";
-        log(Info, message);
-        return false;
-    } else if (readResult < 0) {
-        string errorPrefix = "Read result(" + std::to_string(readResult) + ") reading from socket(" + std::to_string(socket) + ")";
-        log(Error, errorPrefix);
-        return false;
-    }
-
-    return true;
-}
-
-// TODO: Make this global?
-// TODO: Move this somewhere?
-#define ERROR_TERMINATE_CONNECTION -7
-#define ERROR_CLIENT_DISCONNECTED -134
-
 // TODO: readPacketHeaderFromSocket and readPacketFromSocket can be refactored, the only difference is the type of what we're reading.
-// I tried the code below but the server was crashing when a user connects:
+//  Maybe we can move this to shared so the client can also use this code
+//  I tried the code below but the server was crashing when a user connects:
 //void readSocket(SocketFD socket, size_t length, void* dst) {
 //    int readOperationResult = read(socket, dst, length);
 //    if (readOperationResult == 0) {
@@ -130,8 +112,7 @@ void ServerCommunicationManager::sendMessageToClients(const string& message, con
     for (const UserConnection& userConnection:userConnections) {
         int readWriteOperationResult = write(userConnection.socket, message.c_str(), message.length());
         if (readWriteOperationResult < 0) {
-            // TODO: Create constant
-            throw -321;
+            throw ERROR_SOCKET_WRITE;
         }
     }
 }
@@ -155,12 +136,21 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
                 args->groupsManager->sendMessage(packet.payload);
             }
         } catch (int errorCode) {
-            string errorPrefix =
-                    "Error(" + std::to_string(errorCode) + ") from socket(" + std::to_string(communicationSocket) + ")";
-            log(Error, errorPrefix);
             if (errorCode == ERROR_CLIENT_DISCONNECTED) {
-                terminateClientConnection(communicationSocket, packet.payload.username);
-            };
+                try {
+                    terminateClientConnection(communicationSocket, packet.payload.username);
+                } catch (int errorCode) {
+                    if (errorCode == ERROR_SOCKET_CLOSE) {
+                        string errorPrefix =
+                                "Error(" + std::to_string(errno) + ") closing socket(" + std::to_string(communicationSocket) + ")";
+                        log(Error, errorPrefix);
+                    }
+                }
+            } else {
+                string errorPrefix =
+                        "Error(" + std::to_string(errno) + ") from socket(" + std::to_string(communicationSocket) + ")";
+                log(Error, errorPrefix);
+            }
             break;
         }
     }
@@ -171,7 +161,7 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
 SocketFD ServerCommunicationManager::setupServerSocket() {
     SocketFD connectionSocketFD;
     if ((connectionSocketFD = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-        return SOCKET_CREATION_ERROR;
+        return ERROR_SOCKET_CREATION;
 
     struct sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
@@ -180,10 +170,16 @@ SocketFD ServerCommunicationManager::setupServerSocket() {
     bzero(&(serverAddress.sin_zero), 8);
 
     if (bind(connectionSocketFD, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0)
-        return SOCKET_BINDING_ERROR;
+        return ERROR_SOCKET_BINDING;
 
-    // TODO: Magic number 5? Fix it!
-    listen(connectionSocketFD, 5);
+    //    The backlog argument defines the maximum length to which the queue of
+    //    pending connections for sockfd may grow.  If a connection request
+    //    arrives when the queue is full, the client may receive an error with
+    //    an indication of ECONNREFUSED or, if the underlying protocol supports
+    //    retransmission, the request may be ignored so that a later reattempt
+    //    at connection succeeds.
+    int backlog = 100;
+    listen(connectionSocketFD, backlog);
 
     return connectionSocketFD;
 }
@@ -199,12 +195,12 @@ int ServerCommunicationManager::startServer(int loadMessageCount) {
     // TODO: Change this to std::list
     pthread_t clientConnections[10];
     int threadIndex = 0;
-    struct sockaddr_in cli_addr; // TODO: Add a more suggestive name
+    struct sockaddr_in clientAddress;
     socklen_t clientSocketLength;
     while(true) {
         clientSocketLength = sizeof(struct sockaddr_in);
-        if ((communicationSocketFD = accept(connectionSocketFDResult, (struct sockaddr *) &cli_addr, &clientSocketLength)) == -1)
-            return ACCEPT_SOCKET_CONNECTION_ERROR;
+        if ((communicationSocketFD = accept(connectionSocketFDResult, (struct sockaddr *) &clientAddress, &clientSocketLength)) == -1)
+            return ERROR_SOCKET_ACCEPT_CONNECTION;
 
         struct HandleNewClientArguments args;
         args.newClientSocket = communicationSocketFD;
