@@ -1,3 +1,4 @@
+#include <signal.h>
 #include <iostream>
 #include "UI/ClientUI.h"
 #include "MessagesManager/ClientMessagesManager.h"
