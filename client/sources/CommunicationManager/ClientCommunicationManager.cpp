@@ -2,7 +2,7 @@
 #include <netdb.h>
 #include <unistd.h>
 
-int ClientCommunicationManager::connectClient(SocketConnectionInfo connectionInfo) {
+int ClientCommunicationManager::connectClient(const SocketConnectionInfo& connectionInfo) {
 
     SocketFD sockFd;
     struct sockaddr_in serv_addr;

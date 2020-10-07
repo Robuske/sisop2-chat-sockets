@@ -20,7 +20,7 @@ private:
     SocketFD socketConnectionResult;
 
 public:
-    SocketFD connectClient(SocketConnectionInfo connectionInfo);
+    SocketFD connectClient(const SocketConnectionInfo& connectionInfo);
     int writeSocketMessage(struct Message *message);
     int readSocketMessage(char *message);
 

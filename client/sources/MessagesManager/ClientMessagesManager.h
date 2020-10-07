@@ -13,11 +13,12 @@ typedef int SocketFD;
 class ClientMessagesManager {
 
 public:
-    int startClient(SocketConnectionInfo connectionInfo, UserInfo userInfo);
+    int startClient(const SocketConnectionInfo& connectionInfo, UserInfo userInfo);
 
 private:
     UserInfo userInfo;
     ClientCommunicationManager communicationManager;
+
     void *readMessagesThread();
     static void *staticReadMessagesThread(void *threadParm);
     void *writeMessagesThread();

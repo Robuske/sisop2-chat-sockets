@@ -47,7 +47,7 @@ void ServerCommunicationManager::terminateClientConnection(SocketFD socketFileDe
     // Doug falou que tu explicou algo pra ele.
     // this->groupsManager->handleUserDisconnection(socketFileDescriptor);
     // This for was moved to handleUserDisconnection.
-    for(std::list<SocketFD>::iterator client = std::begin(clients); client != std::end(clients); ++client) {
+    for(auto client = std::begin(clients); client != std::end(clients); ++client) {
         int socketToWrite = *client;
         readWriteOperationResult = write(socketToWrite, disconnectionMessage.c_str(), disconnectionMessage.length());
         if (readWriteOperationResult < 0) {

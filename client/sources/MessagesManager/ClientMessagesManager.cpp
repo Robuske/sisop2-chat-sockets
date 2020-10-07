@@ -68,7 +68,7 @@ void* ClientMessagesManager::writeMessagesThread() {
     }
 }
 
-int ClientMessagesManager::startClient(SocketConnectionInfo connectionInfo, UserInfo userInfo) {
+int ClientMessagesManager::startClient(const SocketConnectionInfo& connectionInfo, UserInfo userInfo) {
 
     int socketConnectionResult;
     pthread_t mySocketReading, mySocketWriting;
@@ -84,7 +84,7 @@ int ClientMessagesManager::startClient(SocketConnectionInfo connectionInfo, User
 
     std::cout << "Connection successful";
 
-    ThreadParameter *tp = new ThreadParameter();
+    auto *tp = new ThreadParameter();
     tp->client = this;
 
     pthread_create(&mySocketReading, NULL, ClientMessagesManager::staticReadMessagesThread, tp);
@@ -99,13 +99,13 @@ int ClientMessagesManager::startClient(SocketConnectionInfo connectionInfo, User
 }
 
 void * ClientMessagesManager::staticReadMessagesThread(void *threadParm) {
-    ThreadParameter* t = static_cast<ThreadParameter*>(threadParm);
+    auto* t = static_cast<ThreadParameter*>(threadParm);
     t->client->readMessagesThread();
     return NULL;
 }
 
 void * ClientMessagesManager::staticWriteMessagesThread(void *threadParm) {
-    ThreadParameter* t = static_cast<ThreadParameter*>(threadParm);
+    auto* t = static_cast<ThreadParameter*>(threadParm);
     t->client->writeMessagesThread();
     return NULL;
 }
