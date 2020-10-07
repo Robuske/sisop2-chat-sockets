@@ -159,11 +159,10 @@ SocketFD ServerCommunicationManager::setupServerSocket() {
     if ((connectionSocketFD = socket(AF_INET, SOCK_STREAM, 0)) == -1)
         return ERROR_SOCKET_CREATION;
 
-    struct sockaddr_in serverAddress;
+    struct sockaddr_in serverAddress{};
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(PORT);
     serverAddress.sin_addr.s_addr = INADDR_ANY;
-    bzero(&(serverAddress.sin_zero), 8);
 
     if (bind(connectionSocketFD, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0)
         return ERROR_SOCKET_BINDING;

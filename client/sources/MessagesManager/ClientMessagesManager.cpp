@@ -17,11 +17,12 @@ void* ClientMessagesManager::readMessagesThread() {
 
     while(true) {
 
-        bzero(messages[messagesNumber], 256);
         readResult = communicationManager.readSocketMessage(messages[messagesNumber]);
         if (readResult < 0) {
-            string errorPrefix = "Error(" + std::to_string(readResult) + ") writing to socket";
+            string errorPrefix = "Error(" + std::to_string(readResult) + ") reading from socket";
             perror(errorPrefix.c_str());
+            return nullptr; // TODO: Provavelmente isso tudo vai mudar bastante, mas no momento não faz sentido manter a leitura
+
         } else if (readResult > 0) {
             system("clear");
 
@@ -50,9 +51,6 @@ void* ClientMessagesManager::writeMessagesThread() {
         messageString.clear();
         std::cout << " > ";
         std::getline(std::cin, messageString);
-
-       // bzero(finalMessageBuffer, bufferSize);
-       // strcpy(finalMessageBuffer, stringToSend.c_str());
 
         struct Message message;
         message.text = messageString;

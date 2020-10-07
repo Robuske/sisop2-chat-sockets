@@ -5,7 +5,7 @@
 int ClientCommunicationManager::connectClient(const SocketConnectionInfo& connectionInfo) {
 
     SocketFD sockFd;
-    struct sockaddr_in serv_addr;
+    struct sockaddr_in serv_addr{};
     struct hostent *server;
 
     server = gethostbyname(connectionInfo.ipAddress.c_str());
@@ -24,7 +24,6 @@ int ClientCommunicationManager::connectClient(const SocketConnectionInfo& connec
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(connectionInfo.port);
     serv_addr.sin_addr = *((struct in_addr *)server->h_addr);
-    bzero(&(serv_addr.sin_zero), 8);
 
     int connectionResult = connect(sockFd,(struct sockaddr *) &serv_addr,sizeof(serv_addr));
     if (connectionResult < 0) {
