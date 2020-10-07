@@ -9,7 +9,7 @@ int ClientCommunicationManager::connectClient(const SocketConnectionInfo& connec
     struct hostent *server;
 
     server = gethostbyname(connectionInfo.ipAddress.c_str());
-    if (server == NULL) {
+    if (server == nullptr) {
         string errorPrefix = "Error no such host '" + connectionInfo.ipAddress + "'";
         perror(errorPrefix.c_str());
         return ERROR_INVALID_HOST;

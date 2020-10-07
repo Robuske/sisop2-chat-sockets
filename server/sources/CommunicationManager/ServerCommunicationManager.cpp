@@ -27,7 +27,7 @@ void log(LogLevel logLevel, const string& msg) {
 void *ServerCommunicationManager::staticHandleNewClientConnection(void *newClientArguments) {
     auto* t = static_cast<HandleNewClientArguments*>(newClientArguments);
     t->communicationManager->handleNewClientConnection(t);
-    return NULL;
+    return nullptr;
 }
 
 // MARK: - Instance methods
@@ -151,7 +151,7 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 SocketFD ServerCommunicationManager::setupServerSocket() {
@@ -202,7 +202,7 @@ int ServerCommunicationManager::startServer(int loadMessageCount) {
         args.newClientSocket = communicationSocketFD;
         args.communicationManager = this;
         args.groupsManager = &groupsManager;
-        pthread_create(&clientConnections[threadIndex], NULL, ServerCommunicationManager::staticHandleNewClientConnection, &args);
+        pthread_create(&clientConnections[threadIndex], nullptr, ServerCommunicationManager::staticHandleNewClientConnection, &args);
     }
 
     return 0;

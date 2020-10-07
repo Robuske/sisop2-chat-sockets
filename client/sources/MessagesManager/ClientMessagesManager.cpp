@@ -87,11 +87,11 @@ int ClientMessagesManager::startClient(const SocketConnectionInfo& connectionInf
     auto *tp = new ThreadParameter();
     tp->client = this;
 
-    pthread_create(&mySocketReading, NULL, ClientMessagesManager::staticReadMessagesThread, tp);
-    pthread_create(&mySocketWriting, NULL, ClientMessagesManager::staticWriteMessagesThread, tp);
+    pthread_create(&mySocketReading, nullptr, ClientMessagesManager::staticReadMessagesThread, tp);
+    pthread_create(&mySocketWriting, nullptr, ClientMessagesManager::staticWriteMessagesThread, tp);
 
-    pthread_join(mySocketReading, NULL);
-    pthread_join(mySocketWriting, NULL);
+    pthread_join(mySocketReading, nullptr);
+    pthread_join(mySocketWriting, nullptr);
 
     // Pegar interrupcao do ctrl - c pra fechar o socket e finalizar a conexao (talves uma outra thread?)
 
@@ -101,13 +101,13 @@ int ClientMessagesManager::startClient(const SocketConnectionInfo& connectionInf
 void * ClientMessagesManager::staticReadMessagesThread(void *threadParm) {
     auto* t = static_cast<ThreadParameter*>(threadParm);
     t->client->readMessagesThread();
-    return NULL;
+    return nullptr;
 }
 
 void * ClientMessagesManager::staticWriteMessagesThread(void *threadParm) {
     auto* t = static_cast<ThreadParameter*>(threadParm);
     t->client->writeMessagesThread();
-    return NULL;
+    return nullptr;
 }
 
 
