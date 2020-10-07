@@ -1,9 +1,17 @@
+#include <signal.h>
 #include <iostream>
 #include "UI/ClientUI.h"
 #include "MessagesManager/ClientMessagesManager.h"
 #include <string>
 #include "SharedDefinitions.h"
+
+void handleControlC(int signal) {
+    std::cout << std::endl << "ctrl+C signal(" + std::to_string(signal) + "), disconnecting client..." << std::endl;
+    exit(signal);
+}
+
 int main(int argc, char *argv[]) {
+    signal(SIGINT, handleControlC);
 
     std::cout << " ::::::: Zap ::::::: " << std::endl;
 
