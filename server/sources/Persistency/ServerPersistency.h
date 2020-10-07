@@ -3,14 +3,14 @@
 
 #include "SharedDefinitions.h"
 
-
 class ServerPersistency {
 
 public:
     int saveMessage(Message* message);
-    int readMessage(string group, Message* messages, int messageCount);
+    int readMessages(string group, int messageCount, Message* messages);
 
-    const long long int getFileSize(std::ifstream file);
+private:
+   // long long calculateFileSize(std::ifstream* filePointer);
 };
 
 
