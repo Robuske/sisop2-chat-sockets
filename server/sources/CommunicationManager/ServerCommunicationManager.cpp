@@ -1,14 +1,10 @@
-#include "ServerCommunicationManager.h"
-#include "SharedDefinitions.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <pthread.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include "GroupsManager/ServerGroupsManager.h"
+#include "ServerCommunicationManager.h"
+#include <iostream>
+#include <netinet/in.h>
+#include <pthread.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 enum eLogLevel { Info, Debug, Error } typedef LogLevel;
 void log(LogLevel logLevel, const string& msg) {
@@ -31,7 +27,7 @@ void log(LogLevel logLevel, const string& msg) {
 void *ServerCommunicationManager::staticHandleNewClientConnection(void *newClientArguments) {
     auto* t = static_cast<HandleNewClientArguments*>(newClientArguments);
     t->communicationManager->handleNewClientConnection(t);
-    return NULL;
+    return nullptr;
 }
 
 // MARK: - Instance methods
@@ -51,7 +47,7 @@ void ServerCommunicationManager::terminateClientConnection(SocketFD socketFileDe
     // Doug falou que tu explicou algo pra ele.
     // this->groupsManager->handleUserDisconnection(socketFileDescriptor);
     // This for was moved to handleUserDisconnection.
-    for(std::list<SocketFD>::iterator client = std::begin(clients); client != std::end(clients); ++client) {
+    for(auto client = std::begin(clients); client != std::end(clients); ++client) {
         int socketToWrite = *client;
         readWriteOperationResult = write(socketToWrite, disconnectionMessage.c_str(), disconnectionMessage.length());
         if (readWriteOperationResult < 0) {
@@ -155,7 +151,7 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 SocketFD ServerCommunicationManager::setupServerSocket() {
@@ -163,11 +159,10 @@ SocketFD ServerCommunicationManager::setupServerSocket() {
     if ((connectionSocketFD = socket(AF_INET, SOCK_STREAM, 0)) == -1)
         return ERROR_SOCKET_CREATION;
 
-    struct sockaddr_in serverAddress;
+    struct sockaddr_in serverAddress{};
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(PORT);
     serverAddress.sin_addr.s_addr = INADDR_ANY;
-    bzero(&(serverAddress.sin_zero), 8);
 
     if (bind(connectionSocketFD, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0)
         return ERROR_SOCKET_BINDING;
@@ -192,7 +187,7 @@ int ServerCommunicationManager::startServer(int loadMessageCount) {
     if (connectionSocketFDResult < 0)
         return connectionSocketFDResult;
 
-    // TODO: Change this to std::list
+    // TODO: Server não deveria ter isso, só o GroupsManager deveria controlar isso, mas no momento estamos usando pra desconectar users
     pthread_t clientConnections[10];
     int threadIndex = 0;
     struct sockaddr_in clientAddress;
@@ -206,7 +201,7 @@ int ServerCommunicationManager::startServer(int loadMessageCount) {
         args.newClientSocket = communicationSocketFD;
         args.communicationManager = this;
         args.groupsManager = &groupsManager;
-        pthread_create(&clientConnections[threadIndex], NULL, ServerCommunicationManager::staticHandleNewClientConnection, &args);
+        pthread_create(&clientConnections[threadIndex], nullptr, ServerCommunicationManager::staticHandleNewClientConnection, &args);
     }
 
     return 0;

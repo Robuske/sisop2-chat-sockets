@@ -2,7 +2,6 @@
 #define SISOP2_T1_SHAREDDEFINITIONS_H
 
 #include <string>
-#include <iostream>
 
 using std::string;
 
