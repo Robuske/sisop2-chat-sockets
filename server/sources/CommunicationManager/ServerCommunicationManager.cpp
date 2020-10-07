@@ -37,8 +37,10 @@ void *ServerCommunicationManager::staticHandleNewClientConnection(void *newClien
 // MARK: - Instance methods
 // TODO: Send disconnection message to all remaining client
 void ServerCommunicationManager::terminateClientConnection(SocketFD socketFileDescriptor, string username) {
-    // TODO: Do we need to close the socket here?
-    // close(socketFileDescriptor);
+    int closeReturn = close(socketFileDescriptor);
+    if (closeReturn < 0) {
+        throw ERROR_SOCKET_CLOSE;
+    }
     clients.remove(socketFileDescriptor);
 
     int readWriteOperationResult;
@@ -134,12 +136,21 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
                 args->groupsManager->sendMessage(packet.payload);
             }
         } catch (int errorCode) {
-            string errorPrefix =
-                    "Error(" + std::to_string(errorCode) + ") from socket(" + std::to_string(communicationSocket) + ")";
-            log(Error, errorPrefix);
             if (errorCode == ERROR_CLIENT_DISCONNECTED) {
-                terminateClientConnection(communicationSocket, packet.payload.username);
-            };
+                try {
+                    terminateClientConnection(communicationSocket, packet.payload.username);
+                } catch (int errorCode) {
+                    if (errorCode == ERROR_SOCKET_CLOSE) {
+                        string errorPrefix =
+                                "Error(" + std::to_string(errno) + ") closing socket(" + std::to_string(communicationSocket) + ")";
+                        log(Error, errorPrefix);
+                    }
+                }
+            } else {
+                string errorPrefix =
+                        "Error(" + std::to_string(errno) + ") from socket(" + std::to_string(communicationSocket) + ")";
+                log(Error, errorPrefix);
+            }
             break;
         }
     }
