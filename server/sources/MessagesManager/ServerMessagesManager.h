@@ -4,12 +4,12 @@
 #include "Persistency/ServerPersistency.h"
 #include "SharedDefinitions.h"
 #include <iostream>
-#include <algorithm>
 
 class ServerMessagesManager {
 
 public:
-    int loadInitialMessages(string groupName, Message* messages, int messagesCount);
+    int loadInitialMessages(const string& groupName, Message* messages, int messagesCount);
+    int writeMessage(const Message& message);
 
 private:
     ServerPersistency persistency;

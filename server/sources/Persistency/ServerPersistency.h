@@ -6,7 +6,7 @@
 class ServerPersistency {
 
 public:
-    int saveMessage(Message* message);
+    int saveMessage(const Message& message);
     int readMessages(string group, int messageCount, Message* messages);
 
 private:

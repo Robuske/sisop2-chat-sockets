@@ -9,14 +9,14 @@
  * @param[out] operationCode
  */
 
-int ServerPersistency::saveMessage(Message* message) {
+int ServerPersistency::saveMessage(const Message& message) {
    // Building the file path based on the group name + file extension
-    string path = message->group;
+    string path = message.group;
     string fileExtension = ".txt";
     path.append(fileExtension);
     // Opening file in append mode
     std::ofstream file(path.c_str(), std::ios::app);
-    const char* data = (char*)message;
+    const char* data = (char*)&message;
     file.write(data, sizeof(Message));
     file.close();
     return CODE_SUCCESS;
