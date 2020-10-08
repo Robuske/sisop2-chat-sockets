@@ -1,13 +1,13 @@
 #ifndef SISOP2_T1_SERVERCOMMUNICATIONMANAGER_H
 #define SISOP2_T1_SERVERCOMMUNICATIONMANAGER_H
 
-#include <ServerDefinitions.h>
-#include <SharedDefinitions.h>
+#include "ServerDefinitions.h"
+#include "SharedDefinitions.h"
 #include <list>
 
 class ServerGroupsManager;
-class ServerCommunicationManager;
 struct UserConnection;
+class ServerCommunicationManager;
 
 struct HandleNewClientArguments {
     ServerCommunicationManager *communicationManager;

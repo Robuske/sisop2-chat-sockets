@@ -1,8 +1,8 @@
 #ifndef SISOP2_T1_SERVERGROUPSMANAGER_H
 #define SISOP2_T1_SERVERGROUPSMANAGER_H
 
-#include "SharedDefinitions.h"
 #include "CommunicationManager/ServerCommunicationManager.h"
+#include "SharedDefinitions.h"
 
 struct UserConnection {
     string username;

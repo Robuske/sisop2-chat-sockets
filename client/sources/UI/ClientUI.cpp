@@ -1,5 +1,5 @@
-#include "SharedDefinitions.h"
 #include "ClientUI.h"
+#include "SharedDefinitions.h"
 #include <iostream>
 
 void ClientUI::displayMessage(string message) {

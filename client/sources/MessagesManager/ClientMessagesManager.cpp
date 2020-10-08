@@ -1,7 +1,4 @@
 #include "ClientMessagesManager.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <pthread.h>
 #include <iostream>
 
@@ -20,11 +17,12 @@ void* ClientMessagesManager::readMessagesThread() {
 
     while(true) {
 
-        bzero(messages[messagesNumber], 256);
         readResult = communicationManager.readSocketMessage(messages[messagesNumber]);
         if (readResult < 0) {
-            string errorPrefix = "Error(" + std::to_string(readResult) + ") writing to socket";
+            string errorPrefix = "Error(" + std::to_string(readResult) + ") reading from socket";
             perror(errorPrefix.c_str());
+            return nullptr; // TODO: Provavelmente isso tudo vai mudar bastante, mas no momento não faz sentido manter a leitura
+
         } else if (readResult > 0) {
             system("clear");
 
@@ -54,9 +52,6 @@ void* ClientMessagesManager::writeMessagesThread() {
         std::cout << " > ";
         std::getline(std::cin, messageString);
 
-       // bzero(finalMessageBuffer, bufferSize);
-       // strcpy(finalMessageBuffer, stringToSend.c_str());
-
         struct Message message;
         message.text = messageString;
         message.username = userInfo.username;
@@ -71,7 +66,7 @@ void* ClientMessagesManager::writeMessagesThread() {
     }
 }
 
-int ClientMessagesManager::startClient(SocketConnectionInfo connectionInfo, UserInfo userInfo) {
+int ClientMessagesManager::startClient(const SocketConnectionInfo& connectionInfo, UserInfo userInfo) {
 
     int socketConnectionResult;
     pthread_t mySocketReading, mySocketWriting;
@@ -87,14 +82,14 @@ int ClientMessagesManager::startClient(SocketConnectionInfo connectionInfo, User
 
     std::cout << "Connection successful";
 
-    ThreadParameter *tp = new ThreadParameter();
+    auto *tp = new ThreadParameter();
     tp->client = this;
 
-    pthread_create(&mySocketReading, NULL, ClientMessagesManager::staticReadMessagesThread, tp);
-    pthread_create(&mySocketWriting, NULL, ClientMessagesManager::staticWriteMessagesThread, tp);
+    pthread_create(&mySocketReading, nullptr, ClientMessagesManager::staticReadMessagesThread, tp);
+    pthread_create(&mySocketWriting, nullptr, ClientMessagesManager::staticWriteMessagesThread, tp);
 
-    pthread_join(mySocketReading, NULL);
-    pthread_join(mySocketWriting, NULL);
+    pthread_join(mySocketReading, nullptr);
+    pthread_join(mySocketWriting, nullptr);
 
     // Pegar interrupcao do ctrl - c pra fechar o socket e finalizar a conexao (talves uma outra thread?)
 
@@ -102,15 +97,15 @@ int ClientMessagesManager::startClient(SocketConnectionInfo connectionInfo, User
 }
 
 void * ClientMessagesManager::staticReadMessagesThread(void *threadParm) {
-    ThreadParameter* t = static_cast<ThreadParameter*>(threadParm);
+    auto* t = static_cast<ThreadParameter*>(threadParm);
     t->client->readMessagesThread();
-    return NULL;
+    return nullptr;
 }
 
 void * ClientMessagesManager::staticWriteMessagesThread(void *threadParm) {
-    ThreadParameter* t = static_cast<ThreadParameter*>(threadParm);
+    auto* t = static_cast<ThreadParameter*>(threadParm);
     t->client->writeMessagesThread();
-    return NULL;
+    return nullptr;
 }
 
 
