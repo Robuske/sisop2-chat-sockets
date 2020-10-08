@@ -2,7 +2,7 @@
 #include <pthread.h>
 #include <iostream>
 
-char messages[10][256];
+Message messages[10][256];
 
 int messagesNumber = 0;
 
@@ -25,14 +25,14 @@ void* ClientMessagesManager::readMessagesThread() {
 
         } else if (readResult > 0) {
             system("clear");
-
+            std::cout << "Grupo: " << messages[0]->group << std::endl;
             int index = 0;
 
             messagesNumber++;
 
             for (index = 0; index < messagesNumber; index++) {
                 // Chamar display message do Client UI?
-                std::cout << "Message " << index << ": " << messages[index] << std::endl;
+                std::cout << "Message " << index << " [" << messages[index]->username << "]" <<": " << messages[index]->text << std::endl;
             }
         }
     }

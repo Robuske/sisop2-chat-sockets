@@ -19,7 +19,7 @@ class ServerCommunicationManager {
 public:
     int startServer(int loadMessageCount);
 
-    void sendMessageToClients(const string& message, const std::list<UserConnection>& userConnections);
+    void sendMessageToClients(const Message& message, const std::list<UserConnection>& userConnections);
 
 private:
     SocketFD setupServerSocket();

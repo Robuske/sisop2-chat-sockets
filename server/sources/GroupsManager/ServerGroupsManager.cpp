@@ -19,7 +19,7 @@ void ServerGroupsManager::sendMessage(const Message& message) {
     // handle possible reading file exceptions
     int returnCode = messagesManager.writeMessage(message);
 
-    communicationManager->sendMessageToClients(message.text, groupToSendMessage.clients);
+    communicationManager->sendMessageToClients(message, groupToSendMessage.clients);
 }
 
 /**
@@ -33,7 +33,7 @@ void ServerGroupsManager::sendMessagesToSpecificUser(UserConnection userConnecti
     std::list<UserConnection> singleUserConnectionList;
     singleUserConnectionList.push_back(userConnection);
     for(int index = 0; index < loadedMessagesCount; index++) {
-        communicationManager->sendMessageToClients(messages[index].text, singleUserConnectionList);
+        communicationManager->sendMessageToClients(messages[index], singleUserConnectionList);
     }
 }
 
@@ -75,9 +75,16 @@ void ServerGroupsManager::handleUserConnection(const string& username, SocketFD 
         userConnectionsToSendConnectionMessage = newGroup.clients;
     }
 
-    const string joinMessage = username + " conectou!";
-    communicationManager->sendMessageToClients(joinMessage, userConnectionsToSendConnectionMessage);
     this->loadInitialMessagesForNewUserConnection(userConnection, groupName);
+
+    Message message;
+    message.username = username;
+    message.text = username + " conectou!";
+    message.timestamp = 1234;
+    message.group = groupName;
+
+    communicationManager->sendMessageToClients(message, userConnectionsToSendConnectionMessage);
+
 }
 
 // This can throw
@@ -101,8 +108,14 @@ void ServerGroupsManager::handleUserDisconnection(SocketFD socket) {
         throw ERROR_GROUP_NOT_FOUND;
     }
 
-    const string joinMessage = disconnectedUsername + " desconectou!";
-    communicationManager->sendMessageToClients(joinMessage, userConnectionsToSendConnectionMessage);
+    const string disconnectedMessage = disconnectedUsername + " desconectou!";
+    Message message;
+    message.username = disconnectedUsername;
+    message.text = disconnectedMessage;
+    message.timestamp = 1234;
+    message.group = "";
+
+    communicationManager->sendMessageToClients(message, userConnectionsToSendConnectionMessage);
 }
 
 ServerGroupsManager::ServerGroupsManager(int numberOfMessagesToLoadWhenUserJoined, ServerCommunicationManager *communicationManager) {

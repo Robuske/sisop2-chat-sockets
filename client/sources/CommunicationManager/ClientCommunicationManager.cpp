@@ -64,7 +64,6 @@ int ClientCommunicationManager::writeConnectionMessageToSocket(struct Message *m
     return 1;
 }
 
-int ClientCommunicationManager::readSocketMessage(char* message) {
-    int bufferSize = 256;
-    return read(this->socketConnectionResult, message, bufferSize);
+int ClientCommunicationManager::readSocketMessage(Message* message) {
+    return read(this->socketConnectionResult, message, sizeof(Message));
 }

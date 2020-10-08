@@ -22,7 +22,7 @@ private:
 public:
     SocketFD connectClient(const SocketConnectionInfo& connectionInfo);
     int writeSocketMessage(struct Message *message);
-    int readSocketMessage(char *message);
+    int readSocketMessage(Message *message);
 
     int writeConnectionMessageToSocket(Message *message);
 };
