@@ -20,6 +20,7 @@ struct Group {
 
 class ServerGroupsManager {
 private:
+    void sendMessagesToSpecificUser(SocketFD socket, Message* messages, int messagesCount);
     int numberOfMessagesToLoadWhenUserJoined;
     ServerCommunicationManager *communicationManager;
     std::list<Group> groups;

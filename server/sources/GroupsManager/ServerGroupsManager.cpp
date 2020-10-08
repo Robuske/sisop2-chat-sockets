@@ -1,5 +1,5 @@
 #include "ServerGroupsManager.h"
-
+#include "MessagesManager/ServerMessagesManager.h"
 void ServerGroupsManager::sendMessage(const Message& message) {
     bool groupFound = false;
     string groupName = message.group;
@@ -17,6 +17,10 @@ void ServerGroupsManager::sendMessage(const Message& message) {
     }
 
     communicationManager->sendMessageToClients(message.text, groupToSendMessage.clients);
+}
+
+void ServerGroupsManager::sendMessagesToSpecificUser(SocketFD socket, Message* messages, int messagesCount) {
+
 }
 
 // This can throw
