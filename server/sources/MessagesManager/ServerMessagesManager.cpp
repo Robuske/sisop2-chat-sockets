@@ -1,6 +1,5 @@
 #include "ServerMessagesManager.h"
 
-
 int ServerMessagesManager::loadInitialMessages(const string& groupName, std::list<Message>& messages, int messagesCount) {
 
     this->lockAccessForGroup(groupName);

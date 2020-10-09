@@ -5,9 +5,9 @@
 #include "Persistency/ServerPersistency.h"
 #include "SharedDefinitions.h"
 #include <iostream>
-#include <semaphore.h>
 #include <list>
 #include <map>
+#include <mutex>
 
 /**
  * Struct: GroupConcurrentAccessControl
