@@ -65,7 +65,7 @@ int ServerPersistency::readMessages(string group, int messageCount, Message* mes
     const auto begin = file.tellg();
     file.seekg (0, std::ios::end);
     const auto end = file.tellg();
-    const auto fileSize = end-begin;
+    const long long fileSize = end-begin;
 
     //const auto fileSize = this->calculateFileSize(&file);
     //Rewinding file the file pointer previously located at the EOF
