@@ -60,6 +60,12 @@ int ServerPersistency::readMessages(string group, int messageCount, std::list<Me
 
     const auto bytesToRead = std::min(fileSize, messagesSize);
 
+    // Moving file pointer to the offset of the last massages to be read
+    if(bytesToRead < fileSize) {
+        int lastMessagesOffset = fileSize - messagesSize;
+        file.seekg(lastMessagesOffset, std::ios::beg);
+    }
+
     char *buffer = new char[bytesToRead]();
 
     file.read(buffer, bytesToRead);
