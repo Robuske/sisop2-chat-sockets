@@ -119,7 +119,6 @@ void ServerGroupsManager::handleUserDisconnection(const string &username, Socket
         throw ERROR_GROUP_NOT_FOUND;
     }
 
-    // TODO: Mensagem de descontectado ta chegando vazia
     // TODO: Timestamp
     Message message = Message(TypeDesconnection, 1234, groupName, disconnectedUsername, "Desconectou!");
     communicationManager->sendMessageToClients(message, userConnectionsToSendConnectionMessage);

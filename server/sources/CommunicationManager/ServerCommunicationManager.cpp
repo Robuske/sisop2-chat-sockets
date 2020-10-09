@@ -40,24 +40,6 @@ void ServerCommunicationManager::terminateClientConnection(SocketFD socketFileDe
     }
 
     groupsManager->handleUserDisconnection(username, socketFileDescriptor);
-   // clients.remove(socketFileDescriptor);
-
-   // int readWriteOperationResult;
-   // string disconnectionMessage = username + " desconectou!";
-
-    // TODO: We should notify only the clients of a particular group, not all clients
-    // BUSKE: Pq a gente nao tem o groupsManager na instancia?
-    // Estamos apenas passando como argumento na staticHandleNewClientConnection
-    // Doug falou que tu explicou algo pra ele.
-    // This for was moved to handleUserDisconnection.
-//    for(auto client = std::begin(clients); client != std::end(clients); ++client) {
-//        int socketToWrite = *client;
-//        readWriteOperationResult = write(socketToWrite, disconnectionMessage.c_str(), disconnectionMessage.length());
-//        if (readWriteOperationResult < 0) {
-//            string errorPrefix = "Error(" + std::to_string(readWriteOperationResult) + ") writing into socket(" + std::to_string(socketToWrite) +")";
-//            perror(errorPrefix.c_str());
-//        }
-//    }
 }
 
 // TODO: readPacketHeaderFromSocket and readPacketFromSocket can be refactored, the only difference is the type of what we're reading.
