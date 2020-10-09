@@ -2,6 +2,15 @@
 #include <iostream>
 #include <fstream>
 
+string ServerPersistency::getMessagesDatabasePathForGroup(const string &groupName) {
+    // Building the file path based on the group name + file extension
+    string path = groupName;
+    string fileExtension = ".txt";
+    path.append(fileExtension);
+
+    return path;
+}
+
 /**
  * Function: ServerPersistency::saveMessage
  * Write 1 message on te related group file
@@ -10,10 +19,7 @@
  */
 
 int ServerPersistency::saveMessage(const Message& message) {
-   // Building the file path based on the group name + file extension
-    string path = message.group;
-    string fileExtension = ".txt";
-    path.append(fileExtension);
+   string path = getMessagesDatabasePathForGroup(message.group);
     // Opening file in append mode
     std::ofstream file(path.c_str(), std::ios::app);
     const char* data = (char*)&message;
@@ -50,9 +56,7 @@ int ServerPersistency::saveMessage(const Message& message) {
 
 int ServerPersistency::readMessages(string group, int messageCount, Message* messages) {
 
-    string path = group;
-    string fileExtension = ".txt";
-    path.append(fileExtension);
+    string path = getMessagesDatabasePathForGroup(group);
     std::ifstream file(path.c_str());
 
     // Checking the file size to avoid reading errors
@@ -67,9 +71,9 @@ int ServerPersistency::readMessages(string group, int messageCount, Message* mes
     //Rewinding file the file pointer previously located at the EOF
     file.seekg(0, std::ios::beg);
 
-    const auto messagesSize = sizeof(Message) * messageCount;
+    const long long messagesSize = sizeof(Message) * messageCount;
 
-    const auto bufferSize = (fileSize < messagesSize) ? fileSize : messagesSize;
+    const auto bufferSize = std::min(fileSize, messagesSize);
 
     file.read((char*)messages, bufferSize);
 

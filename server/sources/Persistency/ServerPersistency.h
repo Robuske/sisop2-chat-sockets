@@ -10,6 +10,7 @@ public:
     int readMessages(string group, int messageCount, Message* messages);
 
 private:
+    string getMessagesDatabasePathForGroup(const string& groupName);
    // long long calculateFileSize(std::ifstream* filePointer);
 };
 
