@@ -9,7 +9,7 @@ class ServerPersistency {
 
 public:
     int saveMessage(Message message);
-    int readMessages(string group, int messageCount, std::list<Message> messages);
+    int readMessages(string group, int messageCount, std::list<Message>& messages);
 
 private:
     string getMessagesDatabasePathForGroup(const string& groupName);

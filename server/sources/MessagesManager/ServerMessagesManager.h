@@ -10,7 +10,7 @@
 class ServerMessagesManager {
 
 public:
-    int loadInitialMessages(const string& groupName, std::list<Message> messages, int messagesCount);
+    int loadInitialMessages(const string& groupName, std::list<Message>& messages, int messagesCount);
     int writeMessage(const Message& message);
 
 private:

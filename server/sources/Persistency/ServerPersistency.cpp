@@ -55,7 +55,7 @@ int ServerPersistency::saveMessage(Message message) {
  * @param[out] numberOfMessagesRead
  */
 
-int ServerPersistency::readMessages(string group, int messageCount, std::list<Message> messages) {
+int ServerPersistency::readMessages(string group, int messageCount, std::list<Message>& messages) {
 
     string path = getMessagesDatabasePathForGroup(group);
     std::ifstream file(path.c_str());
