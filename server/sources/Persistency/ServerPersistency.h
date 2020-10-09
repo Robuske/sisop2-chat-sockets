@@ -11,6 +11,7 @@ public:
 
 private:
     string getMessagesDatabasePathForGroup(const string& groupName);
+    // TODO: Essa função?
    // long long calculateFileSize(std::ifstream* filePointer);
 };
 

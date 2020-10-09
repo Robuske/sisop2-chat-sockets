@@ -1,12 +1,10 @@
 #include "GroupsManager/ServerGroupsManager.h"
+#include "Persistency/ServerPersistency.h"
 #include "ServerCommunicationManager.h"
 #include <iostream>
 #include <netinet/in.h>
 #include <pthread.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
-#include "GroupsManager/ServerGroupsManager.h"
-#include "Persistency/ServerPersistency.h"
 #include <unistd.h>
 
 enum eLogLevel { Info, Debug, Error } typedef LogLevel;

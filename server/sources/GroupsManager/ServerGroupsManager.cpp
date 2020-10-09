@@ -1,5 +1,6 @@
-#include "ServerGroupsManager.h"
 #include "MessagesManager/ServerMessagesManager.h"
+#include "ServerGroupsManager.h"
+
 void ServerGroupsManager::sendMessage(const Message& message) {
     bool groupFound = false;
     string groupName = message.group;
@@ -16,7 +17,7 @@ void ServerGroupsManager::sendMessage(const Message& message) {
         throw ERROR_GROUP_NOT_FOUND;
     }
 
-    // handle possible reading file exceptions
+    // TODO: handle possible reading file exceptions
     int returnCode = messagesManager.writeMessage(message);
 
     communicationManager->sendMessageToClients(message, groupToSendMessage.clients);
@@ -77,9 +78,11 @@ void ServerGroupsManager::handleUserConnection(const string& username, SocketFD 
 
     this->loadInitialMessagesForNewUserConnection(userConnection, groupName);
 
+    // TODO: Acho que mensagem de conecção deveria ser salva, e de desconecção
     Message message;
     message.username = username;
     message.text = username + " conectou!";
+    // TODO: Timestamp
     message.timestamp = 1234;
     message.group = groupName;
 
@@ -108,10 +111,12 @@ void ServerGroupsManager::handleUserDisconnection(SocketFD socket) {
         throw ERROR_GROUP_NOT_FOUND;
     }
 
+    // TODO: Mensagem de descontectado ta chegando vazia
     const string disconnectedMessage = disconnectedUsername + " desconectou!";
     Message message;
     message.username = disconnectedUsername;
     message.text = disconnectedMessage;
+    // TODO: Timestamp
     message.timestamp = 1234;
     message.group = "";
 

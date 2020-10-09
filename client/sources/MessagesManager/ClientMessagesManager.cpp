@@ -53,6 +53,7 @@ void* ClientMessagesManager::writeMessagesThread() {
         struct Message message;
         message.text = messageString;
         message.username = userInfo.username;
+        // TODO: Timestamp
         message.timestamp = 1234;
         message.group = userInfo.groupName;
 
