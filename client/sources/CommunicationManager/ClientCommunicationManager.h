@@ -2,6 +2,7 @@
 #define SISOP2_T1_CLIENTCOMMUNICATIONMANAGER_H
 
 #include "ClientDefinitions.h"
+#include "Message/Message.h"
 #include "SharedDefinitions.h"
 #include <string>
 
@@ -21,10 +22,10 @@ private:
 
 public:
     SocketFD connectClient(const SocketConnectionInfo& connectionInfo);
-    int writeSocketMessage(struct Message *message);
-    int readSocketMessage(Message *message);
+    int writeSocketMessage(Message message);
+    Message readSocketMessage();
 
-    int writeConnectionMessageToSocket(Message *message);
+    int writeConnectionMessageToSocket(Message message);
 };
 
 
