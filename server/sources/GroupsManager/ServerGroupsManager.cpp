@@ -1,3 +1,4 @@
+#include "MessagesManager/ServerMessagesManager.h"
 #include "ServerGroupsManager.h"
 
 void ServerGroupsManager::sendMessage(const Message& message) {
@@ -16,7 +17,38 @@ void ServerGroupsManager::sendMessage(const Message& message) {
         throw ERROR_GROUP_NOT_FOUND;
     }
 
-    communicationManager->sendMessageToClients(message.text, groupToSendMessage.clients);
+    // TODO: handle possible reading file exceptions
+    int returnCode = messagesManager.writeMessage(message);
+
+    communicationManager->sendMessageToClients(message, groupToSendMessage.clients);
+}
+
+/**
+ * Function: ServerGroupsManager::sendMessagesToSpecificUser
+ * Kinda dirty but this way we can send multiple messages to one specific user using a single user list
+ * @param[in] userConnection, messages, loadedMessagesCount
+ * @param[out] void
+ */
+
+void ServerGroupsManager::sendMessagesToSpecificUser(UserConnection userConnection, Message* messages, int loadedMessagesCount) {
+    std::list<UserConnection> singleUserConnectionList;
+    singleUserConnectionList.push_back(userConnection);
+    for(int index = 0; index < loadedMessagesCount; index++) {
+        communicationManager->sendMessageToClients(messages[index], singleUserConnectionList);
+    }
+}
+
+/**
+ * Function: ServerGroupsManager::loadInitialMessagesForNewUserConnection
+ * Loading initial messages for user based on the number of messages to be loaded server side parameter
+ * @param[in] userConnection, groupName
+ * @param[out] void
+ */
+
+void ServerGroupsManager::loadInitialMessagesForNewUserConnection(UserConnection userConnection, const string& groupName) {
+    Message initialMessages[numberOfMessagesToLoadWhenUserJoined];
+    int numberOfLoadedMessages = messagesManager.loadInitialMessages(groupName, initialMessages, numberOfMessagesToLoadWhenUserJoined);
+    this->sendMessagesToSpecificUser(userConnection, initialMessages, numberOfLoadedMessages);
 }
 
 // This can throw
@@ -44,8 +76,18 @@ void ServerGroupsManager::handleUserConnection(const string& username, SocketFD 
         userConnectionsToSendConnectionMessage = newGroup.clients;
     }
 
-    const string joinMessage = username + " conectou!";
-    communicationManager->sendMessageToClients(joinMessage, userConnectionsToSendConnectionMessage);
+    this->loadInitialMessagesForNewUserConnection(userConnection, groupName);
+
+    // TODO: Acho que mensagem de conecção deveria ser salva, e de desconecção
+    Message message;
+    message.username = username;
+    message.text = username + " conectou!";
+    // TODO: Timestamp
+    message.timestamp = 1234;
+    message.group = groupName;
+
+    communicationManager->sendMessageToClients(message, userConnectionsToSendConnectionMessage);
+
 }
 
 // This can throw
@@ -69,8 +111,16 @@ void ServerGroupsManager::handleUserDisconnection(SocketFD socket) {
         throw ERROR_GROUP_NOT_FOUND;
     }
 
-    const string joinMessage = disconnectedUsername + " desconectou!";
-    communicationManager->sendMessageToClients(joinMessage, userConnectionsToSendConnectionMessage);
+    // TODO: Mensagem de descontectado ta chegando vazia
+    const string disconnectedMessage = disconnectedUsername + " desconectou!";
+    Message message;
+    message.username = disconnectedUsername;
+    message.text = disconnectedMessage;
+    // TODO: Timestamp
+    message.timestamp = 1234;
+    message.group = "";
+
+    communicationManager->sendMessageToClients(message, userConnectionsToSendConnectionMessage);
 }
 
 ServerGroupsManager::ServerGroupsManager(int numberOfMessagesToLoadWhenUserJoined, ServerCommunicationManager *communicationManager) {

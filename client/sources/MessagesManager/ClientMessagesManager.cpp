@@ -1,8 +1,9 @@
 #include "ClientMessagesManager.h"
 #include <pthread.h>
 #include <iostream>
+#include <list>
 
-char messages[10][256];
+std::list<Message> messages;
 
 int messagesNumber = 0;
 
@@ -16,8 +17,8 @@ void* ClientMessagesManager::readMessagesThread() {
     int readResult;
 
     while(true) {
-
-        readResult = communicationManager.readSocketMessage(messages[messagesNumber]);
+        Message message = {};
+        readResult = communicationManager.readSocketMessage(&message);
         if (readResult < 0) {
             string errorPrefix = "Error(" + std::to_string(readResult) + ") reading from socket";
             perror(errorPrefix.c_str());
@@ -25,14 +26,11 @@ void* ClientMessagesManager::readMessagesThread() {
 
         } else if (readResult > 0) {
             system("clear");
-
-            int index = 0;
-
-            messagesNumber++;
-
-            for (index = 0; index < messagesNumber; index++) {
-                // Chamar display message do Client UI?
-                std::cout << "Message " << index << ": " << messages[index] << std::endl;
+            std::cout << "Grupo: " << messages.front().group << std::endl;
+            int index = 1;
+            messages.push_back(message);
+            for (Message message:messages) {
+                std::cout << "Message " << index++ << " [" << message.username << "]" <<": " << message.text << std::endl;
             }
         }
     }
@@ -55,7 +53,8 @@ void* ClientMessagesManager::writeMessagesThread() {
         struct Message message;
         message.text = messageString;
         message.username = userInfo.username;
-        message.timestamp = 0;
+        // TODO: Timestamp
+        message.timestamp = 1234;
         message.group = userInfo.groupName;
 
         writeResult = communicationManager.writeSocketMessage(&message);

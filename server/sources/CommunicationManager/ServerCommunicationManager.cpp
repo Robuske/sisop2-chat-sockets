@@ -1,4 +1,5 @@
 #include "GroupsManager/ServerGroupsManager.h"
+#include "Persistency/ServerPersistency.h"
 #include "ServerCommunicationManager.h"
 #include <iostream>
 #include <netinet/in.h>
@@ -104,9 +105,9 @@ Packet ServerCommunicationManager::readPacketFromSocket(SocketFD communicationSo
 }
 
 // TODO: Change `string message` to be a `Message message`
-void ServerCommunicationManager::sendMessageToClients(const string& message, const std::list<UserConnection>& userConnections) {
+void ServerCommunicationManager::sendMessageToClients(const Message& message, const std::list<UserConnection>& userConnections) {
     for (const UserConnection& userConnection:userConnections) {
-        int readWriteOperationResult = write(userConnection.socket, message.c_str(), message.length());
+        int readWriteOperationResult = write(userConnection.socket, &message, sizeof(Message));
         if (readWriteOperationResult < 0) {
             throw ERROR_SOCKET_WRITE;
         }

@@ -2,6 +2,7 @@
 #define SISOP2_T1_SERVERGROUPSMANAGER_H
 
 #include "CommunicationManager/ServerCommunicationManager.h"
+#include "MessagesManager/ServerMessagesManager.h"
 #include "SharedDefinitions.h"
 
 struct UserConnection {
@@ -20,8 +21,11 @@ struct Group {
 
 class ServerGroupsManager {
 private:
+    void sendMessagesToSpecificUser(UserConnection userConnection, Message* messages, int messagesCount);
+    void loadInitialMessagesForNewUserConnection(UserConnection userConnection, const string& groupName);
     int numberOfMessagesToLoadWhenUserJoined;
     ServerCommunicationManager *communicationManager;
+    ServerMessagesManager messagesManager;
     std::list<Group> groups;
 
 public:
