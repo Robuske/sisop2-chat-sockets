@@ -39,29 +39,18 @@ int ClientCommunicationManager::connectClient(const SocketConnectionInfo& connec
 
 int ClientCommunicationManager::writeSocketMessage(Message message) {
     Packet packet = message.asPacket();
-//    packetHeader.type = TypeMessage;
-//    packetHeader.length = sizeof(Message);
 
     // TODO: Return result
     write(this->socketConnectionResult, &packet, sizeof(Packet));
-//    write(this->socketConnectionResult, message, sizeof(Message));
 
     return 1;
 }
 
 int ClientCommunicationManager::writeConnectionMessageToSocket(Message message) {
-//    struct PacketHeader packetHeader;
-//    packetHeader.type = TypeConnection;
-//    packetHeader.length = sizeof(Packet);
-
     Packet packet = message.asPacket();
-//    packet.payload = *message;
 
-//    write(this->socketConnectionResult, &packet, sizeof(PacketHeader));
-    // TODO: Return result
-    write(this->socketConnectionResult, &packet, sizeof(Packet));
-
-    return 1;
+    // TODO: Throw or handle error in callers
+    return write(this->socketConnectionResult, &packet, sizeof(Packet));
 }
 
 Message ClientCommunicationManager::readSocketMessage() {

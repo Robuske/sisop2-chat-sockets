@@ -30,22 +30,6 @@ int ServerPersistency::saveMessage(Message message) {
 }
 
 /**
- * Function: ServerPersistency::calculateFileSize
- * Calculate the size of a ifstream file
- * The file in question must be a reference (parameters only don't work)
- * Not working at the moment
- * @param[in] filePointer
- * @param[out] fileSize
- */
-
-//long long ServerPersistency::calculateFileSize(std::ifstream* filePointer) {
-//    const auto begin = filePointer->tellg();
-//    filePointer->seekg (0, std::ios::end);
-//    const auto end = filePointer->tellg();
-//    return end-begin;
-//}
-
-/**
  * Function: ServerPersistency::readMessage
  * Read N messages (given in the server initialization) from the related group file
  * First we check if the file size is smaller than the number of bytes to be read.
@@ -55,6 +39,7 @@ int ServerPersistency::saveMessage(Message message) {
  * @param[out] numberOfMessagesRead
  */
 
+// TODO: Pegar as ULTIMAS mensagens
 int ServerPersistency::readMessages(string group, int messageCount, std::list<Message>& messages) {
 
     string path = getMessagesDatabasePathForGroup(group);
@@ -68,7 +53,6 @@ int ServerPersistency::readMessages(string group, int messageCount, std::list<Me
     const auto end = file.tellg();
     const long long fileSize = end-begin;
 
-    //const auto fileSize = this->calculateFileSize(&file);
     //Rewinding file the file pointer previously located at the EOF
     file.seekg(0, std::ios::beg);
 

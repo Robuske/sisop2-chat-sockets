@@ -5,6 +5,7 @@
 
 std::list<Message> messages;
 
+// TODO: Can we remove this?
 int messagesNumber = 0;
 
 struct ThreadParameter {
@@ -17,7 +18,6 @@ void* ClientMessagesManager::readMessagesThread() {
     int readResult;
 
     while(true) {
-//        Message message = {};
         try {
             Message message = communicationManager.readSocketMessage();
             system("clear");
@@ -41,6 +41,8 @@ void* ClientMessagesManager::writeMessagesThread() {
     int writeResult;
 
     Message connectionMessage = Message(TypeConnection, 12345, userInfo.groupName, userInfo.username, "");
+
+    // TODO: Throw or handle error
     communicationManager.writeConnectionMessageToSocket(connectionMessage);
 
     while(true) {
@@ -48,9 +50,6 @@ void* ClientMessagesManager::writeMessagesThread() {
         std::cout << " > ";
         std::getline(std::cin, messageString);
 
-//        struct Message message;
-//        message.text = messageString;
-//        message.username = userInfo.username;
 //        // TODO: Timestamp
 //        message.timestamp = 1234;
 //        message.group = userInfo.groupName;
@@ -88,8 +87,6 @@ int ClientMessagesManager::startClient(const SocketConnectionInfo& connectionInf
 
     pthread_join(mySocketReading, nullptr);
     pthread_join(mySocketWriting, nullptr);
-
-    // Pegar interrupcao do ctrl - c pra fechar o socket e finalizar a conexao (talves uma outra thread?)
 
     return 0;
 }

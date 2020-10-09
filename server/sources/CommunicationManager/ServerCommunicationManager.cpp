@@ -124,7 +124,6 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
     bool shouldContinue = true;
     while(shouldContinue) {
         try {
-//            PacketHeader packetHeader = readPacketHeaderFromSocket(communicationSocket);
             packet = readPacketFromSocket(communicationSocket, sizeof(Packet));
             Message message = Message(packet);
             if (packet.type == TypeConnection) {

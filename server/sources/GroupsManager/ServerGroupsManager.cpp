@@ -50,7 +50,7 @@ void ServerGroupsManager::loadInitialMessagesForNewUserConnection(UserConnection
     int numberOfLoadedMessages = messagesManager.loadInitialMessages(groupName, initialMessages, numberOfMessagesToLoadWhenUserJoined);
     this->sendMessagesToSpecificUser(userConnection, initialMessages, numberOfLoadedMessages);
 }
-
+#include <time.h>
 // This can throw
 void ServerGroupsManager::handleUserConnection(const string& username, SocketFD socket, const string& groupName) {
     UserConnection userConnection;
@@ -78,14 +78,19 @@ void ServerGroupsManager::handleUserConnection(const string& username, SocketFD 
 
     this->loadInitialMessagesForNewUserConnection(userConnection, groupName);
 
-    // TODO: Acho que mensagem de conecção deveria ser salva, e de desconecção
+    // TODO: Confirmar se precisa persistir as mensagens de conexão/desconexão
+
     // TODO: Timestamp
+    // https://www.epochconverter.com/programming/c
+    //    time_t     now;
+    //    struct tm  ts;
+    //    char       buf[80];
+    // Format time, "ddd yyyy-mm-dd hh:mm:ss zzz"
+    //    ts = *localtime(&now);
+    //    strftime(buf, sizeof(buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
+    //    time(&now);
     Message message = Message(TypeConnection, 1234, groupName, username, "Conectou!");
-//    message.username = username;
-//    message.text = username + " conectou!";
-//
-//    message.timestamp = 1234;
-//    message.group = groupName;
+
 
     communicationManager->sendMessageToClients(message, userConnectionsToSendConnectionMessage);
 
@@ -114,14 +119,7 @@ void ServerGroupsManager::handleUserDisconnection(SocketFD socket) {
 
     // TODO: Mensagem de descontectado ta chegando vazia
     // TODO: Timestamp
-//    const string disconnectedMessage = disconnectedUsername + " desconectou!";
     Message message = Message(TypeDesconnection, 1234, "", disconnectedUsername, "Desconectou!");
-//    Message message;
-//    message.username = disconnectedUsername;
-//    message.text = disconnectedMessage;
-//    message.timestamp = 1234;
-//    message.group = "";
-
     communicationManager->sendMessageToClients(message, userConnectionsToSendConnectionMessage);
 }
 
