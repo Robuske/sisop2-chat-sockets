@@ -1,4 +1,5 @@
 #include "Message.h"
+#include <cstring>
 
 Message::Message(PacketType packetType, uint16_t timestamp, string groupName, string username, string text) {
     this->packetType = packetType;
