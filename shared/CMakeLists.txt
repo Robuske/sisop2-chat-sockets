@@ -6,7 +6,7 @@ include_directories(sources)
 
 add_library(shared_lib
         sources/SharedDefinitions.h
-        sources/Packet/Packet.cpp sources/Packet/Packet.h)
+        sources/Packet/Packet.cpp sources/Packet/Packet.h sources/Message/Message.cpp sources/Message/Message.h)
 
 # Config Tests
 

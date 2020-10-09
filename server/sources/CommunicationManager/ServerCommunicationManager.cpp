@@ -80,17 +80,17 @@ void ServerCommunicationManager::terminateClientConnection(SocketFD socketFileDe
 //    readSocket(communicationSocket, packetSize, &packet);
 //}
 
-PacketHeader ServerCommunicationManager::readPacketHeaderFromSocket(SocketFD communicationSocket) {
-    PacketHeader packetHeader;
-    int readOperationResult = read(communicationSocket, &packetHeader, sizeof(PacketHeader));
-    if (readOperationResult == 0) {
-        throw ERROR_CLIENT_DISCONNECTED;
-    } else if (readOperationResult < 0) {
-        throw readOperationResult;
-    } else {
-        return packetHeader;
-    }
-}
+//PacketHeader ServerCommunicationManager::readPacketHeaderFromSocket(SocketFD communicationSocket) {
+//    PacketHeader packetHeader;
+//    int readOperationResult = read(communicationSocket, &packetHeader, sizeof(PacketHeader));
+//    if (readOperationResult == 0) {
+//        throw ERROR_CLIENT_DISCONNECTED;
+//    } else if (readOperationResult < 0) {
+//        throw readOperationResult;
+//    } else {
+//        return packetHeader;
+//    }
+//}
 
 Packet ServerCommunicationManager::readPacketFromSocket(SocketFD communicationSocket, int packetSize) {
     Packet packet;
@@ -105,9 +105,10 @@ Packet ServerCommunicationManager::readPacketFromSocket(SocketFD communicationSo
 }
 
 // TODO: Change `string message` to be a `Message message`
-void ServerCommunicationManager::sendMessageToClients(const Message& message, const std::list<UserConnection>& userConnections) {
+void ServerCommunicationManager::sendMessageToClients(Message message, const std::list<UserConnection>& userConnections) {
     for (const UserConnection& userConnection:userConnections) {
-        int readWriteOperationResult = write(userConnection.socket, &message, sizeof(Message));
+        Packet packet = message.asPacket();
+        int readWriteOperationResult = write(userConnection.socket, &packet, sizeof(Packet));
         if (readWriteOperationResult < 0) {
             throw ERROR_SOCKET_WRITE;
         }
@@ -123,19 +124,19 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
     bool shouldContinue = true;
     while(shouldContinue) {
         try {
-            PacketHeader packetHeader = readPacketHeaderFromSocket(communicationSocket);
-            packet = readPacketFromSocket(communicationSocket, packetHeader.length);
-            if (packetHeader.type == TypeConnection) {
-                args->groupsManager->handleUserConnection(packet.payload.username,
+            packet = readPacketFromSocket(communicationSocket, sizeof(Packet));
+            Message message = Message(packet);
+            if (packet.type == TypeConnection) {
+                args->groupsManager->handleUserConnection(message.username,
                                                           communicationSocket,
-                                                          packet.payload.group);
-            } else if (packetHeader.type == TypeMessage) {
-                args->groupsManager->sendMessage(packet.payload);
+                                                          message.groupName);
+            } else if (packet.type == TypeMessage) {
+                args->groupsManager->sendMessage(message);
             }
         } catch (int errorCode) {
             if (errorCode == ERROR_CLIENT_DISCONNECTED) {
                 try {
-                    terminateClientConnection(communicationSocket, packet.payload.username);
+                    terminateClientConnection(communicationSocket, packet.username);
                 } catch (int errorCode) {
                     if (errorCode == ERROR_SOCKET_CLOSE) {
                         string errorPrefix =

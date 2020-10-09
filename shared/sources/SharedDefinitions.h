@@ -5,9 +5,6 @@
 
 using std::string;
 
-#define ERROR_SOCKET_CREATION -2
-#define ERROR_SOCKET_WRITE -18
-
 // TODO:
 //  The PORT is here so we can share with client and don't to change the PORT every time we run the server.
 //  Sometimes the port hangs and the server won't start until the OS close the release the resource
@@ -16,32 +13,38 @@ using std::string;
 
 // Codes
 
+#define ERROR_SOCKET_CREATION -2
+#define ERROR_SOCKET_WRITE -18
+#define ERROR_SOCKET_READ -20
 #define CODE_SUCCESS 0
+
+#define NAME_SIZE 128
+#define MESSAGE_SIZE 512
 
 typedef int SocketFD;
 
-enum PacketHeaderType { TypeConnection, TypeMessage };
+enum PacketType { TypeConnection, TypeDesconnection, TypeMessage };
 
 struct tUserInfo {
     string username;
     string groupName;
 } typedef UserInfo;
 
-struct PacketHeader {
-    PacketHeaderType type;
-    uint16_t length;
-};
-
-struct Message {
-    uint16_t timestamp;
-    string group;
-    string username;
-    string text;
-};
+//struct PacketHeader {
+//    PacketHeaderType type;
+//};
 
 struct Packet {
-    Message payload;
+    PacketType type;
+    uint16_t timestamp;
+    char groupName[NAME_SIZE];
+    char username[NAME_SIZE];
+    char text[MESSAGE_SIZE];
 };
+
+//struct Packet {
+//    Message payload;
+//};
 
 
 #endif // SISOP2_T1_SHAREDDEFINITIONS_H

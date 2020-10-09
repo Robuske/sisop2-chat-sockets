@@ -1,6 +1,7 @@
 #ifndef SISOP2_T1_SERVERCOMMUNICATIONMANAGER_H
 #define SISOP2_T1_SERVERCOMMUNICATIONMANAGER_H
 
+#include "Message/Message.h"
 #include "ServerDefinitions.h"
 #include "SharedDefinitions.h"
 #include <list>
@@ -19,7 +20,7 @@ class ServerCommunicationManager {
 public:
     int startServer(int loadMessageCount);
 
-    void sendMessageToClients(const Message& message, const std::list<UserConnection>& userConnections);
+    void sendMessageToClients(Message message, const std::list<UserConnection>& userConnections);
 
 private:
     SocketFD setupServerSocket();
@@ -31,7 +32,7 @@ private:
 
     bool handleReadResult(int readResult, int socket);
     void terminateClientConnection(SocketFD socketFileDescriptor, string username);
-    PacketHeader readPacketHeaderFromSocket(SocketFD communicationSocket);
+//    PacketHeader readPacketHeaderFromSocket(SocketFD communicationSocket);
     Packet readPacketFromSocket(SocketFD communicationSocket, int packetSize);
 
 };

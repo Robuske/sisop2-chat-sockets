@@ -3,7 +3,7 @@
 
 void ServerGroupsManager::sendMessage(const Message& message) {
     bool groupFound = false;
-    string groupName = message.group;
+    string groupName = message.groupName;
     Group groupToSendMessage;
     for (const Group& currentGroup: groups) {
         if (currentGroup.name == groupName) {
@@ -30,11 +30,11 @@ void ServerGroupsManager::sendMessage(const Message& message) {
  * @param[out] void
  */
 
-void ServerGroupsManager::sendMessagesToSpecificUser(UserConnection userConnection, Message* messages, int loadedMessagesCount) {
+void ServerGroupsManager::sendMessagesToSpecificUser(UserConnection userConnection, std::list<Message> messages, int loadedMessagesCount) {
     std::list<UserConnection> singleUserConnectionList;
     singleUserConnectionList.push_back(userConnection);
-    for(int index = 0; index < loadedMessagesCount; index++) {
-        communicationManager->sendMessageToClients(messages[index], singleUserConnectionList);
+    for (const auto& message:messages) {
+        communicationManager->sendMessageToClients(message, singleUserConnectionList);
     }
 }
 
@@ -46,11 +46,11 @@ void ServerGroupsManager::sendMessagesToSpecificUser(UserConnection userConnecti
  */
 
 void ServerGroupsManager::loadInitialMessagesForNewUserConnection(UserConnection userConnection, const string& groupName) {
-    Message initialMessages[numberOfMessagesToLoadWhenUserJoined];
+    std::list<Message> initialMessages;
     int numberOfLoadedMessages = messagesManager.loadInitialMessages(groupName, initialMessages, numberOfMessagesToLoadWhenUserJoined);
     this->sendMessagesToSpecificUser(userConnection, initialMessages, numberOfLoadedMessages);
 }
-
+#include <time.h>
 // This can throw
 void ServerGroupsManager::handleUserConnection(const string& username, SocketFD socket, const string& groupName) {
     UserConnection userConnection;
@@ -78,13 +78,19 @@ void ServerGroupsManager::handleUserConnection(const string& username, SocketFD 
 
     this->loadInitialMessagesForNewUserConnection(userConnection, groupName);
 
-    // TODO: Acho que mensagem de conecção deveria ser salva, e de desconecção
-    Message message;
-    message.username = username;
-    message.text = username + " conectou!";
+    // TODO: Confirmar se precisa persistir as mensagens de conexão/desconexão
+
     // TODO: Timestamp
-    message.timestamp = 1234;
-    message.group = groupName;
+    // https://www.epochconverter.com/programming/c
+    //    time_t     now;
+    //    struct tm  ts;
+    //    char       buf[80];
+    // Format time, "ddd yyyy-mm-dd hh:mm:ss zzz"
+    //    ts = *localtime(&now);
+    //    strftime(buf, sizeof(buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
+    //    time(&now);
+    Message message = Message(TypeConnection, 1234, groupName, username, "Conectou!");
+
 
     communicationManager->sendMessageToClients(message, userConnectionsToSendConnectionMessage);
 
@@ -112,14 +118,8 @@ void ServerGroupsManager::handleUserDisconnection(SocketFD socket) {
     }
 
     // TODO: Mensagem de descontectado ta chegando vazia
-    const string disconnectedMessage = disconnectedUsername + " desconectou!";
-    Message message;
-    message.username = disconnectedUsername;
-    message.text = disconnectedMessage;
     // TODO: Timestamp
-    message.timestamp = 1234;
-    message.group = "";
-
+    Message message = Message(TypeDesconnection, 1234, "", disconnectedUsername, "Desconectou!");
     communicationManager->sendMessageToClients(message, userConnectionsToSendConnectionMessage);
 }
 

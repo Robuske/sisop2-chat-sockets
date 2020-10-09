@@ -18,31 +18,16 @@ string ServerPersistency::getMessagesDatabasePathForGroup(const string &groupNam
  * @param[out] operationCode
  */
 
-int ServerPersistency::saveMessage(const Message& message) {
-   string path = getMessagesDatabasePathForGroup(message.group);
+int ServerPersistency::saveMessage(Message message) {
+   string path = getMessagesDatabasePathForGroup(message.groupName);
     // Opening file in append mode
     std::ofstream file(path.c_str(), std::ios::app);
-    const char* data = (char*)&message;
-    file.write(data, sizeof(Message));
+    Packet packet = message.asPacket();
+    const char* data = (char*)&packet;
+    file.write(data, sizeof(Packet));
     file.close();
     return CODE_SUCCESS;
 }
-
-/**
- * Function: ServerPersistency::calculateFileSize
- * Calculate the size of a ifstream file
- * The file in question must be a reference (parameters only don't work)
- * Not working at the moment
- * @param[in] filePointer
- * @param[out] fileSize
- */
-
-//long long ServerPersistency::calculateFileSize(std::ifstream* filePointer) {
-//    const auto begin = filePointer->tellg();
-//    filePointer->seekg (0, std::ios::end);
-//    const auto end = filePointer->tellg();
-//    return end-begin;
-//}
 
 /**
  * Function: ServerPersistency::readMessage
@@ -51,10 +36,11 @@ int ServerPersistency::saveMessage(const Message& message) {
  * In this case we read the number of bytes available in the file
  * Otherwise we use the number of bytes calculated using the provided messages count
  * @param[in] group, messageCount, messages
- * @param[out] numberOfMessagesReaded
+ * @param[out] numberOfMessagesRead
  */
 
-int ServerPersistency::readMessages(string group, int messageCount, Message* messages) {
+// TODO: Pegar as ULTIMAS mensagens
+int ServerPersistency::readMessages(string group, int messageCount, std::list<Message>& messages) {
 
     string path = getMessagesDatabasePathForGroup(group);
     std::ifstream file(path.c_str());
@@ -67,19 +53,29 @@ int ServerPersistency::readMessages(string group, int messageCount, Message* mes
     const auto end = file.tellg();
     const long long fileSize = end-begin;
 
-    //const auto fileSize = this->calculateFileSize(&file);
     //Rewinding file the file pointer previously located at the EOF
     file.seekg(0, std::ios::beg);
 
-    const long long messagesSize = sizeof(Message) * messageCount;
+    const long long messagesSize = sizeof(Packet) * messageCount;
 
-    const auto bufferSize = std::min(fileSize, messagesSize);
+    const auto bytesToRead = std::min(fileSize, messagesSize);
 
-    file.read((char*)messages, bufferSize);
+    char *buffer = new char[bytesToRead]();
+
+    file.read(buffer, bytesToRead);
 
     file.close();
 
-    return bufferSize/sizeof(Message);
+    const int numberOfMessagesRead = bytesToRead/sizeof(Packet);
+
+    for (int i = 0; i < numberOfMessagesRead; ++i) {
+        Packet *packet = (Packet *) buffer;
+        buffer+= sizeof(Packet);
+        Message message = Message(*packet);
+        messages.push_back(message);
+    }
+
+    return numberOfMessagesRead;
 }
 
 

@@ -21,7 +21,7 @@ struct Group {
 
 class ServerGroupsManager {
 private:
-    void sendMessagesToSpecificUser(UserConnection userConnection, Message* messages, int messagesCount);
+    void sendMessagesToSpecificUser(UserConnection userConnection, std::list<Message> messages, int messagesCount);
     void loadInitialMessagesForNewUserConnection(UserConnection userConnection, const string& groupName);
     int numberOfMessagesToLoadWhenUserJoined;
     ServerCommunicationManager *communicationManager;

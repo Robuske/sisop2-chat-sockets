@@ -5,6 +5,7 @@
 
 std::list<Message> messages;
 
+// TODO: Can we remove this?
 int messagesNumber = 0;
 
 struct ThreadParameter {
@@ -17,21 +18,20 @@ void* ClientMessagesManager::readMessagesThread() {
     int readResult;
 
     while(true) {
-        Message message = {};
-        readResult = communicationManager.readSocketMessage(&message);
-        if (readResult < 0) {
-            string errorPrefix = "Error(" + std::to_string(readResult) + ") reading from socket";
-            perror(errorPrefix.c_str());
-            return nullptr; // TODO: Provavelmente isso tudo vai mudar bastante, mas no momento não faz sentido manter a leitura
-
-        } else if (readResult > 0) {
+        try {
+            Message message = communicationManager.readSocketMessage();
             system("clear");
-            std::cout << "Grupo: " << messages.front().group << std::endl;
+            std::cout << "Grupo: " << userInfo.groupName << std::endl;
             int index = 1;
             messages.push_back(message);
             for (Message message:messages) {
                 std::cout << "Message " << index++ << " [" << message.username << "]" <<": " << message.text << std::endl;
             }
+
+        } catch (int error) {
+            string errorPrefix = "Error(" + std::to_string(error) + ") reading from socket";
+            perror(errorPrefix.c_str());
+            return nullptr; // TODO: Provavelmente isso tudo vai mudar bastante, mas no momento não faz sentido manter a leitura
         }
     }
 }
@@ -40,24 +40,22 @@ void* ClientMessagesManager::writeMessagesThread() {
     string messageString;
     int writeResult;
 
-    Message connectionMessage;
-    connectionMessage.username = userInfo.username;
-    connectionMessage.group = userInfo.groupName;
-    communicationManager.writeConnectionMessageToSocket(&connectionMessage);
+    Message connectionMessage = Message(TypeConnection, 12345, userInfo.groupName, userInfo.username, "");
+
+    // TODO: Throw or handle error
+    communicationManager.writeConnectionMessageToSocket(connectionMessage);
 
     while(true) {
         messageString.clear();
         std::cout << " > ";
         std::getline(std::cin, messageString);
 
-        struct Message message;
-        message.text = messageString;
-        message.username = userInfo.username;
-        // TODO: Timestamp
-        message.timestamp = 1234;
-        message.group = userInfo.groupName;
+//        // TODO: Timestamp
+//        message.timestamp = 1234;
+//        message.group = userInfo.groupName;
+        Message message = Message(TypeMessage, 654321, userInfo.groupName, userInfo.username, messageString);
 
-        writeResult = communicationManager.writeSocketMessage(&message);
+        writeResult = communicationManager.writeSocketMessage(message);
         if (writeResult < 0) {
             string errorPrefix = "Error(" + std::to_string(writeResult) + ") writing to socket";
             perror(errorPrefix.c_str());
@@ -79,7 +77,7 @@ int ClientMessagesManager::startClient(const SocketConnectionInfo& connectionInf
         return socketConnectionResult;
     }
 
-    std::cout << "Connection successful";
+    std::cout << "Connection successful" << std::endl;
 
     auto *tp = new ThreadParameter();
     tp->client = this;
@@ -89,8 +87,6 @@ int ClientMessagesManager::startClient(const SocketConnectionInfo& connectionInf
 
     pthread_join(mySocketReading, nullptr);
     pthread_join(mySocketWriting, nullptr);
-
-    // Pegar interrupcao do ctrl - c pra fechar o socket e finalizar a conexao (talves uma outra thread?)
 
     return 0;
 }

@@ -37,33 +37,29 @@ int ClientCommunicationManager::connectClient(const SocketConnectionInfo& connec
     return SUCCESSFUL_OPERATION;
 }
 
-int ClientCommunicationManager::writeSocketMessage(struct Message *message) {
-//    struct Packet packet;
-    struct PacketHeader packetHeader;
+int ClientCommunicationManager::writeSocketMessage(Message message) {
+    Packet packet = message.asPacket();
 
-    packetHeader.type = TypeMessage;
-    packetHeader.length = sizeof(Message);
-
-    write(this->socketConnectionResult, &packetHeader, sizeof(PacketHeader));
-    write(this->socketConnectionResult, message, sizeof(Message));
-
-    return 1;
-}
-
-int ClientCommunicationManager::writeConnectionMessageToSocket(struct Message *message) {
-    struct PacketHeader packetHeader;
-    packetHeader.type = TypeConnection;
-    packetHeader.length = sizeof(Packet);
-
-    struct Packet packet;
-    packet.payload = *message;
-
-    write(this->socketConnectionResult, &packetHeader, sizeof(PacketHeader));
+    // TODO: Return result
     write(this->socketConnectionResult, &packet, sizeof(Packet));
 
     return 1;
 }
 
-int ClientCommunicationManager::readSocketMessage(Message* message) {
-    return read(this->socketConnectionResult, message, sizeof(Message));
+int ClientCommunicationManager::writeConnectionMessageToSocket(Message message) {
+    Packet packet = message.asPacket();
+
+    // TODO: Throw or handle error in callers
+    return write(this->socketConnectionResult, &packet, sizeof(Packet));
+}
+
+Message ClientCommunicationManager::readSocketMessage() {
+    auto *packet = static_cast<Packet *>(malloc(sizeof(Packet)));
+
+    int readResult = read(this->socketConnectionResult, packet, sizeof(Packet));
+    if (readResult < 0) {
+        throw ERROR_SOCKET_READ;
+    }
+
+    return Message(*packet);
 }
