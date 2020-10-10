@@ -38,6 +38,8 @@ public:
     void handleUserConnection(const string& username, SocketFD socket, const string& group);
     void sendMessage(const Message& message);
     void handleUserDisconnection(SocketFD socket, const string& username);
+
+    string getUserNameForSocket(SocketFD socketFd);
 };
 
 
