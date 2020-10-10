@@ -35,7 +35,11 @@ void* ClientMessagesManager::readMessagesThread() {
             int index = 1;
             messages.push_back(message);
             for (Message message:messages) {
-                std::cout << "Message " << index++ << " [" << message.username << "]" <<": " << message.text << std::endl;
+                this->clientUI.displayMessage(message, userInfo.username);
+            }
+
+            if(message.packetType == TypeMaxConnectionsReached) {
+                exit(0);
             }
 
         } catch (int error) {

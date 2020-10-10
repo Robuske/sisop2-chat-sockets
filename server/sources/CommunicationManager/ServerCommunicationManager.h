@@ -26,10 +26,11 @@ private:
     SocketFD setupServerSocket();
 
     std::list<SocketFD> clients;
-
+    void handleNewClientConnectionErrors(int errorCode,SocketFD communicationSocket, const string& username, ServerGroupsManager* groupsManager);
     static void *staticHandleNewClientConnection(void *newClientArguments);
     void *handleNewClientConnection(HandleNewClientArguments *args);
-
+    void closeSocketConnection(SocketFD socket);
+    bool handleReadResult(int readResult, int socketFileDescriptor);
     void terminateClientConnection(SocketFD socketFileDescriptor, string username, ServerGroupsManager* groupsManager);
 
     Packet readPacketFromSocket(SocketFD communicationSocket, int packetSize);
