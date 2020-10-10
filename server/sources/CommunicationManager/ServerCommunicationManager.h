@@ -29,8 +29,8 @@ private:
 
     static void *staticHandleNewClientConnection(void *newClientArguments);
     void *handleNewClientConnection(HandleNewClientArguments *args);
-
-    bool handleReadResult(int readResult, int socket);
+    void closeSocketConnection(SocketFD socket);
+    bool handleReadResult(int readResult, int socketFileDescriptor);
     void terminateClientConnection(SocketFD socketFileDescriptor, string username, ServerGroupsManager* groupsManager);
 //    PacketHeader readPacketHeaderFromSocket(SocketFD communicationSocket);
     Packet readPacketFromSocket(SocketFD communicationSocket, int packetSize);

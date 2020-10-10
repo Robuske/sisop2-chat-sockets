@@ -32,14 +32,16 @@ void *ServerCommunicationManager::staticHandleNewClientConnection(void *newClien
 }
 
 // MARK: - Instance methods
-// TODO: Send disconnection message to all remaining client
-void ServerCommunicationManager::terminateClientConnection(SocketFD socketFileDescriptor, string username, ServerGroupsManager* groupsManager) {
 
+void ServerCommunicationManager::closeSocketConnection(SocketFD socketFileDescriptor) {
     int closeReturn = close(socketFileDescriptor);
     if (closeReturn < 0) {
         throw ERROR_SOCKET_CLOSE;
     }
+}
 
+void ServerCommunicationManager::terminateClientConnection(SocketFD socketFileDescriptor, string username, ServerGroupsManager* groupsManager) {
+    this->closeSocketConnection(socketFileDescriptor);
     groupsManager->handleUserDisconnection(socketFileDescriptor, username);
 }
 
@@ -125,7 +127,22 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
                 } catch (int errorCode) {
                     if (errorCode == ERROR_SOCKET_CLOSE) {
                         string errorPrefix =
-                                "Error(" + std::to_string(errno) + ") closing socket(" + std::to_string(communicationSocket) + ")";
+                                "Error(" + std::to_string(errno) + ") closing socket(" +
+                                std::to_string(communicationSocket) + ")";
+                        log(Error, errorPrefix);
+                    }
+                }
+            } else if(errorCode == ERROR_MAX_USER_CONNECTIONS_REACHED) {
+                try {
+                    int closeReturn = close(communicationSocket);
+                    if (closeReturn < 0) {
+                        throw ERROR_SOCKET_CLOSE;
+                    }
+                } catch (int errorCode) {
+                    if (errorCode == ERROR_SOCKET_CLOSE) {
+                        string errorPrefix =
+                                "Error(" + std::to_string(errno) + ") closing socket(" +
+                                std::to_string(communicationSocket) + ")";
                         log(Error, errorPrefix);
                     }
                 }

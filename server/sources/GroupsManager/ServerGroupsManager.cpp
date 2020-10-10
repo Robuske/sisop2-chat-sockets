@@ -62,7 +62,7 @@ void ServerGroupsManager::handleUserConnection(const string& username, SocketFD 
 
     if(checkForUsersMaxConnections(username)) {
         this->handleUserConnectionLimitReached(username, groupName, userConnection);
-        throw MAX_USER_CONNECTIONS_REACHED;
+        throw ERROR_MAX_USER_CONNECTIONS_REACHED;
     }
 
     for (Group &currentGroup:groups) {
