@@ -26,7 +26,7 @@ private:
     SocketFD setupServerSocket();
 
     std::list<SocketFD> clients;
-
+    void handleNewClientConnectionErrors(int errorCode,SocketFD communicationSocket, const string& username, ServerGroupsManager* groupsManager);
     static void *staticHandleNewClientConnection(void *newClientArguments);
     void *handleNewClientConnection(HandleNewClientArguments *args);
     void closeSocketConnection(SocketFD socket);
