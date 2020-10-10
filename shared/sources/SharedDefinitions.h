@@ -11,6 +11,8 @@ using std::string;
 //  This should live in ServerDefinitions.h
 #define PORT 2000
 
+#define TIMEOUT 60
+
 // Codes
 
 #define ERROR_SOCKET_CREATION -2
@@ -27,16 +29,12 @@ using std::string;
 
 typedef int SocketFD;
 
-enum PacketType { TypeConnection, TypeDesconnection, TypeMessage, TypeMaxConnectionsReached };
+enum PacketType { TypeConnection, TypeDesconnection, TypeMessage, TypeKeepAlive, TypeMaxConnectionsReached };
 
 struct tUserInfo {
     string username;
     string groupName;
 } typedef UserInfo;
-
-//struct PacketHeader {
-//    PacketHeaderType type;
-//};
 
 struct Packet {
     PacketType type;
@@ -45,10 +43,5 @@ struct Packet {
     char username[NAME_SIZE];
     char text[MESSAGE_SIZE];
 };
-
-//struct Packet {
-//    Message payload;
-//};
-
 
 #endif // SISOP2_T1_SHAREDDEFINITIONS_H

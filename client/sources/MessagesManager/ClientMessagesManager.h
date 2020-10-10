@@ -25,6 +25,8 @@ private:
     static void *staticReadMessagesThread(void *threadParm);
     void *writeMessagesThread();
     static void *staticWriteMessagesThread(void *threadParm);
+
+    void sendKeepAliveMessage();
 };
 
 

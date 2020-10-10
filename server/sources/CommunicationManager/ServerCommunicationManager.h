@@ -32,9 +32,12 @@ private:
     void closeSocketConnection(SocketFD socket);
     bool handleReadResult(int readResult, int socketFileDescriptor);
     void terminateClientConnection(SocketFD socketFileDescriptor, string username, ServerGroupsManager* groupsManager);
-//    PacketHeader readPacketHeaderFromSocket(SocketFD communicationSocket);
+
     Packet readPacketFromSocket(SocketFD communicationSocket, int packetSize);
 
+    static void *staticNewClientConnectionKeepAlive(void *newClientArguments);
+    void *newClientConnectionKeepAlive(HandleNewClientArguments *args);
+    bool shouldTerminateSocketConnection(SocketFD socket);
 };
 
 #endif //SISOP2_T1_SERVERCOMMUNICATIONMANAGER_H

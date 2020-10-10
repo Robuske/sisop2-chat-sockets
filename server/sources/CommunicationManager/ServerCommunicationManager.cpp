@@ -6,6 +6,12 @@
 #include <pthread.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <ctime>
+
+std::time_t now() {
+    std::time_t now = std::time(nullptr);
+    return now;
+}
 
 enum eLogLevel { Info, Debug, Error } typedef LogLevel;
 void log(LogLevel logLevel, const string& msg) {
@@ -28,6 +34,12 @@ void log(LogLevel logLevel, const string& msg) {
 void *ServerCommunicationManager::staticHandleNewClientConnection(void *newClientArguments) {
     auto* t = static_cast<HandleNewClientArguments*>(newClientArguments);
     t->communicationManager->handleNewClientConnection(t);
+    return nullptr;
+}
+
+void *ServerCommunicationManager::staticNewClientConnectionKeepAlive(void *newClientArguments) {
+    auto* t = static_cast<HandleNewClientArguments*>(newClientArguments);
+    t->communicationManager->newClientConnectionKeepAlive(t);
     return nullptr;
 }
 
@@ -91,7 +103,6 @@ Packet ServerCommunicationManager::readPacketFromSocket(SocketFD communicationSo
     }
 }
 
-// TODO: Change `string message` to be a `Message message`
 void ServerCommunicationManager::sendMessageToClients(Message message, const std::list<UserConnection>& userConnections) {
     for (const UserConnection& userConnection:userConnections) {
         Packet packet = message.asPacket();
@@ -102,7 +113,27 @@ void ServerCommunicationManager::sendMessageToClients(Message message, const std
     }
 }
 
-void ServerCommunicationManager::handleNewClientConnectionErrors(int errorCode,SocketFD communicationSocket, const string& username, ServerGroupsManager* groupsManager) {
+typedef std::map<SocketFD, std::time_t> KeepAlive;
+KeepAlive socketsLastPing;
+KeepAlive socketsLastPong;
+
+typedef std::map<SocketFD, std::mutex> KeepAliveAccessControl;
+KeepAliveAccessControl pingAccessControl;
+KeepAliveAccessControl pongAccessControl;
+
+void updateLastPingForSocket(SocketFD socket) {
+    pingAccessControl[socket].lock();
+    socketsLastPing[socket] = now();
+    pingAccessControl[socket].unlock();
+}
+
+void updateLastPongForSocket(SocketFD socket) {
+    pongAccessControl[socket].lock();
+    socketsLastPong[socket] = now();
+    pongAccessControl[socket].unlock();
+}
+
+void ServerCommunicationManager::handleNewClientConnectionErrors(int errorCode, SocketFD communicationSocket, const string& username, ServerGroupsManager* groupsManager) {
     if (errorCode == ERROR_CLIENT_DISCONNECTED) {
         try {
             this->terminateClientConnection(communicationSocket, username, groupsManager);
@@ -114,7 +145,7 @@ void ServerCommunicationManager::handleNewClientConnectionErrors(int errorCode,S
                 log(Error, errorPrefix);
             }
         }
-    } else if(errorCode == ERROR_MAX_USER_CONNECTIONS_REACHED) {
+    } else if (errorCode == ERROR_MAX_USER_CONNECTIONS_REACHED) {
         try {
             this->closeSocketConnection(communicationSocket);
         } catch (int errorCode) {
@@ -125,6 +156,9 @@ void ServerCommunicationManager::handleNewClientConnectionErrors(int errorCode,S
                 log(Error, errorPrefix);
             }
         }
+    } else if (errno == EBADF && shouldTerminateSocketConnection(communicationSocket)) {
+        // Quando fechamos o socket por timeout vai dar erro de bad file descriptor(errno=9)
+        // Neste caso, não queremos printar o erro
     } else {
         string errorPrefix =
                 "Error(" + std::to_string(errno) + ") from socket(" + std::to_string(communicationSocket) + ")";
@@ -136,10 +170,10 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
     SocketFD communicationSocket = args->newClientSocket;
 
     Packet packet;
-    bool shouldContinue = true;
-    while(shouldContinue) {
+    while(true) {
         try {
             packet = readPacketFromSocket(communicationSocket, sizeof(Packet));
+            updateLastPongForSocket(communicationSocket);
             Message message = Message(packet);
             if (packet.type == TypeConnection) {
                 args->groupsManager->handleUserConnection(message.username,
@@ -153,6 +187,50 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
                                             communicationSocket,
                                             packet.username,
                                             args->groupsManager);
+            break;
+        }
+    }
+
+    return nullptr;
+}
+
+bool ServerCommunicationManager::shouldTerminateSocketConnection(SocketFD socket) {
+    // TODO: Esses ifs estao aqui pq na primeira execucao o ping é 0 ainda e temos um pong da msg de conexao.
+    //  Talvez tenha uma forma melhor de resolver, mas é o que temos for now.
+    std::time_t lastPing = socketsLastPing[socket];
+    if (lastPing <= 0) {
+        return false;
+    }
+    std::time_t lastPong = socketsLastPong[socket];
+    if (lastPing <= 0) {
+        return false;
+    }
+
+    return (abs(lastPing - lastPong) > TIMEOUT);
+}
+
+void *ServerCommunicationManager::newClientConnectionKeepAlive(HandleNewClientArguments *args) {
+    UserConnection userConnection;
+    userConnection.socket = args->newClientSocket;
+    std::list<UserConnection> singleUserConnectionList;
+    singleUserConnectionList.push_back(userConnection);
+    Message keepAliveMessage = Message(TypeKeepAlive);
+    while (true) {
+        sleep(TIMEOUT);
+        try {
+            if (shouldTerminateSocketConnection(userConnection.socket)) {
+                // TODO: Get the username
+                string username = "WHERE WE CAN GET THE USERNAME FROM?";
+                terminateClientConnection(userConnection.socket, username, args->groupsManager);
+                break;
+            } else {
+                std::cout << "Pinging socket " << std::to_string(userConnection.socket) << std::endl;
+                updateLastPingForSocket(userConnection.socket);
+                sendMessageToClients(keepAliveMessage, singleUserConnectionList);
+            }
+        } catch (int zapError) {
+            string errorPrefix = "Error(" + std::to_string(errno) + ", " + std::to_string(zapError) + ") from socket(" + std::to_string(userConnection.socket) + ")";
+            log(Error, errorPrefix);
             break;
         }
     }
@@ -207,6 +285,7 @@ int ServerCommunicationManager::startServer(int loadMessageCount) {
         args.newClientSocket = communicationSocketFD;
         args.communicationManager = this;
         args.groupsManager = &groupsManager;
+        pthread_create(&clientConnections[threadIndex], nullptr, ServerCommunicationManager::staticNewClientConnectionKeepAlive, &args);
         pthread_create(&clientConnections[threadIndex], nullptr, ServerCommunicationManager::staticHandleNewClientConnection, &args);
     }
 
