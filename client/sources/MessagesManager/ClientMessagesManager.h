@@ -3,6 +3,7 @@
 
 #include "ClientDefinitions.h"
 #include "CommunicationManager/ClientCommunicationManager.h"
+#include "UI/ClientUI.h"
 #include "SharedDefinitions.h"
 #include <string>
 
@@ -18,6 +19,7 @@ public:
 private:
     UserInfo userInfo;
     ClientCommunicationManager communicationManager;
+    ClientUI clientUI;
 
     void *readMessagesThread();
     static void *staticReadMessagesThread(void *threadParm);
