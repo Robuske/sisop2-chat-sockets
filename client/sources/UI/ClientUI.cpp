@@ -22,7 +22,7 @@ string ClientUI::fromTimeStampToDateString(long timestamp) {
 string ClientUI::solveMessagePrefix(Message message, string currentUserName) {
 
     if(message.packetType == TypeMessage || message.packetType == TypeConnection) {
-        return (message.username == currentUserName) ? "you" : message.username;
+        return (message.username == currentUserName) ? "você" : message.username;
     } else {
         return "SYSTEM";
     }
