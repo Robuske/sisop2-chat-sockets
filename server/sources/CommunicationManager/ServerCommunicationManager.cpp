@@ -32,14 +32,16 @@ void *ServerCommunicationManager::staticHandleNewClientConnection(void *newClien
 }
 
 // MARK: - Instance methods
-// TODO: Send disconnection message to all remaining client
-void ServerCommunicationManager::terminateClientConnection(SocketFD socketFileDescriptor, string username, ServerGroupsManager* groupsManager) {
 
+void ServerCommunicationManager::closeSocketConnection(SocketFD socketFileDescriptor) {
     int closeReturn = close(socketFileDescriptor);
     if (closeReturn < 0) {
         throw ERROR_SOCKET_CLOSE;
     }
+}
 
+void ServerCommunicationManager::terminateClientConnection(SocketFD socketFileDescriptor, string username, ServerGroupsManager* groupsManager) {
+    this->closeSocketConnection(socketFileDescriptor);
     groupsManager->handleUserDisconnection(socketFileDescriptor, username);
 }
 
@@ -100,10 +102,38 @@ void ServerCommunicationManager::sendMessageToClients(Message message, const std
     }
 }
 
+void ServerCommunicationManager::handleNewClientConnectionErrors(int errorCode,SocketFD communicationSocket, const string& username, ServerGroupsManager* groupsManager) {
+    if (errorCode == ERROR_CLIENT_DISCONNECTED) {
+        try {
+            this->terminateClientConnection(communicationSocket, username, groupsManager);
+        } catch (int errorCode) {
+            if (errorCode == ERROR_SOCKET_CLOSE) {
+                string errorPrefix =
+                        "Error(" + std::to_string(errno) + ") closing socket(" +
+                        std::to_string(communicationSocket) + ")";
+                log(Error, errorPrefix);
+            }
+        }
+    } else if(errorCode == ERROR_MAX_USER_CONNECTIONS_REACHED) {
+        try {
+            this->closeSocketConnection(communicationSocket);
+        } catch (int errorCode) {
+            if (errorCode == ERROR_SOCKET_CLOSE) {
+                string errorPrefix =
+                        "Error(" + std::to_string(errno) + ") closing socket(" +
+                        std::to_string(communicationSocket) + ")";
+                log(Error, errorPrefix);
+            }
+        }
+    } else {
+        string errorPrefix =
+                "Error(" + std::to_string(errno) + ") from socket(" + std::to_string(communicationSocket) + ")";
+        log(Error, errorPrefix);
+    }
+}
+
 void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArguments *args) {
     SocketFD communicationSocket = args->newClientSocket;
-    // TODO: Add client to correct list in a group
-    clients.push_back(communicationSocket);
 
     Packet packet;
     bool shouldContinue = true;
@@ -119,21 +149,10 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
                 args->groupsManager->sendMessage(message);
             }
         } catch (int errorCode) {
-            if (errorCode == ERROR_CLIENT_DISCONNECTED) {
-                try {
-                    terminateClientConnection(communicationSocket, packet.username, args->groupsManager);
-                } catch (int errorCode) {
-                    if (errorCode == ERROR_SOCKET_CLOSE) {
-                        string errorPrefix =
-                                "Error(" + std::to_string(errno) + ") closing socket(" + std::to_string(communicationSocket) + ")";
-                        log(Error, errorPrefix);
-                    }
-                }
-            } else {
-                string errorPrefix =
-                        "Error(" + std::to_string(errno) + ") from socket(" + std::to_string(communicationSocket) + ")";
-                log(Error, errorPrefix);
-            }
+            handleNewClientConnectionErrors(errorCode,
+                                            communicationSocket,
+                                            packet.username,
+                                            args->groupsManager);
             break;
         }
     }

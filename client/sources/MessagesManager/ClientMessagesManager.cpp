@@ -28,6 +28,10 @@ void* ClientMessagesManager::readMessagesThread() {
                 this->clientUI.displayMessage(message, userInfo.username);
             }
 
+            if(message.packetType == TypeMaxConnectionsReached) {
+                exit(0);
+            }
+
         } catch (int error) {
             string errorPrefix = "Error(" + std::to_string(error) + ") reading from socket";
             perror(errorPrefix.c_str());
