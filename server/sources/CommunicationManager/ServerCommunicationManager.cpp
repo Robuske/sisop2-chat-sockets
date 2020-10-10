@@ -120,6 +120,7 @@ KeepAlive socketsLastPong;
 typedef std::map<SocketFD, std::mutex> KeepAliveAccessControl;
 KeepAliveAccessControl pingAccessControl;
 KeepAliveAccessControl pongAccessControl;
+
 void updateLastPingForSocket(SocketFD socket) {
     pingAccessControl[socket].lock();
     socketsLastPing[socket] = now();
