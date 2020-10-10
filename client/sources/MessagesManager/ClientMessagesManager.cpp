@@ -12,14 +12,24 @@ struct ThreadParameter {
     ClientMessagesManager *client;
 };
 
+void  ClientMessagesManager::sendKeepAliveMessage() {
+    Message keepAliveMessage = Message(TypeKeepAlive);
+    int writeResult = communicationManager.writeSocketMessage(keepAliveMessage);
+    if (writeResult < 0) {
+        string errorPrefix = "Error(" + std::to_string(writeResult) + ") writing keep alive message to socket";
+        perror(errorPrefix.c_str());
+    }
+}
+
 // thread de read messages teria que estar talvez dentro do communication manager?
 void* ClientMessagesManager::readMessagesThread() {
-
-    int readResult;
 
     while(true) {
         try {
             Message message = communicationManager.readSocketMessage();
+            if (message.packetType == TypeKeepAlive) {
+                sendKeepAliveMessage();
+            }
             system("clear");
             std::cout << "Grupo: " << userInfo.groupName << std::endl;
             int index = 1;

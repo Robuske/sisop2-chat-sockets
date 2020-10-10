@@ -23,7 +23,7 @@ using std::string;
 
 typedef int SocketFD;
 
-enum PacketType { TypeConnection, TypeDesconnection, TypeMessage };
+enum PacketType { TypeConnection, TypeDesconnection, TypeMessage, TypeKeepAlive };
 
 struct tUserInfo {
     string username;

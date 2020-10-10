@@ -1,6 +1,14 @@
 #include "Message.h"
 #include <cstring>
 
+Message::Message(PacketType packetType) {
+    this->packetType = packetType;
+    this->timestamp = 0;
+    this->username = "";
+    this->groupName = "";
+    this->text = "A KEEP ALIVE MESSAGE";
+}
+
 Message::Message(PacketType packetType, uint16_t timestamp, string groupName, string username, string text) {
     this->packetType = packetType;
     this->timestamp = timestamp;

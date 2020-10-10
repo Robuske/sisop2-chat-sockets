@@ -8,6 +8,8 @@ using std::string;
 
 class Message {
 public:
+    Message(PacketType packetType);
+
     PacketType packetType;
     uint16_t timestamp;
     string groupName;

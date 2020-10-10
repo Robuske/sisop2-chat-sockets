@@ -30,11 +30,13 @@ private:
     static void *staticHandleNewClientConnection(void *newClientArguments);
     void *handleNewClientConnection(HandleNewClientArguments *args);
 
-    bool handleReadResult(int readResult, int socket);
     void terminateClientConnection(SocketFD socketFileDescriptor, string username, ServerGroupsManager* groupsManager);
-//    PacketHeader readPacketHeaderFromSocket(SocketFD communicationSocket);
+
     Packet readPacketFromSocket(SocketFD communicationSocket, int packetSize);
 
+    static void *staticNewClientConnectionKeepAlive(void *newClientArguments);
+    void *newClientConnectionKeepAlive(HandleNewClientArguments *args);
+    bool shouldTerminateSocketConnection(SocketFD socket);
 };
 
 #endif //SISOP2_T1_SERVERCOMMUNICATIONMANAGER_H
