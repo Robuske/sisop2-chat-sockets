@@ -5,6 +5,8 @@ void ServerGroupsManager::sendMessage(const Message& message) {
     bool groupFound = false;
     string groupName = message.groupName;
     Group groupToSendMessage;
+    /// MARK: Critical session access - (This one I'm not sure.. someone double check please)
+    this->groupsListAccessControl.lockAccessForGroup(groupName);
     for (const Group& currentGroup: groups) {
         if (currentGroup.name == groupName) {
             groupToSendMessage = currentGroup;
@@ -12,6 +14,7 @@ void ServerGroupsManager::sendMessage(const Message& message) {
             break;
         }
     }
+    this->groupsListAccessControl.unlockAccessForGroup(groupName);
 
     if (!groupFound) {
         throw ERROR_GROUP_NOT_FOUND;
@@ -62,7 +65,10 @@ void ServerGroupsManager::handleUserConnection(const string& username, SocketFD 
     for (Group &currentGroup:groups) {
         if (currentGroup.name == groupName) {
             groupFound = true;
+            /// MARK: Critical session access
+            this->groupsListAccessControl.lockAccessForGroup(groupName);
             currentGroup.clients.push_back(userConnection);
+            this->groupsListAccessControl.unlockAccessForGroup(groupName);
             userConnectionsToSendConnectionMessage = currentGroup.clients;
             break;
         }
@@ -71,8 +77,11 @@ void ServerGroupsManager::handleUserConnection(const string& username, SocketFD 
     if (!groupFound) {
         Group newGroup = Group();
         newGroup.name = groupName;
+        /// MARK: Critical session access
+        this->groupsListAccessControl.lockAccessForGroup(groupName);
         newGroup.clients.push_back(userConnection);
         groups.push_back(newGroup);
+        this->groupsListAccessControl.unlockAccessForGroup(groupName);
         userConnectionsToSendConnectionMessage = newGroup.clients;
     }
 
@@ -105,9 +114,12 @@ void ServerGroupsManager::handleUserDisconnection(SocketFD socket, const string&
         for (UserConnection &currentUserConnection:currentGroup.clients) {
             if (currentUserConnection.socket == socket) {
                 groupFound = true;
-                currentGroup.clients.remove(currentUserConnection);
-                userConnectionsToSendConnectionMessage = currentGroup.clients;
                 groupName = currentGroup.name;
+                /// MARK: Critical session access
+                this->groupsListAccessControl.lockAccessForGroup(groupName);
+                currentGroup.clients.remove(currentUserConnection);
+                this->groupsListAccessControl.unlockAccessForGroup(groupName);
+                userConnectionsToSendConnectionMessage = currentGroup.clients;
                 break;
             }
         }

@@ -3,6 +3,7 @@
 
 #include "CommunicationManager/ServerCommunicationManager.h"
 #include "MessagesManager/ServerMessagesManager.h"
+#include "GroupsAccessControl/GroupsAccessControl.h"
 #include "SharedDefinitions.h"
 
 struct UserConnection {
@@ -27,6 +28,7 @@ private:
     ServerCommunicationManager *communicationManager;
     ServerMessagesManager messagesManager;
     std::list<Group> groups;
+    GroupsAccessControl groupsListAccessControl;
 
 public:
     ServerGroupsManager(int numberOfMessagesToLoadWhenUserJoined, ServerCommunicationManager *communicationManager);
