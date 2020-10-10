@@ -59,6 +59,12 @@ void ServerGroupsManager::handleUserConnection(const string& username, SocketFD 
 
     std::list<UserConnection> userConnectionsToSendConnectionMessage;
     bool groupFound = false;
+
+    if(checkForUsersMaxConnections(username)) {
+        this->handleUserConnectionLimitReached(username, groupName, userConnection);
+        throw MAX_USER_CONNECTIONS_REACHED;
+    }
+
     for (Group &currentGroup:groups) {
         if (currentGroup.name == groupName) {
             groupFound = true;
@@ -101,6 +107,7 @@ void ServerGroupsManager::handleUserDisconnection(SocketFD socket, const string&
     std::list<UserConnection> userConnectionsToSendConnectionMessage;
     string groupName;
     bool groupFound = false;
+
     for (Group &currentGroup:groups) {
         for (UserConnection &currentUserConnection:currentGroup.clients) {
             if (currentUserConnection.socket == socket) {
@@ -125,4 +132,25 @@ void ServerGroupsManager::handleUserDisconnection(SocketFD socket, const string&
 ServerGroupsManager::ServerGroupsManager(int numberOfMessagesToLoadWhenUserJoined, ServerCommunicationManager *communicationManager) {
     this->numberOfMessagesToLoadWhenUserJoined = numberOfMessagesToLoadWhenUserJoined;
     this->communicationManager = communicationManager;
+}
+
+void ServerGroupsManager::handleUserConnectionLimitReached(const string &username, const string &groupName, const UserConnection &userConnection) {
+    Message message = Message(TypeMaxConnectionsReached, 1234, groupName, username, "Conexão recusada. Você já está conectado no número máximo de dispositivos (2)");
+    std::list<Message> singleMessageList;
+    singleMessageList.push_back(message);
+    this->sendMessagesToSpecificUser(userConnection, singleMessageList, 0);
+}
+
+bool ServerGroupsManager::checkForUsersMaxConnections(const string &username) {
+    int connectionsCount = 0;
+
+    for (Group &currentGroup:groups) {
+        for (UserConnection &currentUserConnection:currentGroup.clients) {
+            if (currentUserConnection.username == username) {
+                connectionsCount++;
+            }
+        }
+    }
+
+    return (connectionsCount >= MAX_CONNECTIONS_COUNT);
 }

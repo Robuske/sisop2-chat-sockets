@@ -23,6 +23,8 @@ class ServerGroupsManager {
 private:
     void sendMessagesToSpecificUser(UserConnection userConnection, std::list<Message> messages, int messagesCount);
     void loadInitialMessagesForNewUserConnection(UserConnection userConnection, const string& groupName);
+    bool checkForUsersMaxConnections(const string &username);
+    void handleUserConnectionLimitReached(const string &username, const string &groupName, const UserConnection &userConnection);
     int numberOfMessagesToLoadWhenUserJoined;
     ServerCommunicationManager *communicationManager;
     ServerMessagesManager messagesManager;
@@ -32,7 +34,6 @@ public:
     ServerGroupsManager(int numberOfMessagesToLoadWhenUserJoined, ServerCommunicationManager *communicationManager);
     void handleUserConnection(const string& username, SocketFD socket, const string& group);
     void sendMessage(const Message& message);
-
     void handleUserDisconnection(SocketFD socket, const string& username);
 };
 
