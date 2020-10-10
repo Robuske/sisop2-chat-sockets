@@ -31,7 +31,7 @@ private:
     void *handleNewClientConnection(HandleNewClientArguments *args);
 
     bool handleReadResult(int readResult, int socket);
-    void terminateClientConnection(SocketFD socketFileDescriptor, string username);
+    void terminateClientConnection(SocketFD socketFileDescriptor, string username, ServerGroupsManager* groupsManager);
 //    PacketHeader readPacketHeaderFromSocket(SocketFD communicationSocket);
     Packet readPacketFromSocket(SocketFD communicationSocket, int packetSize);
 

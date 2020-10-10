@@ -33,9 +33,7 @@ public:
     void handleUserConnection(const string& username, SocketFD socket, const string& group);
     void sendMessage(const Message& message);
 
-    void handleUserDisconnection(const string &username, SocketFD socket, const string &groupName);
-
-    void handleUserDisconnection(SocketFD socket);
+    void handleUserDisconnection(SocketFD socket, const string& username);
 };
 
 

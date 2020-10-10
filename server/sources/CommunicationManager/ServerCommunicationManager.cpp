@@ -33,29 +33,14 @@ void *ServerCommunicationManager::staticHandleNewClientConnection(void *newClien
 
 // MARK: - Instance methods
 // TODO: Send disconnection message to all remaining client
-void ServerCommunicationManager::terminateClientConnection(SocketFD socketFileDescriptor, string username) {
+void ServerCommunicationManager::terminateClientConnection(SocketFD socketFileDescriptor, string username, ServerGroupsManager* groupsManager) {
+
     int closeReturn = close(socketFileDescriptor);
     if (closeReturn < 0) {
         throw ERROR_SOCKET_CLOSE;
     }
-    clients.remove(socketFileDescriptor);
 
-    int readWriteOperationResult;
-    string disconnectionMessage = username + " desconectou!";
-    // TODO: We should notify only the clients of a particular group, not all clients
-    // BUSKE: Pq a gente nao tem o groupsManager na instancia?
-    // Estamos apenas passando como argumento na staticHandleNewClientConnection
-    // Doug falou que tu explicou algo pra ele.
-    // this->groupsManager->handleUserDisconnection(socketFileDescriptor);
-    // This for was moved to handleUserDisconnection.
-    for(auto client = std::begin(clients); client != std::end(clients); ++client) {
-        int socketToWrite = *client;
-        readWriteOperationResult = write(socketToWrite, disconnectionMessage.c_str(), disconnectionMessage.length());
-        if (readWriteOperationResult < 0) {
-            string errorPrefix = "Error(" + std::to_string(readWriteOperationResult) + ") writing into socket(" + std::to_string(socketToWrite) +")";
-            perror(errorPrefix.c_str());
-        }
-    }
+    groupsManager->handleUserDisconnection(socketFileDescriptor, username);
 }
 
 // TODO: readPacketHeaderFromSocket and readPacketFromSocket can be refactored, the only difference is the type of what we're reading.
@@ -136,7 +121,7 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
         } catch (int errorCode) {
             if (errorCode == ERROR_CLIENT_DISCONNECTED) {
                 try {
-                    terminateClientConnection(communicationSocket, packet.username);
+                    terminateClientConnection(communicationSocket, packet.username, args->groupsManager);
                 } catch (int errorCode) {
                     if (errorCode == ERROR_SOCKET_CLOSE) {
                         string errorPrefix =
