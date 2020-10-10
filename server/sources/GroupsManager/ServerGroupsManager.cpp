@@ -154,11 +154,13 @@ bool ServerGroupsManager::checkForUsersMaxConnections(const string &username) {
     int connectionsCount = 0;
 
     for (Group &currentGroup:groups) {
+        this->groupsListAccessControl.lockAccessForGroup(currentGroup.name);
         for (UserConnection &currentUserConnection:currentGroup.clients) {
             if (currentUserConnection.username == username) {
                 connectionsCount++;
             }
         }
+        this->groupsListAccessControl.unlockAccessForGroup(currentGroup.name);
     }
 
     return (connectionsCount >= MAX_CONNECTIONS_COUNT);
