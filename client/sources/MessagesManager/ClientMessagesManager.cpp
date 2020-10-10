@@ -26,7 +26,7 @@ void* ClientMessagesManager::readMessagesThread() {
     // TODO: DEBUG: For testing. We should always send keep alive.
     bool shouldPrintKeepAlive = false;
     bool shouldSendKeepAlive = true;
-    while(true) {
+    while (true) {
         try {
             Message message = communicationManager.readSocketMessage();
             if (message.packetType == TypeKeepAlive) {
