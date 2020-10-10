@@ -11,6 +11,8 @@ using std::string;
 //  This should live in ServerDefinitions.h
 #define PORT 2000
 
+#define TIMEOUT 60
+
 // Codes
 
 #define ERROR_SOCKET_CREATION -2

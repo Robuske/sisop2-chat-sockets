@@ -6,6 +6,12 @@
 #include <pthread.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <ctime>
+
+std::time_t now() {
+    std::time_t now = std::time(nullptr);
+    return now;
+}
 
 enum eLogLevel { Info, Debug, Error } typedef LogLevel;
 void log(LogLevel logLevel, const string& msg) {
@@ -107,12 +113,6 @@ void ServerCommunicationManager::sendMessageToClients(Message message, const std
     }
 }
 
-// TODO: Handle time...
-std::time_t now() {
-    std::time_t now = std::time(nullptr);
-    return now;
-}
-
 typedef std::map<SocketFD, std::time_t> KeepAlive;
 KeepAlive socketsLastPing;
 KeepAlive socketsLastPong;
@@ -193,8 +193,6 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
     return nullptr;
 }
 
-#include <ctime>
-#define TIMEOUT 2
 bool ServerCommunicationManager::shouldTerminateSocketConnection(SocketFD socket) {
     // TODO: Esses ifs estao aqui pq na primeira execucao o ping é 0 ainda e temos um pong da msg de conexao.
     //  Talvez tenha uma forma melhor de resolver, mas é o que temos for now.
