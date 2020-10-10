@@ -97,9 +97,8 @@ void ServerGroupsManager::handleUserConnection(const string& username, SocketFD 
 }
 
 // This can throw
-void ServerGroupsManager::handleUserDisconnection(const string &username, SocketFD socket) {
+void ServerGroupsManager::handleUserDisconnection(SocketFD socket, const string& username) {
     std::list<UserConnection> userConnectionsToSendConnectionMessage;
-    string disconnectedUsername;
     string groupName;
     bool groupFound = false;
     for (Group &currentGroup:groups) {
@@ -108,7 +107,6 @@ void ServerGroupsManager::handleUserDisconnection(const string &username, Socket
                 groupFound = true;
                 currentGroup.clients.remove(currentUserConnection);
                 userConnectionsToSendConnectionMessage = currentGroup.clients;
-                disconnectedUsername = currentUserConnection.username;
                 groupName = currentGroup.name;
                 break;
             }
@@ -120,7 +118,7 @@ void ServerGroupsManager::handleUserDisconnection(const string &username, Socket
     }
 
     // TODO: Timestamp
-    Message message = Message(TypeDesconnection, 1234, groupName, disconnectedUsername, "Desconectou!");
+    Message message = Message(TypeDesconnection, 1234, groupName, username, "Desconectou!");
     communicationManager->sendMessageToClients(message, userConnectionsToSendConnectionMessage);
 }
 

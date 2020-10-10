@@ -34,12 +34,13 @@ void *ServerCommunicationManager::staticHandleNewClientConnection(void *newClien
 // MARK: - Instance methods
 // TODO: Send disconnection message to all remaining client
 void ServerCommunicationManager::terminateClientConnection(SocketFD socketFileDescriptor, string username, ServerGroupsManager* groupsManager) {
+
     int closeReturn = close(socketFileDescriptor);
     if (closeReturn < 0) {
         throw ERROR_SOCKET_CLOSE;
     }
 
-    groupsManager->handleUserDisconnection(username, socketFileDescriptor);
+    groupsManager->handleUserDisconnection(socketFileDescriptor, username);
 }
 
 // TODO: readPacketHeaderFromSocket and readPacketFromSocket can be refactored, the only difference is the type of what we're reading.
