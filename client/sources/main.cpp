@@ -101,7 +101,6 @@ int main(int argc, char *argv[]) {
 
     // TODO: Use correct port
     connectionInfo.port = std::stoul(port);
-    connectionInfo.port = PORT;
 
     int sessionResult = ClientMessagesManager().startClient(connectionInfo, userInfo);
     if(sessionResult > 0) {
