@@ -9,6 +9,25 @@ void handleControlC(int signal) {
     exit(signal);
 }
 
+#define IDENTIFIER_MIN_LENGTH 4
+#define IDENTIFIER_MAX_LENGTH 20
+// Os usuários e grupos serão identificados por uma string entre 4 e 20 caracteres.
+// Os identificadores deverão iniciar por uma letra, e conter apenas letras, números e ponto (.)
+bool isInvalidIdentifier(string identifier) {
+    bool validLength = identifier.length() >= IDENTIFIER_MIN_LENGTH && identifier.length() <= IDENTIFIER_MAX_LENGTH;
+    bool startsWithLetter = isalpha(identifier.c_str()[0]);
+    for(char& c : identifier) {
+        if (!isalnum(c)) {
+            if (c != '.') {
+                return true;
+            }
+        }
+    }
+
+    bool isValidIdentifier = validLength && startsWithLetter;
+    return !isValidIdentifier;
+}
+
 int main(int argc, char *argv[]) {
     signal(SIGINT, handleControlC);
 
@@ -59,6 +78,18 @@ int main(int argc, char *argv[]) {
             std::cout << "Qual a porta do servidor?" << std::endl;
             getline(std::cin, port);
             break;
+    }
+
+    if (isInvalidIdentifier(username)) {
+        std::cout << "Nome de usuário '" << username << "' inválido!" << std::endl;
+        std::cout << "O nome de usuário deve ter entre 4 e 20 caracteres,iniciando por uma letra, e conter apenas letras, números e ponto (.)" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    if (isInvalidIdentifier(groupName)) {
+        std::cout << "Grupo '" << username << "' inválido!" << std::endl;
+        std::cout << "O grupo deve ter entre 4 e 20 caracteres,iniciando por uma letra, e conter apenas letras, números e ponto (.)" << std::endl;
+        exit(EXIT_FAILURE);
     }
 
     UserInfo userInfo;
