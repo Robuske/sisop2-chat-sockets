@@ -23,29 +23,46 @@ void  ClientMessagesManager::sendKeepAliveMessage() {
 
 // thread de read messages teria que estar talvez dentro do communication manager?
 void* ClientMessagesManager::readMessagesThread() {
-
+    // TODO: DEBUG: For testing. We should always send keep alive.
+    bool shouldPrintKeepAlive = false;
+    bool shouldSendKeepAlive = true;
     while(true) {
         try {
             Message message = communicationManager.readSocketMessage();
             if (message.packetType == TypeKeepAlive) {
-                sendKeepAliveMessage();
-            }
-            system("clear");
-            std::cout << "Grupo: " << userInfo.groupName << std::endl;
-            int index = 1;
-            messages.push_back(message);
-            for (Message message:messages) {
-                this->clientUI.displayMessage(message, userInfo.username);
-            }
+                if (shouldSendKeepAlive) {
+                    sendKeepAliveMessage();
+                }
 
-            if(message.packetType == TypeMaxConnectionsReached) {
-                exit(0);
+                if (shouldPrintKeepAlive) {
+                    system("clear");
+                    std::cout << "Grupo: " << userInfo.groupName << std::endl;
+                    int index = 1;
+                    messages.push_back(message);
+                    for (Message message:messages) {
+                        this->clientUI.displayMessage(message, userInfo.username);
+                    }
+                }
+            } else {
+                system("clear");
+                std::cout << "Grupo: " << userInfo.groupName << std::endl;
+                int index = 1;
+                messages.push_back(message);
+                for (Message message:messages) {
+                    this->clientUI.displayMessage(message, userInfo.username);
+                }
+
+                if (message.packetType == TypeMaxConnectionsReached) {
+                    string errorPrefix = "Error(" + std::to_string(ERROR_MAX_CONNECTIONS_PER_USERNAME_REACHED) + ") reading from socket";
+                    perror(errorPrefix.c_str());
+                    exit(EXIT_FAILURE);
+                }
             }
 
         } catch (int error) {
             string errorPrefix = "Error(" + std::to_string(error) + ") reading from socket";
             perror(errorPrefix.c_str());
-            return nullptr; // TODO: Provavelmente isso tudo vai mudar bastante, mas no momento não faz sentido manter a leitura
+            exit(EXIT_FAILURE);
         }
     }
 }

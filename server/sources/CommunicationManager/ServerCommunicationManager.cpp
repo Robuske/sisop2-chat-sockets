@@ -132,7 +132,7 @@ void updateLastPongForSocket(SocketFD socket) {
     pongAccessControl[socket].unlock();
 }
 
-void ServerCommunicationManager::handleNewClientConnectionErrors(int errorCode,SocketFD communicationSocket, const string& username, ServerGroupsManager* groupsManager) {
+void ServerCommunicationManager::handleNewClientConnectionErrors(int errorCode, SocketFD communicationSocket, const string& username, ServerGroupsManager* groupsManager) {
     if (errorCode == ERROR_CLIENT_DISCONNECTED) {
         try {
             this->terminateClientConnection(communicationSocket, username, groupsManager);
@@ -144,7 +144,7 @@ void ServerCommunicationManager::handleNewClientConnectionErrors(int errorCode,S
                 log(Error, errorPrefix);
             }
         }
-    } else if(errorCode == ERROR_MAX_USER_CONNECTIONS_REACHED) {
+    } else if (errorCode == ERROR_MAX_USER_CONNECTIONS_REACHED) {
         try {
             this->closeSocketConnection(communicationSocket);
         } catch (int errorCode) {
@@ -155,6 +155,9 @@ void ServerCommunicationManager::handleNewClientConnectionErrors(int errorCode,S
                 log(Error, errorPrefix);
             }
         }
+    } else if (errno == EBADF && shouldTerminateSocketConnection(communicationSocket)) {
+        // Quando fechamos o socket por timeout vai dar erro de bad file descriptor(errno=9)
+        // Neste caso, não queremos printar o erro
     } else {
         string errorPrefix =
                 "Error(" + std::to_string(errno) + ") from socket(" + std::to_string(communicationSocket) + ")";

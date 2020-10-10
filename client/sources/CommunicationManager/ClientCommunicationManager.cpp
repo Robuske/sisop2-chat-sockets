@@ -57,7 +57,9 @@ Message ClientCommunicationManager::readSocketMessage() {
     auto *packet = static_cast<Packet *>(malloc(sizeof(Packet)));
 
     int readResult = read(this->socketConnectionResult, packet, sizeof(Packet));
-    if (readResult < 0) {
+    if (readResult == 0) {
+        throw ERROR_SERVER_DISCONNECTED;
+    } else if (readResult < 0) {
         throw ERROR_SOCKET_READ;
     }
 
