@@ -16,7 +16,7 @@ target_include_directories(server_lib PUBLIC ./../shared/sources)
 
 # Config server executable
 
-add_executable(server sources/main.cpp)
+add_executable(server sources/main.cpp sources/GroupsAccessControl/GroupsAccessControl.cpp sources/GroupsAccessControl/GroupsAccessControl.h)
 target_link_libraries(server server_lib)
 
 # Config tests

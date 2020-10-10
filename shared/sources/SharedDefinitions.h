@@ -21,6 +21,10 @@ using std::string;
 #define NAME_SIZE 128
 #define MESSAGE_SIZE 512
 
+///MARK: GAMBI Mutex declaration problem - Implicit copy
+
+#define ALL_GROUPS "ALL_GROUPS"
+
 typedef int SocketFD;
 
 enum PacketType { TypeConnection, TypeDesconnection, TypeMessage, TypeMaxConnectionsReached };
