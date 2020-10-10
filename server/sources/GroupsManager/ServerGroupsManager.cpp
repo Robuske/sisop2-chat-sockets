@@ -5,6 +5,8 @@ void ServerGroupsManager::sendMessage(const Message& message) {
     bool groupFound = false;
     string groupName = message.groupName;
     Group groupToSendMessage;
+    /// MARK: Critical session access nao deixamos, mas talvez sim
+
     for (const Group& currentGroup: groups) {
         if (currentGroup.name == groupName) {
             groupToSendMessage = currentGroup;
@@ -59,14 +61,22 @@ void ServerGroupsManager::handleUserConnection(const string& username, SocketFD 
 
     std::list<UserConnection> userConnectionsToSendConnectionMessage;
     bool groupFound = false;
+
+    /// MARK: Critical session access geralzao
+    this->allGroupsAccessControl.lockAccessForGroup(ALL_GROUPS);
+    /// Adicionar a verificacao de numero de conexoes dentro do mutex
+
     for (Group &currentGroup:groups) {
         if (currentGroup.name == groupName) {
             groupFound = true;
+            this->groupsListAccessControl.lockAccessForGroup(groupName);
             currentGroup.clients.push_back(userConnection);
+            this->groupsListAccessControl.unlockAccessForGroup(groupName);
             userConnectionsToSendConnectionMessage = currentGroup.clients;
             break;
         }
     }
+
 
     if (!groupFound) {
         Group newGroup = Group();
@@ -76,21 +86,11 @@ void ServerGroupsManager::handleUserConnection(const string& username, SocketFD 
         userConnectionsToSendConnectionMessage = newGroup.clients;
     }
 
+    this->allGroupsAccessControl.unlockAccessForGroup(ALL_GROUPS);
+
     this->loadInitialMessagesForNewUserConnection(userConnection, groupName);
 
-    // TODO: Confirmar se precisa persistir as mensagens de conexão/desconexão
-
-    // TODO: Timestamp
-    // https://www.epochconverter.com/programming/c
-    //    time_t     now;
-    //    struct tm  ts;
-    //    char       buf[80];
-    // Format time, "ddd yyyy-mm-dd hh:mm:ss zzz"
-    //    ts = *localtime(&now);
-    //    strftime(buf, sizeof(buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
-    //    time(&now);
     Message message = Message(TypeConnection, 1234, groupName, username, "Conectou!");
-
 
     communicationManager->sendMessageToClients(message, userConnectionsToSendConnectionMessage);
 
@@ -101,17 +101,25 @@ void ServerGroupsManager::handleUserDisconnection(SocketFD socket, const string&
     std::list<UserConnection> userConnectionsToSendConnectionMessage;
     string groupName;
     bool groupFound = false;
+    /// MARK: Critical session access
+    this->allGroupsAccessControl.lockAccessForGroup(ALL_GROUPS);
     for (Group &currentGroup:groups) {
+        /// MARK: Critical session access
+        this->groupsListAccessControl.lockAccessForGroup(groupName);
         for (UserConnection &currentUserConnection:currentGroup.clients) {
             if (currentUserConnection.socket == socket) {
                 groupFound = true;
+                groupName = currentGroup.name;
                 currentGroup.clients.remove(currentUserConnection);
                 userConnectionsToSendConnectionMessage = currentGroup.clients;
-                groupName = currentGroup.name;
+                this->groupsListAccessControl.unlockAccessForGroup(groupName);
                 break;
             }
         }
+        this->groupsListAccessControl.unlockAccessForGroup(groupName);
     }
+
+    this->allGroupsAccessControl.unlockAccessForGroup(ALL_GROUPS);
 
     if (!groupFound) {
         throw ERROR_GROUP_NOT_FOUND;
