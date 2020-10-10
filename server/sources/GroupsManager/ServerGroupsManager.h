@@ -29,6 +29,7 @@ private:
     ServerMessagesManager messagesManager;
     std::list<Group> groups;
     GroupsAccessControl groupsListAccessControl;
+    GroupsAccessControl allGroupsAccessControl;
 
 public:
     ServerGroupsManager(int numberOfMessagesToLoadWhenUserJoined, ServerCommunicationManager *communicationManager);
