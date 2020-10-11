@@ -61,7 +61,7 @@ void* ClientMessagesManager::writeMessagesThread() {
     string messageString;
     int writeResult;
 
-    Message connectionMessage = Message(TypeConnection, time(0), userInfo.groupName, userInfo.username, "");
+    Message connectionMessage = Message(TypeConnection, now(), userInfo.groupName, userInfo.username, "");
 
     // TODO: Throw or handle error
     communicationManager.writeConnectionMessageToSocket(connectionMessage);

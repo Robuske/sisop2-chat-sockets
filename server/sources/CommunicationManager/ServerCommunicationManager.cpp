@@ -136,13 +136,13 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
 
 void ServerCommunicationManager::updateLastPingForSocket(SocketFD socket) {
     pingAccessControl[socket].lock();
-    socketsLastPing[socket] = time(0);
+    socketsLastPing[socket] = now();
     pingAccessControl[socket].unlock();
 }
 
 void ServerCommunicationManager::updateLastPongForSocket(SocketFD socket) {
     pongAccessControl[socket].lock();
-    socketsLastPong[socket] = time(0);
+    socketsLastPong[socket] = now();
     pongAccessControl[socket].unlock();
 }
 
