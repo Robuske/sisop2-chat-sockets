@@ -6,12 +6,6 @@
 #include <pthread.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include <ctime>
-
-std::time_t now() {
-    std::time_t now = std::time(nullptr);
-    return now;
-}
 
 enum eLogLevel { Info, Debug, Error } typedef LogLevel;
 void log(LogLevel logLevel, const string& msg) {

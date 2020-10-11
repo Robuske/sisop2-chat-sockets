@@ -5,11 +5,8 @@
 #include "ServerDefinitions.h"
 #include "SharedDefinitions.h"
 #include <list>
-
-
-#include <ctime>
-#include <mutex>
 #include <map>
+#include <mutex>
 
 class ServerGroupsManager;
 struct UserConnection;

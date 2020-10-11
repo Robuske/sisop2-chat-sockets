@@ -52,7 +52,7 @@ void ServerGroupsManager::loadInitialMessagesForNewUserConnection(UserConnection
     int numberOfLoadedMessages = messagesManager.loadInitialMessages(groupName, initialMessages, numberOfMessagesToLoadWhenUserJoined);
     this->sendMessagesToSpecificUser(userConnection, initialMessages, numberOfLoadedMessages);
 }
-#include <time.h>
+
 // This can throw
 void ServerGroupsManager::handleUserConnection(const string& username, SocketFD socket, const string& groupName) {
     UserConnection userConnection;
@@ -97,7 +97,7 @@ void ServerGroupsManager::handleUserConnection(const string& username, SocketFD 
 
     this->loadInitialMessagesForNewUserConnection(userConnection, groupName);
 
-    Message message = Message(TypeConnection, 1234, groupName, username, "Conectou!");
+    Message message = Message(TypeConnection, now(), groupName, username, "Conectou!");
 
     communicationManager->sendMessageToClients(message, userConnectionsToSendConnectionMessage);
 
@@ -132,8 +132,7 @@ void ServerGroupsManager::handleUserDisconnection(SocketFD socket, const string&
         throw ERROR_GROUP_NOT_FOUND;
     }
 
-    // TODO: Timestamp
-    Message message = Message(TypeDesconnection, 1234, groupName, username, "Desconectou!");
+    Message message = Message(TypeDesconnection, now(), groupName, username, "Desconectou!");
     communicationManager->sendMessageToClients(message, userConnectionsToSendConnectionMessage);
 }
 
@@ -143,7 +142,7 @@ ServerGroupsManager::ServerGroupsManager(int numberOfMessagesToLoadWhenUserJoine
 }
 
 void ServerGroupsManager::handleUserConnectionLimitReached(const string &username, const string &groupName, const UserConnection &userConnection) {
-    Message message = Message(TypeMaxConnectionsReached, 1234, groupName, username, "Conexão recusada. Você já está conectado no número máximo de dispositivos (2)");
+    Message message = Message(TypeMaxConnectionsReached, now(), groupName, username, "Conexão recusada. Você já está conectado no número máximo de dispositivos (" + std::to_string(MAX_CONNECTIONS_COUNT) + ")");
     std::list<Message> singleMessageList;
     singleMessageList.push_back(message);
     this->sendMessagesToSpecificUser(userConnection, singleMessageList, 0);

@@ -1,6 +1,7 @@
 #ifndef SISOP2_T1_SHAREDDEFINITIONS_H
 #define SISOP2_T1_SHAREDDEFINITIONS_H
 
+#include <ctime>
 #include <string>
 
 using std::string;
@@ -8,7 +9,6 @@ using std::string;
 // TODO:
 //  The PORT is here so we can share with client and don't to change the PORT every time we run the server.
 //  Sometimes the port hangs and the server won't start until the OS close the release the resource
-//  This should live in ServerDefinitions.h
 #define PORT 2000
 
 #define TIMEOUT 5
@@ -24,7 +24,6 @@ using std::string;
 #define MESSAGE_SIZE 512
 
 ///MARK: GAMBI Mutex declaration problem - Implicit copy
-
 #define ALL_GROUPS "ALL_GROUPS"
 
 typedef int SocketFD;
@@ -43,5 +42,8 @@ struct Packet {
     char username[NAME_SIZE];
     char text[MESSAGE_SIZE];
 };
+
+// Only forward definition to avoid duplicate symbols
+std::time_t now();
 
 #endif // SISOP2_T1_SHAREDDEFINITIONS_H
