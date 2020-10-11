@@ -11,12 +11,12 @@ using std::string;
 class ClientUI {
 
 private:
-    string buildTextMessage(const Message& message, const string& currentUserName);
+    string buildTextMessage(Message message, string currentUserName);
     string fromTimeStampToDateString(long timestamp);
-    string solveMessagePrefix(const Message& message, const string& currentUserName);
+    string solveMessagePrefix(Message message, string currentUserName);
 public:
-    void displayMessages(std::list<Message>& messages, UserInfo userInfo);
-    void displayTextInputIndicator(const string& userName);
+    void displayMessages(std::list<Message> messages, UserInfo userInfo);
+    void displayTextInputIndicator(string userName);
 };
 
 
