@@ -40,7 +40,6 @@ private:
     static void *staticHandleNewClientConnection(void *newClientArguments);
     void *handleNewClientConnection(HandleNewClientArguments *args);
     void closeSocketConnection(SocketFD socket);
-    bool handleReadResult(int readResult, int socketFileDescriptor);
     void terminateClientConnection(SocketFD socketFileDescriptor, string username, ServerGroupsManager* groupsManager);
 
     Packet readPacketFromSocket(SocketFD communicationSocket, int packetSize);

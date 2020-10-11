@@ -11,7 +11,7 @@ using std::string;
 //  Sometimes the port hangs and the server won't start until the OS close the release the resource
 #define PORT 2000
 
-#define TIMEOUT 5
+#define TIMEOUT 60
 
 // Codes
 

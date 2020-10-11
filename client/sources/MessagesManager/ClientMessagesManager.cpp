@@ -5,9 +5,6 @@
 
 std::list<Message> messages;
 
-// TODO: Can we remove this?
-int messagesNumber = 0;
-
 struct ThreadParameter {
     ClientMessagesManager *client;
 };
@@ -37,7 +34,6 @@ void* ClientMessagesManager::readMessagesThread() {
                 if (shouldPrintKeepAlive) {
                     system("clear");
                     std::cout << "Grupo: " << userInfo.groupName << std::endl;
-                    int index = 1;
                     messages.push_back(message);
                     for (Message message:messages) {
                         this->clientUI.displayMessage(message, userInfo.username);
@@ -46,7 +42,6 @@ void* ClientMessagesManager::readMessagesThread() {
             } else {
                 system("clear");
                 std::cout << "Grupo: " << userInfo.groupName << std::endl;
-                int index = 1;
                 messages.push_back(message);
                 for (Message message:messages) {
                     this->clientUI.displayMessage(message, userInfo.username);

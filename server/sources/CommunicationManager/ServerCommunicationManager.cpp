@@ -51,40 +51,6 @@ void ServerCommunicationManager::terminateClientConnection(SocketFD socketFileDe
     groupsManager->handleUserDisconnection(socketFileDescriptor, username);
 }
 
-// TODO: readPacketHeaderFromSocket and readPacketFromSocket can be refactored, the only difference is the type of what we're reading.
-//  Maybe we can move this to shared so the client can also use this code
-//  I tried the code below but the server was crashing when a user connects:
-//void readSocket(SocketFD socket, size_t length, void* dst) {
-//    int readOperationResult = read(socket, dst, length);
-//    if (readOperationResult == 0) {
-//        throw ERROR_CLIENT_DISCONNECTED;
-//    } else if (readOperationResult < 0) {
-//        throw readOperationResult;
-//    }
-//}
-//
-//PacketHeader ServerCommunicationManager::readPacketHeaderFromSocket(SocketFD communicationSocket) {
-//    PacketHeader packetHeader;
-//    readSocket(communicationSocket, sizeof(PacketHeader), &packetHeader);
-//}
-//
-//Packet ServerCommunicationManager::readPacketFromSocket(SocketFD communicationSocket, int packetSize) {
-//    Packet packet;
-//    readSocket(communicationSocket, packetSize, &packet);
-//}
-
-//PacketHeader ServerCommunicationManager::readPacketHeaderFromSocket(SocketFD communicationSocket) {
-//    PacketHeader packetHeader;
-//    int readOperationResult = read(communicationSocket, &packetHeader, sizeof(PacketHeader));
-//    if (readOperationResult == 0) {
-//        throw ERROR_CLIENT_DISCONNECTED;
-//    } else if (readOperationResult < 0) {
-//        throw readOperationResult;
-//    } else {
-//        return packetHeader;
-//    }
-//}
-
 Packet ServerCommunicationManager::readPacketFromSocket(SocketFD communicationSocket, int packetSize) {
     Packet packet;
     int readOperationResult = read(communicationSocket, &packet, packetSize);
@@ -210,14 +176,12 @@ void *ServerCommunicationManager::newClientConnectionKeepAlive(HandleNewClientAr
         try {
             string username = args->groupsManager->getUserNameForSocket(userConnection.socket);
             if (username.empty()) {
-                // client desconectou durante o timeout.
+                // Client desconectou no intervalo do timeout.
                 std::cout << "Socket " + std::to_string(userConnection.socket) + " already left" << std::endl;
                 break;
             }
 
             if (shouldTerminateSocketConnection(userConnection.socket)) {
-                // TODO: Get the username
-                string username = "WHERE WE CAN GET THE USERNAME FROM?";
                 terminateClientConnection(userConnection.socket, username, args->groupsManager);
                 break;
             } else {

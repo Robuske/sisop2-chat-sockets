@@ -32,7 +32,7 @@ void ServerGroupsManager::sendMessage(const Message& message) {
  * @param[out] void
  */
 
-void ServerGroupsManager::sendMessagesToSpecificUser(UserConnection userConnection, std::list<Message> messages, int loadedMessagesCount) {
+void ServerGroupsManager::sendMessagesToSpecificUser(UserConnection userConnection, std::list<Message> messages) {
     std::list<UserConnection> singleUserConnectionList;
     singleUserConnectionList.push_back(userConnection);
     for (const auto& message:messages) {
@@ -49,8 +49,8 @@ void ServerGroupsManager::sendMessagesToSpecificUser(UserConnection userConnecti
 
 void ServerGroupsManager::loadInitialMessagesForNewUserConnection(UserConnection userConnection, const string& groupName) {
     std::list<Message> initialMessages;
-    int numberOfLoadedMessages = messagesManager.loadInitialMessages(groupName, initialMessages, numberOfMessagesToLoadWhenUserJoined);
-    this->sendMessagesToSpecificUser(userConnection, initialMessages, numberOfLoadedMessages);
+    messagesManager.loadInitialMessages(groupName, initialMessages, numberOfMessagesToLoadWhenUserJoined);
+    this->sendMessagesToSpecificUser(userConnection, initialMessages);
 }
 
 // This can throw
@@ -145,7 +145,7 @@ void ServerGroupsManager::handleUserConnectionLimitReached(const string &usernam
     Message message = Message(TypeMaxConnectionsReached, now(), groupName, username, "Conexão recusada. Você já está conectado no número máximo de dispositivos (" + std::to_string(MAX_CONNECTIONS_COUNT) + ")");
     std::list<Message> singleMessageList;
     singleMessageList.push_back(message);
-    this->sendMessagesToSpecificUser(userConnection, singleMessageList, 0);
+    this->sendMessagesToSpecificUser(userConnection, singleMessageList);
 }
 
 bool ServerGroupsManager::checkForUsersMaxConnections(const string &username) {
