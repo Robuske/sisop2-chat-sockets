@@ -43,7 +43,5 @@ struct Packet {
     char text[MESSAGE_SIZE];
 };
 
-// Only forward definition to avoid duplicate symbols
-std::time_t now();
 
 #endif // SISOP2_T1_SHAREDDEFINITIONS_H

@@ -33,7 +33,7 @@ string ClientUI::buildTextMessage(Message message, string currentUserName) {
     return finalMessage;
 }
 
-string ClientUI::fromTimeStampToDateString(long timestamp) {
+string ClientUI::fromTimeStampToDateString(std::time_t timestamp) {
     struct tm *timeInfo = localtime (&timestamp);
     char strBuffer[20];
     strftime (strBuffer, 20,"%H:%M:%S",timeInfo);
