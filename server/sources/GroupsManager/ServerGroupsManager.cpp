@@ -120,7 +120,6 @@ void ServerGroupsManager::handleUserDisconnection(SocketFD socket, const string&
                 groupName = currentGroup.name;
                 currentGroup.clients.remove(currentUserConnection);
                 userConnectionsToSendConnectionMessage = currentGroup.clients;
-                this->groupsListAccessControl.unlockAccessForGroup(groupName);
                 break;
             }
         }
