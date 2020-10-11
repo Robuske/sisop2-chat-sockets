@@ -25,13 +25,13 @@ void log(LogLevel logLevel, const string& msg) {
 }
 
 // MARK: - Static methods
-void *ServerCommunicationManager::staticHandleNewClientConnection(void *newClientArguments) {
+void *ServerCommunicationManager::staticHandleNewClientConnectionThread(void *newClientArguments) {
     auto* t = static_cast<HandleNewClientArguments*>(newClientArguments);
     t->communicationManager->handleNewClientConnection(t);
     return nullptr;
 }
 
-void *ServerCommunicationManager::staticNewClientConnectionKeepAlive(void *newClientArguments) {
+void *ServerCommunicationManager::staticNewClientConnectionKeepAliveThread(void *newClientArguments) {
     auto* t = static_cast<HandleNewClientArguments*>(newClientArguments);
     t->communicationManager->newClientConnectionKeepAlive(t);
     return nullptr;
@@ -247,8 +247,10 @@ int ServerCommunicationManager::startServer(int loadMessageCount) {
         // Não estamos usando o id da thread depois, só estamos passando um valor porque usar nullptr no primeiro parâmetro da um warning
         pthread_t keepAliveThread, connectionThread;
 
-        pthread_create(&keepAliveThread, nullptr, ServerCommunicationManager::staticNewClientConnectionKeepAlive, &args);
-        pthread_create(&connectionThread, nullptr, ServerCommunicationManager::staticHandleNewClientConnection, &args);
+        pthread_create(&keepAliveThread, nullptr, ServerCommunicationManager::staticNewClientConnectionKeepAliveThread,
+                       &args);
+        pthread_create(&connectionThread, nullptr, ServerCommunicationManager::staticHandleNewClientConnectionThread,
+                       &args);
     }
 
     return 0;
