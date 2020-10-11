@@ -131,7 +131,7 @@ void ServerGroupsManager::handleUserDisconnection(SocketFD socket, const string&
         throw ERROR_GROUP_NOT_FOUND;
     }
 
-    Message message = Message(TypeDesconnection,now(), groupName, username, "Desconectou!");
+    Message message = Message(TypeDesconnection, now(), groupName, username, "Desconectou!");
     communicationManager->sendMessageToClients(message, userConnectionsToSendConnectionMessage);
 }
 
