@@ -11,12 +11,12 @@ public:
     Message(PacketType packetType);
 
     PacketType packetType;
-    uint16_t timestamp;
+    long timestamp;
     string groupName;
     string username;
     string text;
 
-    Message(PacketType packetType, uint16_t timestamp, string groupName, string username, string text);
+    Message(PacketType packetType, long timestamp, string groupName, string username, string text);
     explicit Message(Packet packet);
 
     const Packet asPacket();

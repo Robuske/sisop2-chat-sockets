@@ -4,17 +4,19 @@
 #include <string>
 #include "Message/Message.h"
 #include "SharedDefinitions.h"
+#include <list>
 
 using std::string;
 
 class ClientUI {
 
 private:
-    string buildTextMessage(Message message, string currentUserName);
+    string buildTextMessage(const Message& message, const string& currentUserName);
     string fromTimeStampToDateString(long timestamp);
-    string solveMessagePrefix(Message message, string currentUserName);
+    string solveMessagePrefix(const Message& message, const string& currentUserName);
 public:
-    void displayMessage(Message message, string currentUserName);
+    void displayMessages(std::list<Message>& messages, UserInfo userInfo);
+    void displayTextInputIndicator(const string& userName);
 };
 
 
