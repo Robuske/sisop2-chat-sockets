@@ -6,12 +6,6 @@
 #include <pthread.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include <ctime>
-
-std::time_t now() {
-    std::time_t now = std::time(nullptr);
-    return now;
-}
 
 enum eLogLevel { Info, Debug, Error } typedef LogLevel;
 void log(LogLevel logLevel, const string& msg) {
@@ -57,40 +51,6 @@ void ServerCommunicationManager::terminateClientConnection(SocketFD socketFileDe
     groupsManager->handleUserDisconnection(socketFileDescriptor, username);
 }
 
-// TODO: readPacketHeaderFromSocket and readPacketFromSocket can be refactored, the only difference is the type of what we're reading.
-//  Maybe we can move this to shared so the client can also use this code
-//  I tried the code below but the server was crashing when a user connects:
-//void readSocket(SocketFD socket, size_t length, void* dst) {
-//    int readOperationResult = read(socket, dst, length);
-//    if (readOperationResult == 0) {
-//        throw ERROR_CLIENT_DISCONNECTED;
-//    } else if (readOperationResult < 0) {
-//        throw readOperationResult;
-//    }
-//}
-//
-//PacketHeader ServerCommunicationManager::readPacketHeaderFromSocket(SocketFD communicationSocket) {
-//    PacketHeader packetHeader;
-//    readSocket(communicationSocket, sizeof(PacketHeader), &packetHeader);
-//}
-//
-//Packet ServerCommunicationManager::readPacketFromSocket(SocketFD communicationSocket, int packetSize) {
-//    Packet packet;
-//    readSocket(communicationSocket, packetSize, &packet);
-//}
-
-//PacketHeader ServerCommunicationManager::readPacketHeaderFromSocket(SocketFD communicationSocket) {
-//    PacketHeader packetHeader;
-//    int readOperationResult = read(communicationSocket, &packetHeader, sizeof(PacketHeader));
-//    if (readOperationResult == 0) {
-//        throw ERROR_CLIENT_DISCONNECTED;
-//    } else if (readOperationResult < 0) {
-//        throw readOperationResult;
-//    } else {
-//        return packetHeader;
-//    }
-//}
-
 Packet ServerCommunicationManager::readPacketFromSocket(SocketFD communicationSocket, int packetSize) {
     Packet packet;
     int readOperationResult = read(communicationSocket, &packet, packetSize);
@@ -111,26 +71,6 @@ void ServerCommunicationManager::sendMessageToClients(Message message, const std
             throw ERROR_SOCKET_WRITE;
         }
     }
-}
-
-typedef std::map<SocketFD, std::time_t> KeepAlive;
-KeepAlive socketsLastPing;
-KeepAlive socketsLastPong;
-
-typedef std::map<SocketFD, std::mutex> KeepAliveAccessControl;
-KeepAliveAccessControl pingAccessControl;
-KeepAliveAccessControl pongAccessControl;
-
-void updateLastPingForSocket(SocketFD socket) {
-    pingAccessControl[socket].lock();
-    socketsLastPing[socket] = now();
-    pingAccessControl[socket].unlock();
-}
-
-void updateLastPongForSocket(SocketFD socket) {
-    pongAccessControl[socket].lock();
-    socketsLastPong[socket] = now();
-    pongAccessControl[socket].unlock();
 }
 
 void ServerCommunicationManager::handleNewClientConnectionErrors(int errorCode, SocketFD communicationSocket, const string& username, ServerGroupsManager* groupsManager) {
@@ -194,6 +134,18 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
     return nullptr;
 }
 
+void ServerCommunicationManager::updateLastPingForSocket(SocketFD socket) {
+    pingAccessControl[socket].lock();
+    socketsLastPing[socket] = now();
+    pingAccessControl[socket].unlock();
+}
+
+void ServerCommunicationManager::updateLastPongForSocket(SocketFD socket) {
+    pongAccessControl[socket].lock();
+    socketsLastPong[socket] = now();
+    pongAccessControl[socket].unlock();
+}
+
 bool ServerCommunicationManager::shouldTerminateSocketConnection(SocketFD socket) {
     // TODO: Esses ifs estao aqui pq na primeira execucao o ping é 0 ainda e temos um pong da msg de conexao.
     //  Talvez tenha uma forma melhor de resolver, mas é o que temos for now.
@@ -215,12 +167,21 @@ void *ServerCommunicationManager::newClientConnectionKeepAlive(HandleNewClientAr
     std::list<UserConnection> singleUserConnectionList;
     singleUserConnectionList.push_back(userConnection);
     Message keepAliveMessage = Message(TypeKeepAlive);
+
+    // Ensures ping is reset when repeating the socket
+    updateLastPingForSocket(userConnection.socket);
+
     while (true) {
         sleep(TIMEOUT);
         try {
+            string username = args->groupsManager->getUserNameForSocket(userConnection.socket);
+            if (username.empty()) {
+                // Client desconectou no intervalo do timeout.
+                std::cout << "Socket " + std::to_string(userConnection.socket) + " already left" << std::endl;
+                break;
+            }
+
             if (shouldTerminateSocketConnection(userConnection.socket)) {
-                // TODO: Get the username
-                string username = "WHERE WE CAN GET THE USERNAME FROM?";
                 terminateClientConnection(userConnection.socket, username, args->groupsManager);
                 break;
             } else {
@@ -271,9 +232,6 @@ int ServerCommunicationManager::startServer(int loadMessageCount) {
     if (connectionSocketFDResult < 0)
         return connectionSocketFDResult;
 
-    // TODO: Server não deveria ter isso, só o GroupsManager deveria controlar isso, mas no momento estamos usando pra desconectar users
-    pthread_t clientConnections[10];
-    int threadIndex = 0;
     struct sockaddr_in clientAddress;
     socklen_t clientSocketLength;
     while(true) {
@@ -285,8 +243,12 @@ int ServerCommunicationManager::startServer(int loadMessageCount) {
         args.newClientSocket = communicationSocketFD;
         args.communicationManager = this;
         args.groupsManager = &groupsManager;
-        pthread_create(&clientConnections[threadIndex], nullptr, ServerCommunicationManager::staticNewClientConnectionKeepAlive, &args);
-        pthread_create(&clientConnections[threadIndex], nullptr, ServerCommunicationManager::staticHandleNewClientConnection, &args);
+
+        // Não estamos usando o id da thread depois, só estamos passando um valor porque usar nullptr no primeiro parâmetro da um warning
+        pthread_t keepAliveThread, connectionThread;
+
+        pthread_create(&keepAliveThread, nullptr, ServerCommunicationManager::staticNewClientConnectionKeepAlive, &args);
+        pthread_create(&connectionThread, nullptr, ServerCommunicationManager::staticHandleNewClientConnection, &args);
     }
 
     return 0;

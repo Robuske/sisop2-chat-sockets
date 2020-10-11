@@ -5,9 +5,6 @@
 
 std::list<Message> messages;
 
-// TODO: Can we remove this?
-int messagesNumber = 0;
-
 struct ThreadParameter {
     ClientMessagesManager *client;
 };
@@ -37,7 +34,6 @@ void* ClientMessagesManager::readMessagesThread() {
                 if (shouldPrintKeepAlive) {
                     system("clear");
                     std::cout << "Grupo: " << userInfo.groupName << std::endl;
-                    int index = 1;
                     messages.push_back(message);
                     for (Message message:messages) {
                         this->clientUI.displayMessage(message, userInfo.username);
@@ -46,7 +42,6 @@ void* ClientMessagesManager::readMessagesThread() {
             } else {
                 system("clear");
                 std::cout << "Grupo: " << userInfo.groupName << std::endl;
-                int index = 1;
                 messages.push_back(message);
                 for (Message message:messages) {
                     this->clientUI.displayMessage(message, userInfo.username);
@@ -71,7 +66,7 @@ void* ClientMessagesManager::writeMessagesThread() {
     string messageString;
     int writeResult;
 
-    Message connectionMessage = Message(TypeConnection, 12345, userInfo.groupName, userInfo.username, "");
+    Message connectionMessage = Message(TypeConnection, now(), userInfo.groupName, userInfo.username, "");
 
     // TODO: Throw or handle error
     communicationManager.writeConnectionMessageToSocket(connectionMessage);
@@ -81,10 +76,7 @@ void* ClientMessagesManager::writeMessagesThread() {
         std::cout << " > ";
         std::getline(std::cin, messageString);
 
-//        // TODO: Timestamp
-//        message.timestamp = 1234;
-//        message.group = userInfo.groupName;
-        Message message = Message(TypeMessage, 654321, userInfo.groupName, userInfo.username, messageString);
+        Message message = Message(TypeMessage, now(), userInfo.groupName, userInfo.username, messageString);
 
         writeResult = communicationManager.writeSocketMessage(message);
         if (writeResult < 0) {

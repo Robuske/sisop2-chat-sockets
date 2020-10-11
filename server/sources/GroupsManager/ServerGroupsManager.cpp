@@ -32,7 +32,7 @@ void ServerGroupsManager::sendMessage(const Message& message) {
  * @param[out] void
  */
 
-void ServerGroupsManager::sendMessagesToSpecificUser(UserConnection userConnection, std::list<Message> messages, int loadedMessagesCount) {
+void ServerGroupsManager::sendMessagesToSpecificUser(UserConnection userConnection, std::list<Message> messages) {
     std::list<UserConnection> singleUserConnectionList;
     singleUserConnectionList.push_back(userConnection);
     for (const auto& message:messages) {
@@ -49,10 +49,10 @@ void ServerGroupsManager::sendMessagesToSpecificUser(UserConnection userConnecti
 
 void ServerGroupsManager::loadInitialMessagesForNewUserConnection(UserConnection userConnection, const string& groupName) {
     std::list<Message> initialMessages;
-    int numberOfLoadedMessages = messagesManager.loadInitialMessages(groupName, initialMessages, numberOfMessagesToLoadWhenUserJoined);
-    this->sendMessagesToSpecificUser(userConnection, initialMessages, numberOfLoadedMessages);
+    messagesManager.loadInitialMessages(groupName, initialMessages, numberOfMessagesToLoadWhenUserJoined);
+    this->sendMessagesToSpecificUser(userConnection, initialMessages);
 }
-#include <time.h>
+
 // This can throw
 void ServerGroupsManager::handleUserConnection(const string& username, SocketFD socket, const string& groupName) {
     UserConnection userConnection;
@@ -97,7 +97,7 @@ void ServerGroupsManager::handleUserConnection(const string& username, SocketFD 
 
     this->loadInitialMessagesForNewUserConnection(userConnection, groupName);
 
-    Message message = Message(TypeConnection, 1234, groupName, username, "Conectou!");
+    Message message = Message(TypeConnection, now(), groupName, username, "Conectou!");
 
     communicationManager->sendMessageToClients(message, userConnectionsToSendConnectionMessage);
 
@@ -113,7 +113,7 @@ void ServerGroupsManager::handleUserDisconnection(SocketFD socket, const string&
     this->allGroupsAccessControl.lockAccessForGroup(ALL_GROUPS);
     for (Group &currentGroup:groups) {
         /// MARK: Critical session access
-        this->groupsListAccessControl.lockAccessForGroup(groupName);
+        this->groupsListAccessControl.lockAccessForGroup(currentGroup.name);
         for (UserConnection &currentUserConnection:currentGroup.clients) {
             if (currentUserConnection.socket == socket) {
                 groupFound = true;
@@ -123,7 +123,7 @@ void ServerGroupsManager::handleUserDisconnection(SocketFD socket, const string&
                 break;
             }
         }
-        this->groupsListAccessControl.unlockAccessForGroup(groupName);
+        this->groupsListAccessControl.unlockAccessForGroup(currentGroup.name);
     }
 
     this->allGroupsAccessControl.unlockAccessForGroup(ALL_GROUPS);
@@ -132,8 +132,7 @@ void ServerGroupsManager::handleUserDisconnection(SocketFD socket, const string&
         throw ERROR_GROUP_NOT_FOUND;
     }
 
-    // TODO: Timestamp
-    Message message = Message(TypeDesconnection, 1234, groupName, username, "Desconectou!");
+    Message message = Message(TypeDesconnection, now(), groupName, username, "Desconectou!");
     communicationManager->sendMessageToClients(message, userConnectionsToSendConnectionMessage);
 }
 
@@ -143,10 +142,10 @@ ServerGroupsManager::ServerGroupsManager(int numberOfMessagesToLoadWhenUserJoine
 }
 
 void ServerGroupsManager::handleUserConnectionLimitReached(const string &username, const string &groupName, const UserConnection &userConnection) {
-    Message message = Message(TypeMaxConnectionsReached, 1234, groupName, username, "Conexão recusada. Você já está conectado no número máximo de dispositivos (2)");
+    Message message = Message(TypeMaxConnectionsReached, now(), groupName, username, "Conexão recusada. Você já está conectado no número máximo de dispositivos (" + std::to_string(MAX_CONNECTIONS_COUNT) + ")");
     std::list<Message> singleMessageList;
     singleMessageList.push_back(message);
-    this->sendMessagesToSpecificUser(userConnection, singleMessageList, 0);
+    this->sendMessagesToSpecificUser(userConnection, singleMessageList);
 }
 
 bool ServerGroupsManager::checkForUsersMaxConnections(const string &username) {
@@ -166,15 +165,20 @@ bool ServerGroupsManager::checkForUsersMaxConnections(const string &username) {
 }
 
 string ServerGroupsManager::getUserNameForSocket(SocketFD socketFd) {
+    this->allGroupsAccessControl.lockAccessForGroup(ALL_GROUPS);
     for (Group &currentGroup:groups) {
         this->groupsListAccessControl.lockAccessForGroup(currentGroup.name);
         for (UserConnection &currentUserConnection:currentGroup.clients) {
             if (currentUserConnection.socket == socketFd) {
+                this->groupsListAccessControl.unlockAccessForGroup(currentGroup.name);
+                this->allGroupsAccessControl.unlockAccessForGroup(ALL_GROUPS);
                 return currentUserConnection.username;
             }
         }
         this->groupsListAccessControl.unlockAccessForGroup(currentGroup.name);
     }
+    this->allGroupsAccessControl.unlockAccessForGroup(ALL_GROUPS);
 
-    return nullptr;
+    // Precisa ser "", usar nullptr mata o server
+    return "";
 }

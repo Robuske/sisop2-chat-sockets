@@ -1,7 +1,6 @@
 #include "ClientUI.h"
 #include <iostream>
 
-// TODO: Se for o mesmo usuário a mensagem deve ser "Você: msg msg msg"
 void ClientUI::displayMessage(Message message, string currentUserName) {
     std::cout << this->buildTextMessage(message, currentUserName) << std::endl;
 }
@@ -9,9 +8,8 @@ void ClientUI::displayMessage(Message message, string currentUserName) {
 string ClientUI::buildTextMessage(Message message, string currentUserName) {
     string strTimeStamp = this->fromTimeStampToDateString(message.timestamp);
     string msgPrefix = this->solveMessagePrefix(message, currentUserName);
-    string finalMessage = strTimeStamp.append(" ")
-            .append("[").append(msgPrefix).append("]")
-            .append(" ").append(message.text);
+    string finalMessage = strTimeStamp + " [" + msgPrefix + "] " + message.text;
+
     return finalMessage;
 }
 
@@ -21,9 +19,12 @@ string ClientUI::fromTimeStampToDateString(long timestamp) {
 
 string ClientUI::solveMessagePrefix(Message message, string currentUserName) {
 
-    if(message.packetType == TypeMessage || message.packetType == TypeConnection) {
-        return (message.username == currentUserName) ? "você" : message.username;
-    } else {
-        return "SYSTEM";
+    switch (message.packetType) {
+        case TypeMessage:
+        case TypeConnection:
+        case TypeDesconnection:
+            return (message.username == currentUserName) ? "Você" : message.username;
+        default:
+            return "SYSTEM";
     }
 }

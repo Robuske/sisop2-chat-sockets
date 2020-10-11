@@ -22,7 +22,7 @@ struct Group {
 
 class ServerGroupsManager {
 private:
-    void sendMessagesToSpecificUser(UserConnection userConnection, std::list<Message> messages, int messagesCount);
+    void sendMessagesToSpecificUser(UserConnection userConnection, std::list<Message> messages);
     void loadInitialMessagesForNewUserConnection(UserConnection userConnection, const string& groupName);
     bool checkForUsersMaxConnections(const string &username);
     void handleUserConnectionLimitReached(const string &username, const string &groupName, const UserConnection &userConnection);

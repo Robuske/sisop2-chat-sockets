@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (isInvalidIdentifier(groupName)) {
-        std::cout << "Grupo '" << username << "' inválido!" << std::endl;
+        std::cout << "Grupo '" << groupName << "' inválido!" << std::endl;
         std::cout << "O grupo deve ter entre 4 e 20 caracteres,iniciando por uma letra, e conter apenas letras, números e ponto (.)" << std::endl;
         exit(EXIT_FAILURE);
     }
