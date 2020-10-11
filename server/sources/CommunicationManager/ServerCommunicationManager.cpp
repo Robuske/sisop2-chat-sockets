@@ -218,6 +218,12 @@ void *ServerCommunicationManager::newClientConnectionKeepAlive(HandleNewClientAr
     while (true) {
         sleep(TIMEOUT);
         try {
+            string username = args->groupsManager->getUserNameForSocket(userConnection.socket);
+            if (username.length() <= 0) {
+                // client desconectou durante o timeout.
+                break;
+            }
+
             if (shouldTerminateSocketConnection(userConnection.socket)) {
                 // TODO: Get the username
                 string username = "WHERE WE CAN GET THE USERNAME FROM?";

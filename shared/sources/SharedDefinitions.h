@@ -11,7 +11,7 @@ using std::string;
 //  This should live in ServerDefinitions.h
 #define PORT 2000
 
-#define TIMEOUT 60
+#define TIMEOUT 5
 
 // Codes
 
