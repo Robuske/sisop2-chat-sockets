@@ -232,9 +232,6 @@ int ServerCommunicationManager::startServer(int loadMessageCount) {
     if (connectionSocketFDResult < 0)
         return connectionSocketFDResult;
 
-    // TODO: Server não deveria ter isso, só o GroupsManager deveria controlar isso, mas no momento estamos usando pra desconectar users
-    pthread_t clientConnections[10];
-    int threadIndex = 0;
     struct sockaddr_in clientAddress;
     socklen_t clientSocketLength;
     while(true) {
@@ -246,8 +243,12 @@ int ServerCommunicationManager::startServer(int loadMessageCount) {
         args.newClientSocket = communicationSocketFD;
         args.communicationManager = this;
         args.groupsManager = &groupsManager;
-        pthread_create(&clientConnections[threadIndex], nullptr, ServerCommunicationManager::staticNewClientConnectionKeepAlive, &args);
-        pthread_create(&clientConnections[threadIndex], nullptr, ServerCommunicationManager::staticHandleNewClientConnection, &args);
+
+        // Não estamos usando o id da thread depois, só estamos passando um valor porque usar nullptr no primeiro parâmetro da um warning
+        pthread_t keepAliveThread, connectionThread;
+
+        pthread_create(&keepAliveThread, nullptr, ServerCommunicationManager::staticNewClientConnectionKeepAlive, &args);
+        pthread_create(&connectionThread, nullptr, ServerCommunicationManager::staticHandleNewClientConnection, &args);
     }
 
     return 0;
