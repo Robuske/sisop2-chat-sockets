@@ -30,26 +30,33 @@ public:
 private:
     SocketFD setupServerSocket();
 
+    // Ping/pong for keep alive
     KeepAlive socketsLastPing;
     KeepAlive socketsLastPong;
+    void updateLastPingForSocket(SocketFD socket);
+    void updateLastPongForSocket(SocketFD socket);
 
+    // Mutexes
     KeepAliveAccessControl pingAccessControl;
     KeepAliveAccessControl pongAccessControl;
 
-    void handleNewClientConnectionErrors(int errorCode,SocketFD communicationSocket, const string& username, ServerGroupsManager* groupsManager);
-    static void *staticHandleNewClientConnection(void *newClientArguments);
+    // Threads
+    static void *staticHandleNewClientConnectionThread(void *newClientArguments);
     void *handleNewClientConnection(HandleNewClientArguments *args);
-    void closeSocketConnection(SocketFD socket);
-    void terminateClientConnection(SocketFD socketFileDescriptor, string username, ServerGroupsManager* groupsManager);
+    static void *staticNewClientConnectionKeepAliveThread(void *newClientArguments);
+    void *newClientConnectionKeepAlive(HandleNewClientArguments *args);
 
+    // Socket methods
     Packet readPacketFromSocket(SocketFD communicationSocket, int packetSize);
 
-    static void *staticNewClientConnectionKeepAlive(void *newClientArguments);
-    void *newClientConnectionKeepAlive(HandleNewClientArguments *args);
-    bool shouldTerminateSocketConnection(SocketFD socket);
+    //  Handle errors
+    void handleNewClientConnectionErrors(int errorCode,SocketFD communicationSocket, const string& username, ServerGroupsManager* groupsManager);
 
-    void updateLastPingForSocket(SocketFD socket);
-    void updateLastPongForSocket(SocketFD socket);
+    // Connection termination
+    void terminateClientConnection(SocketFD socketFileDescriptor, string username, ServerGroupsManager* groupsManager);
+    bool shouldTerminateSocketConnection(SocketFD socket);
+    void closeSocketConnection(SocketFD socket);
+
 };
 
 #endif //SISOP2_T1_SERVERCOMMUNICATIONMANAGER_H

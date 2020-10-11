@@ -163,7 +163,7 @@ bool ServerGroupsManager::checkForUsersMaxConnections(const string &username) {
     return (connectionsCount >= MAX_CONNECTIONS_COUNT);
 }
 
-string ServerGroupsManager::getUserNameForSocket(SocketFD socketFd) {
+string ServerGroupsManager::getUsernameForSocket(SocketFD socketFd) {
     this->allGroupsAccessControl.lockAccessForGroup(ALL_GROUPS);
     for (Group &currentGroup:groups) {
         this->groupsListAccessControl.lockAccessForGroup(currentGroup.name);
