@@ -9,7 +9,7 @@ Message::Message(PacketType packetType) {
     this->text = "A KEEP ALIVE MESSAGE";
 }
 
-Message::Message(PacketType packetType, uint16_t timestamp, string groupName, string username, string text) {
+Message::Message(PacketType packetType, std::time_t timestamp, string groupName, string username, string text) {
     this->packetType = packetType;
     this->timestamp = timestamp;
     this->username = username;

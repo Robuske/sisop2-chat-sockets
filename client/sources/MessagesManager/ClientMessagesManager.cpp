@@ -32,20 +32,15 @@ void* ClientMessagesManager::readMessagesThread() {
                 }
 
                 if (shouldPrintKeepAlive) {
-                    system("clear");
-                    std::cout << "Grupo: " << userInfo.groupName << std::endl;
                     messages.push_back(message);
-                    for (Message message:messages) {
-                        this->clientUI.displayMessage(message, userInfo.username);
-                    }
+                    this->clientUI.displayMessages(messages, userInfo);
+
                 }
             } else {
-                system("clear");
-                std::cout << "Grupo: " << userInfo.groupName << std::endl;
+
                 messages.push_back(message);
-                for (Message message:messages) {
-                    this->clientUI.displayMessage(message, userInfo.username);
-                }
+
+                this->clientUI.displayMessages(messages, userInfo);
 
                 if (message.packetType == TypeMaxConnectionsReached) {
                     string errorPrefix = "Error(" + std::to_string(ERROR_MAX_CONNECTIONS_PER_USERNAME_REACHED) + ") reading from socket";
@@ -73,15 +68,16 @@ void* ClientMessagesManager::writeMessagesThread() {
 
     while(true) {
         messageString.clear();
-        std::cout << " > ";
         std::getline(std::cin, messageString);
-
-        Message message = Message(TypeMessage, now(), userInfo.groupName, userInfo.username, messageString);
-
-        writeResult = communicationManager.writeSocketMessage(message);
-        if (writeResult < 0) {
-            string errorPrefix = "Error(" + std::to_string(writeResult) + ") writing to socket";
-            perror(errorPrefix.c_str());
+        if (messageString.length() >= MESSAGE_SIZE) {
+            this->clientUI.displayMessageSizeError();
+        } else {
+            Message message = Message(TypeMessage, now(), userInfo.groupName, userInfo.username, messageString);
+            writeResult = communicationManager.writeSocketMessage(message);
+            if (writeResult < 0) {
+                string errorPrefix = "Error(" + std::to_string(writeResult) + ") writing to socket";
+                perror(errorPrefix.c_str());
+            }
         }
     }
 }

@@ -8,8 +8,6 @@
 
 using std::string;
 
-typedef int SocketFD;
-
 struct SocketConnectionInfo {
     string ipAddress;
     unsigned short port;

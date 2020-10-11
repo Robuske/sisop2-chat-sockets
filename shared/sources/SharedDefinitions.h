@@ -37,7 +37,7 @@ struct tUserInfo {
 
 struct Packet {
     PacketType type;
-    uint16_t timestamp;
+    std::time_t timestamp;
     char groupName[NAME_SIZE];
     char username[NAME_SIZE];
     char text[MESSAGE_SIZE];
