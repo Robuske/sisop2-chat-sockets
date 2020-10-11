@@ -72,7 +72,7 @@ void* ClientMessagesManager::writeMessagesThread() {
         if (messageString.length() >= MESSAGE_SIZE) {
             this->clientUI.displayMessageSizeError();
         } else {
-            Message message = Message(TypeMessage, time(0), userInfo.groupName, userInfo.username, messageString);
+            Message message = Message(TypeMessage, now(), userInfo.groupName, userInfo.username, messageString);
             writeResult = communicationManager.writeSocketMessage(message);
             if (writeResult < 0) {
                 string errorPrefix = "Error(" + std::to_string(writeResult) + ") writing to socket";
