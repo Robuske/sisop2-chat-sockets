@@ -165,16 +165,20 @@ bool ServerGroupsManager::checkForUsersMaxConnections(const string &username) {
 }
 
 string ServerGroupsManager::getUserNameForSocket(SocketFD socketFd) {
+    this->allGroupsAccessControl.lockAccessForGroup(ALL_GROUPS);
     for (Group &currentGroup:groups) {
         this->groupsListAccessControl.lockAccessForGroup(currentGroup.name);
         for (UserConnection &currentUserConnection:currentGroup.clients) {
             if (currentUserConnection.socket == socketFd) {
                 this->groupsListAccessControl.unlockAccessForGroup(currentGroup.name);
+                this->allGroupsAccessControl.unlockAccessForGroup(ALL_GROUPS);
                 return currentUserConnection.username;
             }
         }
         this->groupsListAccessControl.unlockAccessForGroup(currentGroup.name);
     }
+    this->allGroupsAccessControl.unlockAccessForGroup(ALL_GROUPS);
 
+    // Precisa ser "", usar nullptr mata o server
     return "";
 }
