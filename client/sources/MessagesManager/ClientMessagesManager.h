@@ -9,8 +9,6 @@
 
 using std::string;
 
-typedef int SocketFD;
-
 class ClientMessagesManager {
 
 public:
