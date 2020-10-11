@@ -207,12 +207,17 @@ void *ServerCommunicationManager::newClientConnectionKeepAlive(HandleNewClientAr
     std::list<UserConnection> singleUserConnectionList;
     singleUserConnectionList.push_back(userConnection);
     Message keepAliveMessage = Message(TypeKeepAlive);
+
+    // Ensures ping is reset when repeating the socket
+    updateLastPingForSocket(userConnection.socket);
+
     while (true) {
         sleep(TIMEOUT);
         try {
             string username = args->groupsManager->getUserNameForSocket(userConnection.socket);
-            if (username.length() <= 0) {
+            if (username.empty()) {
                 // client desconectou durante o timeout.
+                std::cout << "Socket " + std::to_string(userConnection.socket) + " already left" << std::endl;
                 break;
             }
 

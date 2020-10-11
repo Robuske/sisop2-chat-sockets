@@ -170,11 +170,12 @@ string ServerGroupsManager::getUserNameForSocket(SocketFD socketFd) {
         this->groupsListAccessControl.lockAccessForGroup(currentGroup.name);
         for (UserConnection &currentUserConnection:currentGroup.clients) {
             if (currentUserConnection.socket == socketFd) {
+                this->groupsListAccessControl.unlockAccessForGroup(currentGroup.name);
                 return currentUserConnection.username;
             }
         }
         this->groupsListAccessControl.unlockAccessForGroup(currentGroup.name);
     }
 
-    return nullptr;
+    return "";
 }
