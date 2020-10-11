@@ -247,10 +247,8 @@ int ServerCommunicationManager::startServer(int loadMessageCount) {
         // Não estamos usando o id da thread depois, só estamos passando um valor porque usar nullptr no primeiro parâmetro da um warning
         pthread_t keepAliveThread, connectionThread;
 
-        pthread_create(&keepAliveThread, nullptr, ServerCommunicationManager::staticNewClientConnectionKeepAliveThread,
-                       &args);
-        pthread_create(&connectionThread, nullptr, ServerCommunicationManager::staticHandleNewClientConnectionThread,
-                       &args);
+        pthread_create(&keepAliveThread, nullptr, ServerCommunicationManager::staticNewClientConnectionKeepAliveThread, &args);
+        pthread_create(&connectionThread, nullptr, ServerCommunicationManager::staticHandleNewClientConnectionThread, &args);
     }
 
     return 0;
