@@ -113,7 +113,7 @@ void ServerGroupsManager::handleUserDisconnection(SocketFD socket, const string&
     this->allGroupsAccessControl.lockAccessForGroup(ALL_GROUPS);
     for (Group &currentGroup:groups) {
         /// MARK: Critical session access
-        this->groupsListAccessControl.lockAccessForGroup(groupName);
+        this->groupsListAccessControl.lockAccessForGroup(currentGroup.name);
         for (UserConnection &currentUserConnection:currentGroup.clients) {
             if (currentUserConnection.socket == socket) {
                 groupFound = true;
@@ -123,7 +123,7 @@ void ServerGroupsManager::handleUserDisconnection(SocketFD socket, const string&
                 break;
             }
         }
-        this->groupsListAccessControl.unlockAccessForGroup(groupName);
+        this->groupsListAccessControl.unlockAccessForGroup(currentGroup.name);
     }
 
     this->allGroupsAccessControl.unlockAccessForGroup(ALL_GROUPS);
