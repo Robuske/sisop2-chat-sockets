@@ -6,6 +6,11 @@
 #include "SharedDefinitions.h"
 #include <list>
 
+
+#include <ctime>
+#include <mutex>
+#include <map>
+
 class ServerGroupsManager;
 struct UserConnection;
 class ServerCommunicationManager;
@@ -16,6 +21,9 @@ struct HandleNewClientArguments {
     SocketFD newClientSocket;
 };
 
+typedef std::map<SocketFD, std::time_t> KeepAlive;
+typedef std::map<SocketFD, std::mutex> KeepAliveAccessControl;
+
 class ServerCommunicationManager {
 public:
     int startServer(int loadMessageCount);
@@ -25,7 +33,12 @@ public:
 private:
     SocketFD setupServerSocket();
 
-    std::list<SocketFD> clients;
+    KeepAlive socketsLastPing;
+    KeepAlive socketsLastPong;
+
+    KeepAliveAccessControl pingAccessControl;
+    KeepAliveAccessControl pongAccessControl;
+
     void handleNewClientConnectionErrors(int errorCode,SocketFD communicationSocket, const string& username, ServerGroupsManager* groupsManager);
     static void *staticHandleNewClientConnection(void *newClientArguments);
     void *handleNewClientConnection(HandleNewClientArguments *args);
@@ -38,6 +51,9 @@ private:
     static void *staticNewClientConnectionKeepAlive(void *newClientArguments);
     void *newClientConnectionKeepAlive(HandleNewClientArguments *args);
     bool shouldTerminateSocketConnection(SocketFD socket);
+
+    void updateLastPingForSocket(SocketFD socket);
+    void updateLastPongForSocket(SocketFD socket);
 };
 
 #endif //SISOP2_T1_SERVERCOMMUNICATIONMANAGER_H

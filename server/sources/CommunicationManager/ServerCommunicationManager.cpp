@@ -113,26 +113,6 @@ void ServerCommunicationManager::sendMessageToClients(Message message, const std
     }
 }
 
-typedef std::map<SocketFD, std::time_t> KeepAlive;
-KeepAlive socketsLastPing;
-KeepAlive socketsLastPong;
-
-typedef std::map<SocketFD, std::mutex> KeepAliveAccessControl;
-KeepAliveAccessControl pingAccessControl;
-KeepAliveAccessControl pongAccessControl;
-
-void updateLastPingForSocket(SocketFD socket) {
-    pingAccessControl[socket].lock();
-    socketsLastPing[socket] = now();
-    pingAccessControl[socket].unlock();
-}
-
-void updateLastPongForSocket(SocketFD socket) {
-    pongAccessControl[socket].lock();
-    socketsLastPong[socket] = now();
-    pongAccessControl[socket].unlock();
-}
-
 void ServerCommunicationManager::handleNewClientConnectionErrors(int errorCode, SocketFD communicationSocket, const string& username, ServerGroupsManager* groupsManager) {
     if (errorCode == ERROR_CLIENT_DISCONNECTED) {
         try {
@@ -192,6 +172,18 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
     }
 
     return nullptr;
+}
+
+void ServerCommunicationManager::updateLastPingForSocket(SocketFD socket) {
+    pingAccessControl[socket].lock();
+    socketsLastPing[socket] = now();
+    pingAccessControl[socket].unlock();
+}
+
+void ServerCommunicationManager::updateLastPongForSocket(SocketFD socket) {
+    pongAccessControl[socket].lock();
+    socketsLastPong[socket] = now();
+    pongAccessControl[socket].unlock();
 }
 
 bool ServerCommunicationManager::shouldTerminateSocketConnection(SocketFD socket) {
