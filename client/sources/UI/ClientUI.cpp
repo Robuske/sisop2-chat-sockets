@@ -27,8 +27,9 @@ void ClientUI::displayTextInputIndicator(string userName) {
 
 string ClientUI::buildTextMessage(Message message, string currentUserName) {
     string dateString = this->dateStringFromTimestamp(message.timestamp);
-    string msgPrefix = this->solveMessagePrefix(message, currentUserName);
-    string finalMessage = dateString + " [" + msgPrefix + "] " + message.text;
+    string senderUsername = this->senderUsernameForMessageAndCurrentUsername(message, currentUserName);
+    string msgPrefix = dateString + " [" + senderUsername + "] ";
+    string finalMessage = msgPrefix + message.text;
 
     return finalMessage;
 }
@@ -40,7 +41,7 @@ string ClientUI::dateStringFromTimestamp(std::time_t timestamp) {
     return strBuffer;
 }
 
-string ClientUI::solveMessagePrefix(Message message, string currentUserName) {
+string ClientUI::senderUsernameForMessageAndCurrentUsername(Message message, string currentUserName) {
 
     switch (message.packetType) {
         case TypeMessage:

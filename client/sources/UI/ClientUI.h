@@ -13,7 +13,7 @@ class ClientUI {
 private:
     string buildTextMessage(Message message, string currentUserName);
     string dateStringFromTimestamp(std::time_t timestamp);
-    string solveMessagePrefix(Message message, string currentUserName);
+    string senderUsernameForMessageAndCurrentUsername(Message message, string currentUserName);
 public:
     void displayMessages(std::list<Message> messages, UserInfo userInfo);
     void displayTextInputIndicator(string userName);
