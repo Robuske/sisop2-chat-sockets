@@ -26,9 +26,9 @@ void ClientUI::displayTextInputIndicator(string userName) {
 }
 
 string ClientUI::buildTextMessage(Message message, string currentUserName) {
-    string strTimeStamp = this->dateStringFromTimestamp(message.timestamp);
+    string dateString = this->dateStringFromTimestamp(message.timestamp);
     string msgPrefix = this->solveMessagePrefix(message, currentUserName);
-    string finalMessage = strTimeStamp + " [" + msgPrefix + "] " + message.text;
+    string finalMessage = dateString + " [" + msgPrefix + "] " + message.text;
 
     return finalMessage;
 }
