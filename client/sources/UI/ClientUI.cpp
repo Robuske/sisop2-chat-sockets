@@ -3,7 +3,7 @@
 #include <ctime>
 
 void clearScreen() {
-    std::cout << "\033[2J\033[1;1H";
+    system("clear");
 }
 
 void ClientUI::displayMessages(std::list<Message> messages, UserInfo userInfo) {
@@ -13,6 +13,10 @@ void ClientUI::displayMessages(std::list<Message> messages, UserInfo userInfo) {
     for (const Message& message:messages) {
         std::cout << this->buildTextMessage(message, userInfo.username) << std::endl;
     }
+}
+
+void ClientUI::displayMessageSizeError() {
+    std::cout << "[SYSTEM] Mensagem muito longa. Sua mensagem deve ter no máximo " << std::to_string(MESSAGE_SIZE) << std::endl;
 }
 
 void ClientUI::displayTextInputIndicator(string userName) {
@@ -31,8 +35,8 @@ string ClientUI::buildTextMessage(Message message, string currentUserName) {
 
 string ClientUI::fromTimeStampToDateString(long timestamp) {
     struct tm *timeInfo = localtime (&timestamp);
-    char strBuffer[15];
-    strftime (strBuffer, 15,"%H:%M:%S",timeInfo);
+    char strBuffer[20];
+    strftime (strBuffer, 20,"%H:%M:%S",timeInfo);
     return strBuffer;
 }
 

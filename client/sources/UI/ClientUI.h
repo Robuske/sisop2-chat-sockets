@@ -17,6 +17,7 @@ private:
 public:
     void displayMessages(std::list<Message> messages, UserInfo userInfo);
     void displayTextInputIndicator(string userName);
+    void displayMessageSizeError();
 };
 
 
