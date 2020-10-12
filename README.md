@@ -1,5 +1,10 @@
 # SISOP2-T1
 
+## Entrega do Projeto
+
+- [Vídeo da Apresentação](https://www.youtube.com/)
+- [Relatório](docs/T1-Relatório.pdf)
+
 ## Dependency Tree
 
 - shared_lib
