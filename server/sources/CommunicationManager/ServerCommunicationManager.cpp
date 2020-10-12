@@ -166,7 +166,6 @@ void *ServerCommunicationManager::newClientConnectionKeepAlive(HandleNewClientAr
     userConnection.socket = args->newClientSocket;
     std::list<UserConnection> singleUserConnectionList;
     singleUserConnectionList.push_back(userConnection);
-    Message keepAliveMessage = Message(TypeKeepAlive);
 
     // Ensures ping is reset when repeating the socket
     updateLastPingForSocket(userConnection.socket);
@@ -187,6 +186,7 @@ void *ServerCommunicationManager::newClientConnectionKeepAlive(HandleNewClientAr
             } else {
                 std::cout << "Pinging socket " << std::to_string(userConnection.socket) << std::endl;
                 updateLastPingForSocket(userConnection.socket);
+                Message keepAliveMessage = Message::keepAliveWithUsername(username);
                 sendMessageToClients(keepAliveMessage, singleUserConnectionList);
             }
         } catch (int zapError) {

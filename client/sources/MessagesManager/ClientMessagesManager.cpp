@@ -10,7 +10,7 @@ struct ThreadParameter {
 };
 
 void  ClientMessagesManager::sendKeepAliveMessage() {
-    Message keepAliveMessage = Message(TypeKeepAlive);
+    Message keepAliveMessage = Message::keepAliveWithUsername(userInfo.username);
     int writeResult = communicationManager.writeSocketMessage(keepAliveMessage);
     if (writeResult < 0) {
         string errorPrefix = "Error(" + std::to_string(writeResult) + ") writing keep alive message to socket";
