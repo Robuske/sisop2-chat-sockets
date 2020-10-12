@@ -15,8 +15,8 @@ void ClientUI::displayMessages(std::list<Message> messages, UserInfo userInfo) {
     }
 }
 
-void ClientUI::displayMessageSizeError() {
-    std::cout << "[SYSTEM] Mensagem muito longa. Sua mensagem deve ter no máximo " << std::to_string(MESSAGE_SIZE) << " caracteres."<< std::endl;
+void ClientUI::displayMessageSizeError(int messageSize) {
+    std::cout << "[SYSTEM] Mensagem muito longa. Sua mensagem deve ter no máximo " << std::to_string(MESSAGE_SIZE) << " caracteres, essa mensagem tinha " << std::to_string(messageSize) << "." << std::endl;
 }
 
 void ClientUI::displayTextInputIndicator(string userName) {

@@ -70,7 +70,7 @@ void* ClientMessagesManager::writeMessagesThread() {
         messageString.clear();
         std::getline(std::cin, messageString);
         if (messageString.length() >= MESSAGE_SIZE) {
-            this->clientUI.displayMessageSizeError();
+            this->clientUI.displayMessageSizeError(messageString.length());
         } else {
             Message message = Message(TypeMessage, now(), userInfo.groupName, userInfo.username, messageString);
             writeResult = communicationManager.writeSocketMessage(message);
