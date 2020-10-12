@@ -22,24 +22,27 @@ struct Group {
 
 class ServerGroupsManager {
 private:
-    void sendMessagesToSpecificUser(UserConnection userConnection, std::list<Message> messages);
-    void loadInitialMessagesForNewUserConnection(UserConnection userConnection, const string& groupName);
-    bool checkForUsersMaxConnections(const string &username);
-    void handleUserConnectionLimitReached(const string &username, const string &groupName, const UserConnection &userConnection);
     int numberOfMessagesToLoadWhenUserJoined;
-    ServerCommunicationManager *communicationManager;
-    ServerMessagesManager messagesManager;
     std::list<Group> groups;
+    ServerMessagesManager messagesManager;
+
+    // Mutual exclusion control
     GroupsAccessControl groupsListAccessControl;
     GroupsAccessControl allGroupsAccessControl;
 
-public:
-    ServerGroupsManager(int numberOfMessagesToLoadWhenUserJoined, ServerCommunicationManager *communicationManager);
-    void handleUserConnection(const string& username, SocketFD socket, const string& group);
-    void sendMessage(const Message& message);
-    void handleUserDisconnection(SocketFD socket, const string& username);
+    ServerCommunicationManager *communicationManager;
 
-    string getUserNameForSocket(SocketFD socketFd);
+    bool checkForUsersMaxConnections(const string &username);
+    void sendMessagesToSpecificUser(UserConnection userConnection, std::list<Message> messages);
+    void loadInitialMessagesForNewUserConnection(UserConnection userConnection, const string& groupName);
+    void handleUserConnectionLimitReached(const string &username, const string &groupName, const UserConnection &userConnection);
+
+public:
+    void sendMessage(const Message& message);
+    string getUsernameForSocket(SocketFD socketFd);
+    void handleUserDisconnection(SocketFD socket, const string& username);
+    void handleUserConnection(const string& username, SocketFD socket, const string& group);
+    ServerGroupsManager(int numberOfMessagesToLoadWhenUserJoined, ServerCommunicationManager *communicationManager);
 };
 
 

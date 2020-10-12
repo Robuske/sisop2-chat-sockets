@@ -25,13 +25,13 @@ void log(LogLevel logLevel, const string& msg) {
 }
 
 // MARK: - Static methods
-void *ServerCommunicationManager::staticHandleNewClientConnection(void *newClientArguments) {
+void *ServerCommunicationManager::staticHandleNewClientConnectionThread(void *newClientArguments) {
     auto* t = static_cast<HandleNewClientArguments*>(newClientArguments);
     t->communicationManager->handleNewClientConnection(t);
     return nullptr;
 }
 
-void *ServerCommunicationManager::staticNewClientConnectionKeepAlive(void *newClientArguments) {
+void *ServerCommunicationManager::staticNewClientConnectionKeepAliveThread(void *newClientArguments) {
     auto* t = static_cast<HandleNewClientArguments*>(newClientArguments);
     t->communicationManager->newClientConnectionKeepAlive(t);
     return nullptr;
@@ -136,13 +136,13 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
 
 void ServerCommunicationManager::updateLastPingForSocket(SocketFD socket) {
     pingAccessControl[socket].lock();
-    socketsLastPing[socket] = time(0);
+    socketsLastPing[socket] = now();
     pingAccessControl[socket].unlock();
 }
 
 void ServerCommunicationManager::updateLastPongForSocket(SocketFD socket) {
     pongAccessControl[socket].lock();
-    socketsLastPong[socket] = time(0);
+    socketsLastPong[socket] = now();
     pongAccessControl[socket].unlock();
 }
 
@@ -174,7 +174,7 @@ void *ServerCommunicationManager::newClientConnectionKeepAlive(HandleNewClientAr
     while (true) {
         sleep(TIMEOUT);
         try {
-            string username = args->groupsManager->getUserNameForSocket(userConnection.socket);
+            string username = args->groupsManager->getUsernameForSocket(userConnection.socket);
             if (username.empty()) {
                 // Client desconectou no intervalo do timeout.
                 std::cout << "Socket " + std::to_string(userConnection.socket) + " already left" << std::endl;
@@ -247,8 +247,8 @@ int ServerCommunicationManager::startServer(int loadMessageCount) {
         // Não estamos usando o id da thread depois, só estamos passando um valor porque usar nullptr no primeiro parâmetro da um warning
         pthread_t keepAliveThread, connectionThread;
 
-        pthread_create(&keepAliveThread, nullptr, ServerCommunicationManager::staticNewClientConnectionKeepAlive, &args);
-        pthread_create(&connectionThread, nullptr, ServerCommunicationManager::staticHandleNewClientConnection, &args);
+        pthread_create(&keepAliveThread, nullptr, ServerCommunicationManager::staticNewClientConnectionKeepAliveThread, &args);
+        pthread_create(&connectionThread, nullptr, ServerCommunicationManager::staticHandleNewClientConnectionThread, &args);
     }
 
     return 0;
