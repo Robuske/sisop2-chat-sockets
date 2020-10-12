@@ -32,7 +32,7 @@ int ClientCommunicationManager::connectClient(const SocketConnectionInfo& connec
         return ERROR_SOCKET_CONNECTION;
     }
 
-    this->socketConnectionResult = sockFd;
+    this->connectedSocket = sockFd;
 
     return SUCCESSFUL_OPERATION;
 }
@@ -41,7 +41,7 @@ int ClientCommunicationManager::writeSocketMessage(Message message) {
     Packet packet = message.asPacket();
 
     // TODO: Return result
-    write(this->socketConnectionResult, &packet, sizeof(Packet));
+    write(this->connectedSocket, &packet, sizeof(Packet));
 
     return 1;
 }
@@ -50,18 +50,25 @@ int ClientCommunicationManager::writeConnectionMessageToSocket(Message message) 
     Packet packet = message.asPacket();
 
     // TODO: Throw or handle error in callers
-    return write(this->socketConnectionResult, &packet, sizeof(Packet));
+    return write(this->connectedSocket, &packet, sizeof(Packet));
 }
 
 Message ClientCommunicationManager::readSocketMessage() {
-    auto *packet = static_cast<Packet *>(malloc(sizeof(Packet)));
+    try {
+        // Critical section, a princípio só temos uma thread de leitura, mas só pra garantir
+        continuousBufferAccessControl.lock();
+        Packet packet = continuousBufferRead(connectedSocket, continuousBuffer);
+        continuousBufferAccessControl.unlock();
+        return Message(packet);
 
-    int readResult = read(this->socketConnectionResult, packet, sizeof(Packet));
-    if (readResult == 0) {
-        throw ERROR_SERVER_DISCONNECTED;
-    } else if (readResult < 0) {
-        throw ERROR_SOCKET_READ;
+    } catch (int readOperationResult) {
+        continuousBufferAccessControl.unlock();
+
+        if (readOperationResult == 0) {
+            throw ERROR_SERVER_DISCONNECTED;
+
+        } else {
+            throw ERROR_SOCKET_READ;
+        }
     }
-
-    return Message(*packet);
 }

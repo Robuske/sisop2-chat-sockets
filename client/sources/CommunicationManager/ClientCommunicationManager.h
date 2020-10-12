@@ -4,6 +4,7 @@
 #include "ClientDefinitions.h"
 #include "Message/Message.h"
 #include "SharedDefinitions.h"
+#include <mutex>
 #include <string>
 
 using std::string;
@@ -16,7 +17,9 @@ struct SocketConnectionInfo {
 class ClientCommunicationManager {
 
 private:
-    SocketFD socketConnectionResult;
+    SocketFD connectedSocket;
+    ContinuousBuffer continuousBuffer;
+    std::mutex continuousBufferAccessControl;
 
 public:
     SocketFD connectClient(const SocketConnectionInfo& connectionInfo);

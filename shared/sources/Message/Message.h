@@ -9,16 +9,16 @@ using std::string;
 
 class Message {
 public:
-    Message(PacketType packetType);
-
     PacketType packetType;
     std::time_t timestamp;
     string groupName;
     string username;
     string text;
 
+    // Constructors
     Message(PacketType packetType, std::time_t timestamp, string groupName, string username, string text);
     explicit Message(Packet packet);
+    static Message keepAliveWithUsername(string username);
 
     const Packet asPacket();
 };

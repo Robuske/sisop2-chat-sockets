@@ -51,15 +51,30 @@ void ServerCommunicationManager::terminateClientConnection(SocketFD socketFileDe
     groupsManager->handleUserDisconnection(socketFileDescriptor, username);
 }
 
-Packet ServerCommunicationManager::readPacketFromSocket(SocketFD communicationSocket, int packetSize) {
-    Packet packet;
-    int readOperationResult = read(communicationSocket, &packet, packetSize);
-    if (readOperationResult == 0) {
-        throw ERROR_CLIENT_DISCONNECTED;
-    } else if (readOperationResult < 0) {
-        throw readOperationResult;
-    } else {
+void ServerCommunicationManager::resetContinuousBufferFor(SocketFD socket) {
+    continuousBufferAccessControl[socket].lock();
+    continuousBuffers[socket].clear();
+    continuousBufferAccessControl[socket].unlock();
+}
+
+Packet ServerCommunicationManager::readPacketFromSocket(SocketFD communicationSocket) {
+    try {
+        // Critical section
+        continuousBufferAccessControl[communicationSocket].lock();
+        ContinuousBuffer continuousBuffer = continuousBuffers[communicationSocket];
+        Packet packet = continuousBufferRead(communicationSocket, continuousBuffer);
+        continuousBufferAccessControl[communicationSocket].unlock();
         return packet;
+
+    } catch (int readOperationResult) {
+        continuousBufferAccessControl[communicationSocket].unlock();
+
+        if (readOperationResult == 0) {
+            throw ERROR_CLIENT_DISCONNECTED;
+
+        } else {
+            throw readOperationResult;
+        }
     }
 }
 
@@ -109,10 +124,10 @@ void ServerCommunicationManager::handleNewClientConnectionErrors(int errorCode, 
 void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArguments *args) {
     SocketFD communicationSocket = args->newClientSocket;
 
-    Packet packet;
+    Packet packet{};
     while(true) {
         try {
-            packet = readPacketFromSocket(communicationSocket, sizeof(Packet));
+            packet = readPacketFromSocket(communicationSocket);
             updateLastPongForSocket(communicationSocket);
             Message message = Message(packet);
             if (packet.type == TypeConnection) {
@@ -166,7 +181,6 @@ void *ServerCommunicationManager::newClientConnectionKeepAlive(HandleNewClientAr
     userConnection.socket = args->newClientSocket;
     std::list<UserConnection> singleUserConnectionList;
     singleUserConnectionList.push_back(userConnection);
-    Message keepAliveMessage = Message(TypeKeepAlive);
 
     // Ensures ping is reset when repeating the socket
     updateLastPingForSocket(userConnection.socket);
@@ -187,6 +201,7 @@ void *ServerCommunicationManager::newClientConnectionKeepAlive(HandleNewClientAr
             } else {
                 std::cout << "Pinging socket " << std::to_string(userConnection.socket) << std::endl;
                 updateLastPingForSocket(userConnection.socket);
+                Message keepAliveMessage = Message::keepAliveWithUsername(username);
                 sendMessageToClients(keepAliveMessage, singleUserConnectionList);
             }
         } catch (int zapError) {
@@ -238,6 +253,8 @@ int ServerCommunicationManager::startServer(int loadMessageCount) {
         clientSocketLength = sizeof(struct sockaddr_in);
         if ((communicationSocketFD = accept(connectionSocketFDResult, (struct sockaddr *) &clientAddress, &clientSocketLength)) == -1)
             return ERROR_SOCKET_ACCEPT_CONNECTION;
+
+        resetContinuousBufferFor(communicationSocketFD);
 
         struct HandleNewClientArguments args;
         args.newClientSocket = communicationSocketFD;

@@ -1,14 +1,6 @@
 #include "Message.h"
 #include <cstring>
 
-Message::Message(PacketType packetType) {
-    this->packetType = packetType;
-    this->timestamp = 0;
-    this->username = "";
-    this->groupName = "";
-    this->text = "A KEEP ALIVE MESSAGE";
-}
-
 Message::Message(PacketType packetType, std::time_t timestamp, string groupName, string username, string text) {
     this->packetType = packetType;
     this->timestamp = timestamp;
@@ -23,6 +15,10 @@ Message::Message(Packet packet) {
     this->username = std::string(packet.username);
     this->groupName = std::string(packet.groupName);
     this->text = std::string(packet.text);
+}
+
+Message Message::keepAliveWithUsername(string username) {
+    return Message(TypeKeepAlive, 0, "", username, "KEEP ALIVE MESSAGE");
 }
 
 const Packet Message::asPacket() {

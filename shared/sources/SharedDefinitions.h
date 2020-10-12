@@ -3,6 +3,7 @@
 
 #include <ctime>
 #include <string>
+#include <vector>
 
 using std::string;
 
@@ -20,13 +21,14 @@ using std::string;
 #define ERROR_SOCKET_READ -20
 #define CODE_SUCCESS 0
 
-#define NAME_SIZE 128
+#define NAME_SIZE 32
 #define MESSAGE_SIZE 512
 
 ///MARK: GAMBI Mutex declaration problem - Implicit copy
 #define ALL_GROUPS "ALL_GROUPS"
 
 typedef int SocketFD;
+typedef std::vector<char> ContinuousBuffer;
 
 enum PacketType { TypeConnection, TypeDesconnection, TypeMessage, TypeKeepAlive, TypeMaxConnectionsReached };
 
@@ -45,5 +47,6 @@ struct Packet {
 
 // Only forward definition to avoid duplicate symbols
 std::time_t now();
+Packet continuousBufferRead(SocketFD communicationSocket, ContinuousBuffer continuousBuffer);
 
 #endif // SISOP2_T1_SHAREDDEFINITIONS_H
