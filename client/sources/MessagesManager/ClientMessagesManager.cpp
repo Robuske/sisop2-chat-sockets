@@ -18,7 +18,6 @@ void  ClientMessagesManager::sendKeepAliveMessage() {
     }
 }
 
-// thread de read messages teria que estar talvez dentro do communication manager?
 void* ClientMessagesManager::readMessagesThread() {
     // TODO: DEBUG: For testing. We should always send keep alive.
     bool shouldPrintKeepAlive = false;
