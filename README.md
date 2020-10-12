@@ -2,7 +2,7 @@
 
 ## Entrega do Projeto
 
-- [Vídeo da Apresentação](https://www.youtube.com/)
+- [Vídeo da Apresentação](https://youtu.be/avFRqZCdSqw)
 - [Relatório](docs/T1-Relatório.pdf)
 
 ## Dependency Tree
