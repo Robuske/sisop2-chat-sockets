@@ -7,6 +7,7 @@
 #include <list>
 #include <map>
 #include <mutex>
+#include <vector>
 
 class ServerGroupsManager;
 struct UserConnection;
@@ -20,6 +21,9 @@ struct HandleNewClientArguments {
 
 typedef std::map<SocketFD, std::time_t> KeepAlive;
 typedef std::map<SocketFD, std::mutex> KeepAliveAccessControl;
+
+typedef std::map<SocketFD, ContinuousBuffer> ContinuousBuffersMap;
+typedef std::map<SocketFD, std::mutex> ContinuousBufferAccessControl;
 
 class ServerCommunicationManager {
 public:
@@ -36,9 +40,14 @@ private:
     void updateLastPingForSocket(SocketFD socket);
     void updateLastPongForSocket(SocketFD socket);
 
+    // Continuous buffer
+    ContinuousBuffersMap continuousBuffers;
+    void resetContinuousBufferFor(SocketFD socket);
+
     // Mutexes
     KeepAliveAccessControl pingAccessControl;
     KeepAliveAccessControl pongAccessControl;
+    ContinuousBufferAccessControl continuousBufferAccessControl;
 
     // Threads
     static void *staticHandleNewClientConnectionThread(void *newClientArguments);
@@ -47,7 +56,7 @@ private:
     void *newClientConnectionKeepAlive(HandleNewClientArguments *args);
 
     // Socket methods
-    Packet readPacketFromSocket(SocketFD communicationSocket, int packetSize);
+    Packet readPacketFromSocket(SocketFD communicationSocket);
 
     //  Handle errors
     void handleNewClientConnectionErrors(int errorCode,SocketFD communicationSocket, const string& username, ServerGroupsManager* groupsManager);

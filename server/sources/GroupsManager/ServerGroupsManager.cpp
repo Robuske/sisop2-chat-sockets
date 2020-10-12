@@ -5,7 +5,7 @@ void ServerGroupsManager::sendMessage(const Message& message) {
     bool groupFound = false;
     string groupName = message.groupName;
     Group groupToSendMessage;
-    /// MARK: Critical session access nao deixamos, mas talvez sim
+    /// MARK: Critical session, mas como é só leitura resolvemos deixar sem lock
 
     for (const Group& currentGroup: groups) {
         if (currentGroup.name == groupName) {
