@@ -1,5 +1,4 @@
 #include "SharedDefinitions.h"
-#include <iostream>
 #include <unistd.h>
 
 std::time_t now() {
@@ -12,7 +11,6 @@ std::time_t now() {
 Packet continuousBufferRead(SocketFD communicationSocket, ContinuousBuffer continuousBuffer) {
     auto packetSize = sizeof(Packet);
     while (true) {
-        std::cout << "Inicio do while com dados " << std::to_string(continuousBuffer.size()) << std::endl;
         // Retorna um packet se já tiver dados suficientes disponíveis
         if (continuousBuffer.size() >= packetSize) {
             auto *packet = reinterpret_cast<Packet *>(continuousBuffer.data());
@@ -32,7 +30,6 @@ Packet continuousBufferRead(SocketFD communicationSocket, ContinuousBuffer conti
         } else {
             // Salva novos dados adquiridos
             continuousBuffer.insert(continuousBuffer.end(), receivingBuffer, receivingBuffer + bytesRead);
-            std::cout << "Inseriu " << std::to_string(bytesRead) << std::endl;
         }
     }
 }
