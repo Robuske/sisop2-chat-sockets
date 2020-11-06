@@ -49,4 +49,9 @@ struct Packet {
 std::time_t now();
 Packet continuousBufferRead(SocketFD communicationSocket, ContinuousBuffer continuousBuffer);
 
+struct SocketConnectionInfo {
+    string ipAddress;
+    unsigned short port;
+};
+
 #endif // SISOP2_T1_SHAREDDEFINITIONS_H
