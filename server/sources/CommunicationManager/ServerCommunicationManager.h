@@ -66,6 +66,9 @@ private:
     bool shouldTerminateSocketConnection(SocketFD socket);
     void closeSocketConnection(SocketFD socket);
 
+    // Handle servers replicas
+    AvailableConnections *serverConnections;
+    void loadAvailableServersConnections();
 };
 
 #endif //SISOP2_T1_SERVERCOMMUNICATIONMANAGER_H

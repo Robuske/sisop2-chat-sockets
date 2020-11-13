@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <fstream>
 
 enum eLogLevel { Info, Debug, Error } typedef LogLevel;
 void log(LogLevel logLevel, const string& msg) {
@@ -24,6 +25,7 @@ void log(LogLevel logLevel, const string& msg) {
     }
 }
 
+
 // MARK: - Static methods
 void *ServerCommunicationManager::staticHandleNewClientConnectionThread(void *newClientArguments) {
     auto* t = static_cast<HandleNewClientArguments*>(newClientArguments);
@@ -38,6 +40,28 @@ void *ServerCommunicationManager::staticNewClientConnectionKeepAliveThread(void 
 }
 
 // MARK: - Instance methods
+void ServerCommunicationManager::loadAvailableServersConnections() {
+    string path = "servers.txt";
+    std::ifstream file(path.c_str());
+
+    // Defining the file size
+    // To do so we need to set the file pointer to the EOF
+
+    const auto begin = file.tellg();
+    file.seekg (0, std::ios::end);
+    const auto end = file.tellg();
+    const long long fileSize = end-begin;
+
+    //Rewinding file the file pointer previously located at the EOF
+    file.seekg(0, std::ios::beg);
+
+    char *buffer = new char[fileSize]();
+    file.read(buffer, fileSize);
+    file.close();
+
+   this->serverConnections = (AvailableConnections*) buffer;
+
+}
 
 void ServerCommunicationManager::closeSocketConnection(SocketFD socketFileDescriptor) {
     int closeReturn = close(socketFileDescriptor);
@@ -246,6 +270,8 @@ int ServerCommunicationManager::startServer(int loadMessageCount) {
     connectionSocketFDResult = this->setupServerSocket();
     if (connectionSocketFDResult < 0)
         return connectionSocketFDResult;
+
+    this->loadAvailableServersConnections();
 
     struct sockaddr_in clientAddress;
     socklen_t clientSocketLength;

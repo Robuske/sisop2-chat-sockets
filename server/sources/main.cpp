@@ -16,6 +16,7 @@ int main(int argc, char *argv[]) {
     std::cout << "Porta: " << PORT << std::endl;
     std::cout << "Enviando as # últimas mensagens enviadas no grupo: " << std::to_string(loadMessageCount) << std::endl;
 
+
     int startServerResult = ServerCommunicationManager().startServer(loadMessageCount);
     if (startServerResult < 0) {
         string errorPrefix = "Erro (" + std::to_string(startServerResult) + ") iniciando server";

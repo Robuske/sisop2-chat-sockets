@@ -4,6 +4,7 @@
 #include <ctime>
 #include <string>
 #include <vector>
+#include <map>
 
 using std::string;
 
@@ -45,8 +46,30 @@ struct Packet {
     char text[MESSAGE_SIZE];
 };
 
+struct SocketConnectionInfo {
+    string ipAddress;
+    unsigned short port;
+};
+
 // Only forward definition to avoid duplicate symbols
 std::time_t now();
 Packet continuousBufferRead(SocketFD communicationSocket, ContinuousBuffer continuousBuffer);
+
+// Definitions for the front end and server connections configuration files
+
+/**
+ * Map: AvailableConnections
+ * Responsible to store all the connection information of the front-end and server
+ * to make it possible the creation of coordinator elections and to manage
+ * Client -> Front End | Front End -> Server | Server -> Server connections
+ * @attributes [server/frontEnd id, ConnectionInfo]
+ */
+
+//typedef std::map<int , SocketConnectionInfo> AvailableConnections;
+
+typedef struct AvailableConnections {
+    int id;
+    SocketConnectionInfo connectionInfo;
+} AvailableConnections;
 
 #endif // SISOP2_T1_SHAREDDEFINITIONS_H
