@@ -120,8 +120,41 @@ void FrontCommunicationManager::handleServerMessageThread(HandleNewClientArgumen
     this->forwardPacketFromSocketToSocket(args->communicationManager->serverSocket, args->socket);
 }
 
+string FrontCommunicationManager::packetTypeAsString(PacketType packetType) {
+    switch (packetType) {
+        case TypeConnection:
+            return "Connection";
+
+        case TypeDesconnection:
+            return "Disconnection";
+
+        case TypeMessage:
+            return "Message";
+
+        case TypeKeepAlive:
+            return "Keep Alive";
+
+        case TypeMaxConnectionsReached:
+            return "Max Connections Reached";
+    }
+}
+
+void FrontCommunicationManager::logPacket(Packet packet) {
+    bool debug = true;
+    if (debug) {
+        std::cout << "------------- Packet -----------" << std::endl;
+        std::cout << "Type: " << packetTypeAsString(packet.type) << std::endl;
+        std::cout << "Username: " << packet.username << std::endl;
+        std::cout << "Group name: " << packet.groupName << std::endl;
+        std::cout << "Timestamp: " << packet.timestamp << std::endl;
+        std::cout << "Text: " << packet.text << std::endl;
+        std::cout << "--------------------------------" << std::endl;
+    }
+}
+
 int FrontCommunicationManager::sendPacketToServerSocket(Packet packet, SocketFD socket) {
-    std::cout << "Enviando " << packet.text << " para " << socket << std::endl;
+    std::cout << "Enviando para socket " << socket << std::endl;
+    logPacket(packet);
     return write(socket, &packet, sizeof(Packet));
 }
 

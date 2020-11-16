@@ -41,6 +41,10 @@ private:
     void forwardPacketFromSocketToSocket(SocketFD fromSocket, SocketFD toSocket);
 
     int connectToServer(const SocketConnectionInfo &connectionInfo);
+
+    void logPacket(Packet packet);
+
+    string packetTypeAsString(PacketType packetType);
 };
 
 #endif //SISOP2_T1_FRONTCOMMUNICATIONMANAGER_H
