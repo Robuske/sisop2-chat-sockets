@@ -6,6 +6,10 @@ std::time_t now() {
     return now;
 }
 
+void clearScreen() {
+    system("clear");
+}
+
 /// Pode dar throw
 /// Tecnicamente uma leitura do buffer pode retornar menos dados do que o que foi pedido (apesar de não ser comum), se for o caso nós precisamos continuar lendo até ter um Packet completo.
 Packet continuousBufferRead(SocketFD communicationSocket, ContinuousBuffer continuousBuffer) {

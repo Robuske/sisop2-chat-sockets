@@ -5,6 +5,8 @@
 #include <string>
 
 int main(int argc, char *argv[]) {
+    clearScreen();
+
     std::cout << "Iniciando FRONT Zap" << std::endl;
     std::cout << "Porta para server: " << PORT_FRONT_SERVER << std::endl;
     std::cout << "Porta para client: " << PORT_FRONT_CLIENT << std::endl;

@@ -75,4 +75,6 @@ struct SocketConnectionInfo {
     unsigned short port;
 };
 
+void clearScreen();
+
 #endif // SISOP2_T1_SHAREDDEFINITIONS_H

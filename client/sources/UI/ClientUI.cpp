@@ -2,10 +2,6 @@
 #include <iostream>
 #include <ctime>
 
-void clearScreen() {
-    system("clear");
-}
-
 void ClientUI::displayMessages(std::list<Message> messages, UserInfo userInfo) {
 
     clearScreen();
