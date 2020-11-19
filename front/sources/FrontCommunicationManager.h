@@ -1,12 +1,7 @@
-//
-// Created by Henrique Valcanaia on 06/11/20.
-//
-
 #ifndef SISOP2_T1_FRONTCOMMUNICATIONMANAGER_H
 #define SISOP2_T1_FRONTCOMMUNICATIONMANAGER_H
 
 #include "SharedDefinitions.h"
-
 
 class FrontCommunicationManager;
 struct HandleNewClientArguments {
@@ -21,22 +16,18 @@ public:
 
 private:
     SocketFD serverSocket;
-    SocketFD setupServerSocket();
+    SocketFD setupClientSocket();
     void resetContinuousBufferFor(int socket);
 
     // Threads
+    static void *staticHandleClientMessageThread(void *newClientArguments);
+    void handleClientMessageThread(HandleNewClientArguments *args);
+    static void *staticHandleServerMessageThread(void *newClientArguments);
+    void handleServerMessageThread(HandleNewClientArguments *pArguments);
 
     Packet readPacketFromSocket(SocketFD communicationSocket);
 
-    int sendPacketToServerSocket(Packet packet, SocketFD socket);
-
-    static void *staticHandleClientMessageThread(void *newClientArguments);
-
-    static void *staticHandleServerMessageThread(void *newClientArguments);
-
-    void *handleClientMessageThread(HandleNewClientArguments *args);
-
-    void handleServerMessageThread(HandleNewClientArguments *pArguments);
+    int sendPacketToSocket(Packet packet, SocketFD socket);
 
     void forwardPacketFromSocketToSocket(SocketFD fromSocket, SocketFD toSocket);
 

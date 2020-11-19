@@ -1,20 +1,12 @@
-//
-// Created by Henrique Valcanaia on 06/11/20.
-//
-#include <pthread.h>
 #include "FrontCommunicationManager.h"
-#include <map>
+#include "FrontDefinitions.h"
 #include <iostream>
+#include <map>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <pthread.h>
 #include <sys/socket.h>
-#include <netdb.h>
 #include <unistd.h>
-#include "FrontDefinitions.h"
-
-#define ERROR_INVALID_HOST -3
-#define ERROR_SOCKET_CONNECTION -4
-#define SUCCESSFUL_OPERATION 1
 
 int FrontCommunicationManager::connectToServer(const SocketConnectionInfo& connectionInfo) {
 
@@ -53,15 +45,12 @@ int FrontCommunicationManager::connectToServer(const SocketConnectionInfo& conne
 
 std::map<SocketFD, SocketFD> socketMap;
 
-#define ERROR_SOCKET_BINDING -1
-#define ERROR_SOCKET_ACCEPT_CONNECTION -2
-
 typedef std::map<SocketFD, ContinuousBuffer> ContinuousBuffersMap;
 typedef std::map<SocketFD, std::mutex> ContinuousBufferAccessControl;
 ContinuousBuffersMap continuousBuffers;
 ContinuousBufferAccessControl continuousBufferAccessControl;
 
-SocketFD FrontCommunicationManager::setupServerSocket() {
+SocketFD FrontCommunicationManager::setupClientSocket() {
     SocketFD connectionSocketFD;
     if ((connectionSocketFD = socket(AF_INET, SOCK_STREAM, 0)) == -1)
         return ERROR_SOCKET_CREATION;
@@ -86,18 +75,6 @@ SocketFD FrontCommunicationManager::setupServerSocket() {
     return connectionSocketFD;
 }
 
-void *FrontCommunicationManager::staticHandleClientMessageThread(void *newClientArguments) {
-    auto* t = static_cast<HandleNewClientArguments*>(newClientArguments);
-    t->communicationManager->handleClientMessageThread(t);
-    return nullptr;
-}
-
-void *FrontCommunicationManager::staticHandleServerMessageThread(void *newClientArguments) {
-    auto* t = static_cast<HandleNewClientArguments*>(newClientArguments);
-    t->communicationManager->handleServerMessageThread(t);
-    return nullptr;
-}
-
 void FrontCommunicationManager::forwardPacketFromSocketToSocket(SocketFD fromSocket, SocketFD toSocket) {
     // TODO: Como decidir os sockets?
     // O server vai ter um socket fixo?
@@ -106,13 +83,25 @@ void FrontCommunicationManager::forwardPacketFromSocketToSocket(SocketFD fromSoc
     Packet packet;
     while (true) {
         packet = this->readPacketFromSocket(fromSocket);
-        this->sendPacketToServerSocket(packet, toSocket);
+        this->sendPacketToSocket(packet, toSocket);
     }
 }
 
-void *FrontCommunicationManager::handleClientMessageThread(HandleNewClientArguments *args) {
+void *FrontCommunicationManager::staticHandleClientMessageThread(void *newClientArguments) {
+    auto* t = static_cast<HandleNewClientArguments*>(newClientArguments);
+    t->communicationManager->handleClientMessageThread(t);
+    return nullptr;
+}
+
+void FrontCommunicationManager::handleClientMessageThread(HandleNewClientArguments *args) {
     // TODO: Precisamos de IP e porta pra identificar os participantes?
     this->forwardPacketFromSocketToSocket(args->socket, args->communicationManager->serverSocket);
+}
+
+void *FrontCommunicationManager::staticHandleServerMessageThread(void *newClientArguments) {
+    auto* t = static_cast<HandleNewClientArguments*>(newClientArguments);
+    t->communicationManager->handleServerMessageThread(t);
+    return nullptr;
 }
 
 void FrontCommunicationManager::handleServerMessageThread(HandleNewClientArguments *args) {
@@ -152,13 +141,12 @@ void FrontCommunicationManager::logPacket(Packet packet) {
     }
 }
 
-int FrontCommunicationManager::sendPacketToServerSocket(Packet packet, SocketFD socket) {
+int FrontCommunicationManager::sendPacketToSocket(Packet packet, SocketFD socket) {
     std::cout << "Enviando para socket " << socket << std::endl;
     logPacket(packet);
     return write(socket, &packet, sizeof(Packet));
 }
 
-#define ERROR_CLIENT_DISCONNECTED -3
 Packet FrontCommunicationManager::readPacketFromSocket(SocketFD communicationSocket) {
     try {
         // Critical section
@@ -186,7 +174,6 @@ void FrontCommunicationManager::resetContinuousBufferFor(SocketFD socket) {
     continuousBufferAccessControl[socket].unlock();
 }
 
-#define PORT_SERVER 2000
 int FrontCommunicationManager::startFront() {
     SocketConnectionInfo connectionInfo;
     connectionInfo.ipAddress = "localhost";
@@ -202,7 +189,7 @@ int FrontCommunicationManager::startFront() {
 
     // -------------------------------------------
     SocketFD connectionSocketFDResult;
-    connectionSocketFDResult = this->setupServerSocket();
+    connectionSocketFDResult = this->setupClientSocket();
     if (connectionSocketFDResult < 0)
         return connectionSocketFDResult;
 
