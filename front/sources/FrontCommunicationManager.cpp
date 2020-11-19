@@ -1,7 +1,6 @@
 #include "FrontCommunicationManager.h"
 #include "FrontDefinitions.h"
 #include <iostream>
-#include <map>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <pthread.h>
@@ -42,13 +41,6 @@ int FrontCommunicationManager::connectToServer(const SocketConnectionInfo& conne
 
     return SUCCESSFUL_OPERATION;
 }
-
-std::map<SocketFD, SocketFD> socketMap;
-
-typedef std::map<SocketFD, ContinuousBuffer> ContinuousBuffersMap;
-typedef std::map<SocketFD, std::mutex> ContinuousBufferAccessControl;
-ContinuousBuffersMap continuousBuffers;
-ContinuousBufferAccessControl continuousBufferAccessControl;
 
 SocketFD FrontCommunicationManager::setupClientSocket() {
     SocketFD connectionSocketFD;
