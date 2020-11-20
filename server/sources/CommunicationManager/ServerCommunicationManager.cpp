@@ -127,28 +127,23 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
     SocketFD communicationSocket = args->newClientSocket;
 
     Packet packet{};
+
     while(true) {
         try {
             packet = readPacketFromSocket(communicationSocket);
+            std::cout << "PACKET TEXT "<<packet.text << std::endl;
             updateLastPongForSocket(communicationSocket);
             Message message = Message(packet);
             if (packet.type == TypeConnection) {
-                args->groupsManager->handleUserConnection(message.username,
-                                                          communicationSocket,
-                                                          message.groupName);
+//                args->groupsManager->handleUserConnection(message.username,
+//                                                          communicationSocket,
+//                                                          message.groupName);
+                this->startTestElection();
             } else if (packet.type == TypeMessage) {
                 args->groupsManager->sendMessage(message);
             } else if (packet.type == TypeElection) {
-                // Assuming that the empty state of the elected attribute
-                // is a number less than 0. If the elected attribute has an empty state
-                // this means that the election have already started. Otherwise we need
-                // to connect this server to its subsequent one in the available connections
-                // list.
-                if(this->electionManager.getElected() < 0) {
-                    this->electionManager.didReceiveElectionMessage(packet.text);
-                } else {
-                    this->electionManager.startElection();
-                }
+
+                this->electionManager.didReceiveElectionMessage(packet.text);
             } else if (packet.type == TypeElected) {
                 this->electionManager.didReceiveElectedMessage(packet.text);
             }
@@ -164,6 +159,15 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
 
     return nullptr;
 }
+
+void ServerCommunicationManager::startTestElection() {
+    this->electionManager.setupElection();
+    Message firstElectionMessage = this->electionManager.getFirstCandidateDefaultMessage();
+    std::cout<<"Começou a eleicao "<< firstElectionMessage.text << std::endl;
+    auto writeResult = this->electionManager.sendMessageForCurrentElection(firstElectionMessage);
+    std::cout<<"Write election message result" << writeResult << std::endl;
+}
+
 
 void ServerCommunicationManager::updateLastPingForSocket(SocketFD socket) {
     pingAccessControl[socket].lock();
@@ -230,14 +234,14 @@ void *ServerCommunicationManager::newClientConnectionKeepAlive(HandleNewClientAr
     return nullptr;
 }
 
-SocketFD ServerCommunicationManager::setupServerSocket() {
+SocketFD ServerCommunicationManager::setupServerSocket(unsigned short port) {
     SocketFD connectionSocketFD;
     if ((connectionSocketFD = socket(AF_INET, SOCK_STREAM, 0)) == -1)
         return ERROR_SOCKET_CREATION;
 
     struct sockaddr_in serverAddress{};
     serverAddress.sin_family = AF_INET;
-    serverAddress.sin_port = htons(PORT);
+    serverAddress.sin_port = htons(port);
     serverAddress.sin_addr.s_addr = INADDR_ANY;
 
     if (bind(connectionSocketFD, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0)
@@ -255,16 +259,19 @@ SocketFD ServerCommunicationManager::setupServerSocket() {
     return connectionSocketFD;
 }
 
-int ServerCommunicationManager::startServer(int loadMessageCount) {
+int ServerCommunicationManager::startServer(int loadMessageCount, int myID, int coordinatorID,  unsigned short port) {
     ServerGroupsManager groupsManager = ServerGroupsManager(loadMessageCount, this);
 
     SocketFD communicationSocketFD, connectionSocketFDResult;
-    connectionSocketFDResult = this->setupServerSocket();
+    connectionSocketFDResult = this->setupServerSocket(port);
     if (connectionSocketFDResult < 0)
         return connectionSocketFDResult;
 
-      this->electionManager.loadAvailableServersConnections();
-      this->electionManager.startElection();
+    this->electionManager.port = port;
+
+    this->electionManager.loadAvailableServersConnections();
+    this->electionManager.setMyID(myID);
+    this->electionManager.setElected(coordinatorID);
 
     struct sockaddr_in clientAddress;
     socklen_t clientSocketLength;
@@ -283,7 +290,7 @@ int ServerCommunicationManager::startServer(int loadMessageCount) {
         // Não estamos usando o id da thread depois, só estamos passando um valor porque usar nullptr no primeiro parâmetro da um warning
         pthread_t keepAliveThread, connectionThread;
 
-        pthread_create(&keepAliveThread, nullptr, ServerCommunicationManager::staticNewClientConnectionKeepAliveThread, &args);
+        //pthread_create(&keepAliveThread, nullptr, ServerCommunicationManager::staticNewClientConnectionKeepAliveThread, &args);
         pthread_create(&connectionThread, nullptr, ServerCommunicationManager::staticHandleNewClientConnectionThread, &args);
     }
 

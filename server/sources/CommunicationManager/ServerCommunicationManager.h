@@ -14,6 +14,7 @@ class ServerGroupsManager;
 struct UserConnection;
 class ServerCommunicationManager;
 
+
 struct HandleNewClientArguments {
     ServerCommunicationManager *communicationManager;
     ServerGroupsManager *groupsManager;
@@ -28,13 +29,11 @@ typedef std::map<SocketFD, std::mutex> ContinuousBufferAccessControl;
 
 class ServerCommunicationManager {
 public:
-    int startServer(int loadMessageCount);
-    int handleElectedStatus(string electedID);
-
+    int startServer(int loadMessageCount, int myID, int coordinatorID,  unsigned short port);
     void sendMessageToClients(Message message, const std::list<UserConnection>& userConnections);
 
 private:
-    SocketFD setupServerSocket();
+    SocketFD setupServerSocket(unsigned short port);
 
     // Ping/pong for keep alive
     KeepAlive socketsLastPing;
@@ -68,9 +67,10 @@ private:
     bool shouldTerminateSocketConnection(SocketFD socket);
     void closeSocketConnection(SocketFD socket);
 
-    // Lider election
-
+    // Election
     ServerElectionManager electionManager;
+
+    void startTestElection();
 };
 
 #endif //SISOP2_T1_SERVERCOMMUNICATIONMANAGER_H

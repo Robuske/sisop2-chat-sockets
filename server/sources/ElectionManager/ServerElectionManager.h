@@ -9,14 +9,24 @@
 #include "ServerDefinitions.h"
 #include "SharedDefinitions.h"
 
+
+/** Each time a server start a new election
+ * it needs to call setupElection() and then
+ * send a message with its id to the current
+ * connected server using the electionConnnection
+ * socket
+ */
+
 class ServerElectionManager {
 
 private:
-    AvailableConnection serverConnections[4];
-    int myID = 45;
-    int elected = 40;
+    AvailableConnection serverConnections[5];
+    int myID;
+    int elected;
 
 public:
+
+    unsigned short port;
 
     SocketFD electionConnection;
 
@@ -24,16 +34,22 @@ public:
     void loadAvailableServersConnections();
 
     // Handle coordinator election
-    void startElection();
+    void setupElection();
 
     void mockConnectionsList();
-    void handleElectionCommunication(AvailableConnection serverConnection);
-    int connectServerToServer(const SocketConnectionInfo &connectionInfo);
+    void setupElectionCommunication(AvailableConnection serverConnection);
+     int connectServerToServer(const SocketConnectionInfo &connectionInfo);
 
     void didReceiveElectionMessage(const string &candidateID);
     void didReceiveElectedMessage(const string &candidateID);
 
     int getElected();
+    void setMyID(int myID);
+    void setElected(int electedID);
+
+    int sendMessageForCurrentElection(Message message);
+
+    Message getFirstCandidateDefaultMessage();
 };
 
 
