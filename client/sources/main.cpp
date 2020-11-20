@@ -102,6 +102,7 @@ int main(int argc, char *argv[]) {
     // TODO: Use correct port
     connectionInfo.port = std::stoul(port);
 
+    clearScreen();
     int sessionResult = ClientMessagesManager().startClient(connectionInfo, userInfo);
     if(sessionResult > 0) {
         std::cout << "Success connecting!" << std::endl;

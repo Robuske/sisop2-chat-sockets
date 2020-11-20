@@ -12,6 +12,7 @@ int main(int argc, char *argv[]) {
         loadMessageCount = 0;
     }
 
+    clearScreen();
     std::cout << "Iniciando servidor Zap" << std::endl;
     std::cout << "Vai conectar no front hardcoded: " << PORT_FRONT_SERVER << std::endl;
     std::cout << "Enviando as # últimas mensagens enviadas no grupo: " << std::to_string(loadMessageCount) << std::endl;
