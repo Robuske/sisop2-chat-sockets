@@ -2,6 +2,7 @@
 #include "Persistency/ServerPersistency.h"
 #include "ServerCommunicationManager.h"
 #include <iostream>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <pthread.h>
 #include <sys/socket.h>
@@ -25,30 +26,22 @@ void log(LogLevel logLevel, const string& msg) {
 }
 
 // MARK: - Static methods
-void *ServerCommunicationManager::staticHandleNewClientConnectionThread(void *newClientArguments) {
-    auto* t = static_cast<HandleNewClientArguments*>(newClientArguments);
-    t->communicationManager->handleNewClientConnection(t);
+void *ServerCommunicationManager::staticHandleNewFrontConnectionThread(void *newClientArguments) {
+    auto* t = static_cast<ThreadArguments*>(newClientArguments);
+    t->communicationManager->handleNewFrontConnectionThread(t);
     return nullptr;
 }
 
 void *ServerCommunicationManager::staticNewClientConnectionKeepAliveThread(void *newClientArguments) {
-    auto* t = static_cast<HandleNewClientArguments*>(newClientArguments);
+    auto* t = static_cast<KeepAliveThreadArguments*>(newClientArguments);
     t->communicationManager->newClientConnectionKeepAlive(t);
     return nullptr;
 }
 
 // MARK: - Instance methods
 
-void ServerCommunicationManager::closeSocketConnection(SocketFD socketFileDescriptor) {
-    int closeReturn = close(socketFileDescriptor);
-    if (closeReturn < 0) {
-        throw ERROR_SOCKET_CLOSE;
-    }
-}
-
-void ServerCommunicationManager::terminateClientConnection(SocketFD socketFileDescriptor, string username, ServerGroupsManager* groupsManager) {
-    this->closeSocketConnection(socketFileDescriptor);
-    groupsManager->handleUserDisconnection(socketFileDescriptor, username);
+void ServerCommunicationManager::terminateClientConnection(UserConnection userConnection, ServerGroupsManager *groupsManager) {
+    groupsManager->handleUserDisconnection(userConnection);
 }
 
 void ServerCommunicationManager::resetContinuousBufferFor(SocketFD socket) {
@@ -70,7 +63,7 @@ Packet ServerCommunicationManager::readPacketFromSocket(SocketFD communicationSo
         continuousBufferAccessControl[communicationSocket].unlock();
 
         if (readOperationResult == 0) {
-            throw ERROR_CLIENT_DISCONNECTED;
+            throw ERROR_FRONT_DISCONNECTED;
 
         } else {
             throw readOperationResult;
@@ -81,7 +74,8 @@ Packet ServerCommunicationManager::readPacketFromSocket(SocketFD communicationSo
 void ServerCommunicationManager::sendMessageToClients(Message message, const std::list<UserConnection>& userConnections) {
     for (const UserConnection& userConnection:userConnections) {
         Packet packet = message.asPacket();
-        int readWriteOperationResult = write(userConnection.socket, &packet, sizeof(Packet));
+        packet.recipient = userConnection.origin;
+        int readWriteOperationResult = write(userConnection.frontSocket, &packet, sizeof(Packet));
         if (readWriteOperationResult < 0) {
             throw ERROR_SOCKET_WRITE;
         }
@@ -89,59 +83,75 @@ void ServerCommunicationManager::sendMessageToClients(Message message, const std
 }
 
 void ServerCommunicationManager::handleNewClientConnectionErrors(int errorCode, SocketFD communicationSocket, const string& username, ServerGroupsManager* groupsManager) {
-    if (errorCode == ERROR_CLIENT_DISCONNECTED) {
-        try {
-            this->terminateClientConnection(communicationSocket, username, groupsManager);
-        } catch (int errorCode) {
-            if (errorCode == ERROR_SOCKET_CLOSE) {
-                string errorPrefix =
-                        "Error(" + std::to_string(errno) + ") closing socket(" +
-                        std::to_string(communicationSocket) + ")";
-                log(Error, errorPrefix);
-            }
-        }
-    } else if (errorCode == ERROR_MAX_USER_CONNECTIONS_REACHED) {
-        try {
-            this->closeSocketConnection(communicationSocket);
-        } catch (int errorCode) {
-            if (errorCode == ERROR_SOCKET_CLOSE) {
-                string errorPrefix =
-                        "Error(" + std::to_string(errno) + ") closing socket(" +
-                        std::to_string(communicationSocket) + ")";
-                log(Error, errorPrefix);
-            }
-        }
-    } else if (errno == EBADF && shouldTerminateSocketConnection(communicationSocket)) {
-        // Quando fechamos o socket por timeout vai dar erro de bad file descriptor(errno=9)
-        // Neste caso, não queremos printar o erro
-    } else {
-        string errorPrefix =
-                "Error(" + std::to_string(errno) + ") from socket(" + std::to_string(communicationSocket) + ")";
-        log(Error, errorPrefix);
-    }
+        // TODO: Handle errors somehow D=
+        exit(EXIT_FAILURE);
+//    if (errorCode == ERROR_FRONT_DISCONNECTED) {
+//        exit(EXIT_FAILURE);
+//        try {
+//            this->terminateClientConnection(communicationSocket, groupsManager);
+//        } catch (int errorCode) {
+//            if (errorCode == ERROR_SOCKET_CLOSE) {
+//                string errorPrefix =
+//                        "Error(" + std::to_string(errno) + ") closing socket(" +
+//                        std::to_string(communicationSocket) + ")";
+//                log(Error, errorPrefix);
+//            }
+//        }
+//    } else if (errorCode == ERROR_MAX_USER_CONNECTIONS_REACHED) {
+//        try {
+//            this->terminateClientConnection(communicationSocket, groupsManager);
+//            this->closeSocketConnection(communicationSocket);
+//        } catch (int errorCode) {
+//            if (errorCode == ERROR_SOCKET_CLOSE) {
+//                string errorPrefix =
+//                        "Error(" + std::to_string(errno) + ") closing socket(" + std::to_string(communicationSocket) + ")";
+//                log(Error, errorPrefix);
+//            }
+//        }
+//    } else if (errno == EBADF && shouldTerminateClientConnection(communicationSocket)) {
+//        // Quando fechamos o socket por timeout vai dar erro de bad file descriptor(errno=9)
+//        // Neste caso, não queremos printar o erro
+//    } else {
+//        string errorPrefix = "Error(" + std::to_string(errno) + ") from socket(" + std::to_string(communicationSocket) + ")";
+//        log(Error, errorPrefix);
+//    }
 }
 
-void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArguments *args) {
-    SocketFD communicationSocket = args->newClientSocket;
+void *ServerCommunicationManager::handleNewFrontConnectionThread(ThreadArguments *args) {
+    SocketFD frontCommunicationSocket = args->socket;
 
     Packet packet{};
+    Client origin{};
+    UserConnection userConnection{};
+
+    struct KeepAliveThreadArguments keepAliveThreadArguments;
+    keepAliveThreadArguments.communicationManager = this;
+    pthread_t keepAliveThread;
     while(true) {
         try {
-            packet = readPacketFromSocket(communicationSocket);
-            updateLastPongForSocket(communicationSocket);
+            packet = readPacketFromSocket(frontCommunicationSocket);
+            origin = packet.sender;
+            updateLastPongForClient(origin);
             Message message = Message(packet);
             if (packet.type == TypeConnection) {
-                args->groupsManager->handleUserConnection(message.username,
-                                                          communicationSocket,
-                                                          message.groupName);
+                userConnection.username = message.username;
+                userConnection.origin = origin;
+                userConnection.frontSocket = frontCommunicationSocket;
+                keepAliveThreadArguments.userConnection = userConnection;
+
+                pthread_create(&keepAliveThread, nullptr, ServerCommunicationManager::staticNewClientConnectionKeepAliveThread, &keepAliveThreadArguments);
+                this->groupsManager->handleUserConnection(userConnection, message.groupName);
+
             } else if (packet.type == TypeMessage) {
-                args->groupsManager->sendMessage(message);
+                this->groupsManager->sendMessage(message);
             }
         } catch (int errorCode) {
-            handleNewClientConnectionErrors(errorCode,
-                                            communicationSocket,
-                                            packet.username,
-                                            args->groupsManager);
+            // FIXME: Support booth client and front errors
+            std::cout << "Error: " << errorCode << "while reading from socket: " << frontCommunicationSocket << std::endl;
+//            handleNewClientConnectionErrors(errorCode,
+//                                            frontCommunicationSocket,
+//                                            packet.username,
+//                                            args->groupsManager);
             break;
         }
     }
@@ -149,26 +159,26 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
     return nullptr;
 }
 
-void ServerCommunicationManager::updateLastPingForSocket(SocketFD socket) {
-    pingAccessControl[socket].lock();
-    socketsLastPing[socket] = now();
-    pingAccessControl[socket].unlock();
+void ServerCommunicationManager::updateLastPingForClient(Client client) {
+    pingAccessControl[client].lock();
+    clientsLastPing[client] = now();
+    pingAccessControl[client].unlock();
 }
 
-void ServerCommunicationManager::updateLastPongForSocket(SocketFD socket) {
-    pongAccessControl[socket].lock();
-    socketsLastPong[socket] = now();
-    pongAccessControl[socket].unlock();
+void ServerCommunicationManager::updateLastPongForClient(Client client) {
+    pongAccessControl[client].lock();
+    clientsLastPong[client] = now();
+    pongAccessControl[client].unlock();
 }
 
-bool ServerCommunicationManager::shouldTerminateSocketConnection(SocketFD socket) {
+bool ServerCommunicationManager::shouldTerminateClientConnection(Client client) {
     // TODO: Esses ifs estao aqui pq na primeira execucao o ping é 0 ainda e temos um pong da msg de conexao.
     //  Talvez tenha uma forma melhor de resolver, mas é o que temos for now.
-    std::time_t lastPing = socketsLastPing[socket];
+    std::time_t lastPing = clientsLastPing[client];
     if (lastPing <= 0) {
         return false;
     }
-    std::time_t lastPong = socketsLastPong[socket];
+    std::time_t lastPong = clientsLastPong[client];
     if (lastPing <= 0) {
         return false;
     }
@@ -176,36 +186,35 @@ bool ServerCommunicationManager::shouldTerminateSocketConnection(SocketFD socket
     return (abs(lastPing - lastPong) > TIMEOUT);
 }
 
-void *ServerCommunicationManager::newClientConnectionKeepAlive(HandleNewClientArguments *args) {
-    UserConnection userConnection;
-    userConnection.socket = args->newClientSocket;
+void *ServerCommunicationManager::newClientConnectionKeepAlive(KeepAliveThreadArguments *args) {
+    UserConnection userConnection = args->userConnection;
     std::list<UserConnection> singleUserConnectionList;
     singleUserConnectionList.push_back(userConnection);
 
     // Ensures ping is reset when repeating the socket
-    updateLastPingForSocket(userConnection.socket);
+    updateLastPingForClient(userConnection.origin);
 
     while (true) {
         sleep(TIMEOUT);
         try {
-            string username = args->groupsManager->getUsernameForSocket(userConnection.socket);
-            if (username.empty()) {
+            bool isConnectionValid = this->groupsManager->isConnectionValid(userConnection);
+            if (!isConnectionValid) {
                 // Client desconectou no intervalo do timeout.
-                std::cout << "Socket " + std::to_string(userConnection.socket) + " already left" << std::endl;
+                std::cout << "Client " << userConnection.origin.frontID << "-" << userConnection.origin.clientSocket << " already left" << std::endl;
                 break;
             }
 
-            if (shouldTerminateSocketConnection(userConnection.socket)) {
-                terminateClientConnection(userConnection.socket, username, args->groupsManager);
+            if (shouldTerminateClientConnection(userConnection.origin)) {
+                terminateClientConnection(userConnection, this->groupsManager);
                 break;
             } else {
-                std::cout << "Pinging socket " << std::to_string(userConnection.socket) << std::endl;
-                updateLastPingForSocket(userConnection.socket);
-                Message keepAliveMessage = Message::keepAliveWithUsername(username);
+                std::cout << "Pinging client " << userConnection.origin.frontID << "-" << userConnection.origin.clientSocket << std::endl;
+                updateLastPingForClient(userConnection.origin);
+                Message keepAliveMessage = Message::keepAliveWithUsername(userConnection.username, userConnection.origin, clientNotSet);
                 sendMessageToClients(keepAliveMessage, singleUserConnectionList);
             }
         } catch (int zapError) {
-            string errorPrefix = "Error(" + std::to_string(errno) + ", " + std::to_string(zapError) + ") from socket(" + std::to_string(userConnection.socket) + ")";
+            string errorPrefix = "Error(" + std::to_string(errno) + ", " + std::to_string(zapError) + ") from client(" + std::to_string(userConnection.origin.frontID) + "-" + std::to_string(userConnection.origin.clientSocket) + ")";
             log(Error, errorPrefix);
             break;
         }
@@ -214,59 +223,74 @@ void *ServerCommunicationManager::newClientConnectionKeepAlive(HandleNewClientAr
     return nullptr;
 }
 
-SocketFD ServerCommunicationManager::setupServerSocket() {
-    SocketFD connectionSocketFD;
-    if ((connectionSocketFD = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+int ServerCommunicationManager::connectToFront(const SocketConnectionInfo& connectionInfo) {
+
+    SocketFD socketFD;
+    struct sockaddr_in front_addr{};
+    struct hostent *front;
+
+    front = gethostbyname(connectionInfo.ipAddress.c_str());
+    if (front == nullptr) {
+        string errorPrefix = "Error no such host '" + connectionInfo.ipAddress + "'";
+        perror(errorPrefix.c_str());
+        return ERROR_INVALID_HOST;
+    }
+
+    if ((socketFD = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+        string errorPrefix = "Error(" + std::to_string(socketFD) + ") opening socket";
+        perror(errorPrefix.c_str());
         return ERROR_SOCKET_CREATION;
+    }
 
-    struct sockaddr_in serverAddress{};
-    serverAddress.sin_family = AF_INET;
-    serverAddress.sin_port = htons(PORT);
-    serverAddress.sin_addr.s_addr = INADDR_ANY;
+    front_addr.sin_family = AF_INET;
+    front_addr.sin_port = htons(connectionInfo.port);
+    front_addr.sin_addr = *((struct in_addr *)front->h_addr);
 
-    if (bind(connectionSocketFD, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0)
-        return ERROR_SOCKET_BINDING;
+    int connectionResult = connect(socketFD, (struct sockaddr *) &front_addr, sizeof(front_addr));
+    if (connectionResult < 0) {
+        string errorPrefix = "Error(" + std::to_string(connectionResult) + ") connecting";
+        perror(errorPrefix.c_str());
+        return ERROR_SOCKET_CONNECTION;
+    }
 
-    //    The backlog argument defines the maximum length to which the queue of
-    //    pending connections for sockfd may grow.  If a connection request
-    //    arrives when the queue is full, the client may receive an error with
-    //    an indication of ECONNREFUSED or, if the underlying protocol supports
-    //    retransmission, the request may be ignored so that a later reattempt
-    //    at connection succeeds.
-    int backlog = 100;
-    listen(connectionSocketFD, backlog);
-
-    return connectionSocketFD;
+    return socketFD;
 }
 
 int ServerCommunicationManager::startServer(int loadMessageCount) {
-    ServerGroupsManager groupsManager = ServerGroupsManager(loadMessageCount, this);
+    groupsManager = new ServerGroupsManager(loadMessageCount, this);
 
-    SocketFD communicationSocketFD, connectionSocketFDResult;
-    connectionSocketFDResult = this->setupServerSocket();
-    if (connectionSocketFDResult < 0)
-        return connectionSocketFDResult;
+    std::list<SocketConnectionInfo> connections;
+    // TODO: Load fronts from config file
+    SocketConnectionInfo hardCodedconnectionInfo;
+    hardCodedconnectionInfo.ipAddress = "localhost";
+    hardCodedconnectionInfo.port = PORT_FRONT_SERVER;
+    connections.push_back(hardCodedconnectionInfo);
 
-    struct sockaddr_in clientAddress;
-    socklen_t clientSocketLength;
-    while(true) {
-        clientSocketLength = sizeof(struct sockaddr_in);
-        if ((communicationSocketFD = accept(connectionSocketFDResult, (struct sockaddr *) &clientAddress, &clientSocketLength)) == -1)
-            return ERROR_SOCKET_ACCEPT_CONNECTION;
+    SocketFD communicationSocket;
 
-        resetContinuousBufferFor(communicationSocketFD);
+    for (const SocketConnectionInfo &connectionInfo: connections) {
+        communicationSocket = connectToFront(connectionInfo);
+        if (communicationSocket <= 0) {
+            string errorPrefix = "Error(" + std::to_string(communicationSocket) + ") connecting server to:\nfront: " + connectionInfo.ipAddress + ":" + std::to_string(connectionInfo.port);
+            perror(errorPrefix.c_str());
+            return communicationSocket;
+        }
 
-        struct HandleNewClientArguments args;
-        args.newClientSocket = communicationSocketFD;
+        std::cout << "Successful connection to:" << std::endl;
+        std::cout << "front: " << connectionInfo.ipAddress << ":" << connectionInfo.port << std::endl;
+        std::cout << "communicationSocket: " << communicationSocket << std::endl;
+
+        struct ThreadArguments args;
+        args.socket = communicationSocket;
         args.communicationManager = this;
-        args.groupsManager = &groupsManager;
 
-        // Não estamos usando o id da thread depois, só estamos passando um valor porque usar nullptr no primeiro parâmetro da um warning
-        pthread_t keepAliveThread, connectionThread;
+        pthread_t connectionThread;
 
-        pthread_create(&keepAliveThread, nullptr, ServerCommunicationManager::staticNewClientConnectionKeepAliveThread, &args);
-        pthread_create(&connectionThread, nullptr, ServerCommunicationManager::staticHandleNewClientConnectionThread, &args);
+        pthread_create(&connectionThread, nullptr, ServerCommunicationManager::staticHandleNewFrontConnectionThread, &args);
     }
+
+    // TODO: Probably would be more correct to wait all threads? Not sure
+    while (true);
 
     return 0;
 }

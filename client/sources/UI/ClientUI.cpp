@@ -46,7 +46,7 @@ string ClientUI::senderUsernameForMessageAndCurrentUsername(Message message, str
     switch (message.packetType) {
         case TypeMessage:
         case TypeConnection:
-        case TypeDesconnection:
+        case TypeDisconnection:
             return (message.username == currentUserName) ? "Você" : message.username;
         default:
             return "SYSTEM";

@@ -6,7 +6,8 @@
 
 int main(int argc, char *argv[]) {
     std::cout << "Iniciando FRONT Zap" << std::endl;
-    std::cout << "Porta: " << PORT_FRONT << std::endl;
+    std::cout << "Porta para server: " << PORT_FRONT_SERVER << std::endl;
+    std::cout << "Porta para client: " << PORT_FRONT_CLIENT << std::endl;
 
     int startServerResult = FrontCommunicationManager().startFront();
     if (startServerResult < 0) {

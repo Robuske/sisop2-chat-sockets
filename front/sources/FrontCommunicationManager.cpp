@@ -1,58 +1,22 @@
 #include "FrontCommunicationManager.h"
 #include "FrontDefinitions.h"
 #include <iostream>
-#include <netdb.h>
 #include <netinet/in.h>
 #include <pthread.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
-int FrontCommunicationManager::connectToServer(const SocketConnectionInfo& connectionInfo) {
-
-    SocketFD sockFd;
-    struct sockaddr_in serv_addr{};
-    struct hostent *server;
-
-    server = gethostbyname(connectionInfo.ipAddress.c_str());
-    if (server == nullptr) {
-        string errorPrefix = "Error no such host '" + connectionInfo.ipAddress + "'";
-        perror(errorPrefix.c_str());
-        return ERROR_INVALID_HOST;
-    }
-
-    if ((sockFd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-        string errorPrefix = "Error(" + std::to_string(sockFd) + ") opening socket";
-        perror(errorPrefix.c_str());
-        return ERROR_SOCKET_CREATION;
-    }
-
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(connectionInfo.port);
-    serv_addr.sin_addr = *((struct in_addr *)server->h_addr);
-
-    int connectionResult = connect(sockFd,(struct sockaddr *) &serv_addr,sizeof(serv_addr));
-    if (connectionResult < 0) {
-        string errorPrefix = "Error(" + std::to_string(connectionResult) + ") connecting";
-        perror(errorPrefix.c_str());
-        return ERROR_SOCKET_CONNECTION;
-    }
-
-    this->serverSocket = sockFd;
-
-    return SUCCESSFUL_OPERATION;
-}
-
-SocketFD FrontCommunicationManager::setupClientSocket() {
+SocketFD FrontCommunicationManager::setupConnectionSocketForPort(int port) {
     SocketFD connectionSocketFD;
     if ((connectionSocketFD = socket(AF_INET, SOCK_STREAM, 0)) == -1)
         return ERROR_SOCKET_CREATION;
 
-    struct sockaddr_in serverAddress{};
-    serverAddress.sin_family = AF_INET;
-    serverAddress.sin_port = htons(PORT_FRONT);
-    serverAddress.sin_addr.s_addr = INADDR_ANY;
+    struct sockaddr_in connectionAddress{};
+    connectionAddress.sin_family = AF_INET;
+    connectionAddress.sin_port = htons(port);
+    connectionAddress.sin_addr.s_addr = INADDR_ANY;
 
-    if (bind(connectionSocketFD, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0)
+    if (bind(connectionSocketFD, (struct sockaddr *) &connectionAddress, sizeof(connectionAddress)) < 0)
         return ERROR_SOCKET_BINDING;
 
     //    The backlog argument defines the maximum length to which the queue of
@@ -67,38 +31,97 @@ SocketFD FrontCommunicationManager::setupClientSocket() {
     return connectionSocketFD;
 }
 
-void FrontCommunicationManager::forwardPacketFromSocketToSocket(SocketFD fromSocket, SocketFD toSocket) {
-    // TODO: Como decidir os sockets?
-    // O server vai ter um socket fixo?
-    // Cada front vai ter 1 socket?
-    // Teremos mais de 1 front rodando?
-    Packet packet;
+/// Even though we only have one thread reading from one server, we need to be prepared in case a new server is elected and the front hasn't lost connection to the old one. So the front is always expecting new server connections.
+void *FrontCommunicationManager::staticExpectServerConnectionThread(void *expectServerConnectionArgs) {
+    auto* threadArguments = static_cast<ThreadArguments*>(expectServerConnectionArgs);
+
+    socklen_t socketLength = sizeof(struct sockaddr_in);
+    struct sockaddr_in serverAddress;
+    SocketFD serverCommunicationSocketFD;
+    pthread_t handleServerMessageThread;
     while (true) {
-        packet = this->readPacketFromSocket(fromSocket);
-        this->sendPacketToSocket(packet, toSocket);
+        if ((serverCommunicationSocketFD = accept(threadArguments->socket, (struct sockaddr *) &serverAddress, &socketLength)) == -1) {
+            perror("Server Connection Accept Error");
+            exit(EXIT_FAILURE);
+        }
+        // TODO: Maybe add a lock for the serverCommunicationSocket property?
+        // Not setting to the correct value yet because we haven't started the read thread
+        threadArguments->communicationManager->serverCommunicationSocket = -1;
+        threadArguments->communicationManager->resetContinuousBufferFor(serverCommunicationSocketFD);
+
+        struct ThreadArguments serverArgs;
+        serverArgs.socket = serverCommunicationSocketFD;
+        serverArgs.communicationManager = threadArguments->communicationManager;
+
+        pthread_create(&handleServerMessageThread, nullptr, FrontCommunicationManager::staticHandleServerMessageThread, &serverArgs);
     }
+
+    return nullptr;
 }
 
 void *FrontCommunicationManager::staticHandleClientMessageThread(void *newClientArguments) {
-    auto* t = static_cast<HandleNewClientArguments*>(newClientArguments);
+    auto* t = static_cast<ThreadArguments*>(newClientArguments);
     t->communicationManager->handleClientMessageThread(t);
     return nullptr;
 }
 
-void FrontCommunicationManager::handleClientMessageThread(HandleNewClientArguments *args) {
-    // TODO: Precisamos de IP e porta pra identificar os participantes?
-    this->forwardPacketFromSocketToSocket(args->socket, args->communicationManager->serverSocket);
+void FrontCommunicationManager::handleClientMessageThread(ThreadArguments *args) {
+    Packet packet;
+    while (true) {
+        try {
+            packet = this->readPacketFromSocket(args->socket);
+            if (serverCommunicationSocket > 0) {
+                packet.sender.clientSocket = args->socket;
+                packet.sender.frontID = args->communicationManager->frontID;
+                std::cout << "Client sending message to server" << std::endl;
+                sendPacketToSocket(packet, serverCommunicationSocket);
+            } else {
+                std::cout << "[WARNING]: No server available, will wait for 1 second" << std::endl;
+                // TODO: Send message to client asking to wait
+                sleep(1);
+            }
+        } catch (int error) {
+            std::cout << "Client read error: " << error << std::endl;
+            // TODO: Handle somehow?
+            return;
+        }
+    }
 }
 
-void *FrontCommunicationManager::staticHandleServerMessageThread(void *newClientArguments) {
-    auto* t = static_cast<HandleNewClientArguments*>(newClientArguments);
+void *FrontCommunicationManager::staticHandleServerMessageThread(void *newServerArguments) {
+    auto* t = static_cast<ThreadArguments*>(newServerArguments);
     t->communicationManager->handleServerMessageThread(t);
     return nullptr;
 }
 
-void FrontCommunicationManager::handleServerMessageThread(HandleNewClientArguments *args) {
-    // TODO: Precisamos de IP e porta pra identificar os participantes?
-    this->forwardPacketFromSocketToSocket(args->communicationManager->serverSocket, args->socket);
+void FrontCommunicationManager::handleServerMessageThread(ThreadArguments *args) {
+    serverCommunicationSocket = args->socket;
+
+    Packet packet;
+    while (true) {
+        try {
+            packet = this->readPacketFromSocket(serverCommunicationSocket);
+            // This makes sure this still is the valid server
+            if (serverCommunicationSocket == args->socket) {
+                // TODO: Check if it is disconnection message and drop client
+//                if (packet.type == TypeDisconnection) {
+                    // The SENDER is the one that was disconnected
+                    // Could just close the socket like this \/ but probably would create problems
+//                    close(packet.sender.clientSocket);
+//                }
+                std::cout << "Server sending message to client" << std::endl;
+                this->sendPacketToSocket(packet, packet.recipient.clientSocket);
+            } else {
+                std::cout << "[WARNING]: Invalid server sending message" << std::endl;
+                // TODO: Close connection
+                return;
+            }
+        } catch (int error) {
+            std::cout << "Server read error: " << error << std::endl;
+            // TODO: Handle somehow?
+            return;
+        }
+    }
 }
 
 string FrontCommunicationManager::packetTypeAsString(PacketType packetType) {
@@ -106,7 +129,7 @@ string FrontCommunicationManager::packetTypeAsString(PacketType packetType) {
         case TypeConnection:
             return "Connection";
 
-        case TypeDesconnection:
+        case TypeDisconnection:
             return "Disconnection";
 
         case TypeMessage:
@@ -125,6 +148,10 @@ void FrontCommunicationManager::logPacket(Packet packet) {
     if (debug) {
         std::cout << "------------- Packet -----------" << std::endl;
         std::cout << "Type: " << packetTypeAsString(packet.type) << std::endl;
+        std::cout << "Sender - frontID: " << packet.sender.frontID << std::endl;
+        std::cout << "Sender - clientSocket: " << packet.sender.clientSocket << std::endl;
+        std::cout << "Recipient - frontID: " << packet.recipient.frontID << std::endl;
+        std::cout << "Recipient - clientSocket: " << packet.recipient.clientSocket << std::endl;
         std::cout << "Username: " << packet.username << std::endl;
         std::cout << "Group name: " << packet.groupName << std::endl;
         std::cout << "Timestamp: " << packet.timestamp << std::endl;
@@ -167,40 +194,46 @@ void FrontCommunicationManager::resetContinuousBufferFor(SocketFD socket) {
 }
 
 int FrontCommunicationManager::startFront() {
-    SocketConnectionInfo connectionInfo;
-    connectionInfo.ipAddress = "localhost";
-    connectionInfo.port = PORT_SERVER;
+    // TODO: Get ID and ports from config file
+    this->frontID = 15;
+    int serverPort = PORT_FRONT_SERVER;
+    int clientPort = PORT_FRONT_CLIENT;
 
-    int socketConnectionResult = this->connectToServer(connectionInfo);
-    if (socketConnectionResult != SUCCESSFUL_OPERATION) {
-        string errorPrefix = "Error(" + std::to_string(socketConnectionResult) + ") connecting client";
-        perror(errorPrefix.c_str());
-        return socketConnectionResult;
-    }
-    std::cout << "Server connection successful, socket: " << this->serverSocket << std::endl;
+    // ----- Server Setup
+    this->serverCommunicationSocket = -1;
+    SocketFD serverConnectionSocketFD;
+    serverConnectionSocketFD = this->setupConnectionSocketForPort(serverPort);
+    if (serverConnectionSocketFD < 0)
+        return serverConnectionSocketFD;
 
-    // -------------------------------------------
-    SocketFD connectionSocketFDResult;
-    connectionSocketFDResult = this->setupClientSocket();
-    if (connectionSocketFDResult < 0)
-        return connectionSocketFDResult;
+    ThreadArguments args{};
+    args.communicationManager = this;
+    args.socket = serverConnectionSocketFD;
 
-    socklen_t clientSocketLength;
+    pthread_t serverConnectionThread;
+    pthread_create(&serverConnectionThread, nullptr, FrontCommunicationManager::staticExpectServerConnectionThread, &args);
+
+
+    // ----- Client Setup
+    SocketFD clientConnectionSocketFD;
+    clientConnectionSocketFD = this->setupConnectionSocketForPort(clientPort);
+    if (clientConnectionSocketFD < 0)
+        return clientConnectionSocketFD;
+
+    socklen_t socketLength = sizeof(struct sockaddr_in);
     struct sockaddr_in clientAddress;
-    SocketFD communicationSocketFD;
-    pthread_t handleClientMessageThread, handleServerMessageThread;
+    SocketFD clientCommunicationSocketFD;
+    pthread_t handleClientMessageThread;
     while (true) {
-        clientSocketLength = sizeof(struct sockaddr_in);
-        if ((communicationSocketFD = accept(connectionSocketFDResult, (struct sockaddr *) &clientAddress, &clientSocketLength)) == -1)
-            return ERROR_SOCKET_ACCEPT_CONNECTION;
+        if ((clientCommunicationSocketFD = accept(clientConnectionSocketFD, (struct sockaddr *) &clientAddress, &socketLength)) == -1)
+            return ERROR_SOCKET_ACCEPT_CLIENT_CONNECTION;
 
-        resetContinuousBufferFor(communicationSocketFD);
+        resetContinuousBufferFor(clientCommunicationSocketFD);
 
-        struct HandleNewClientArguments clientArgs;
-        clientArgs.socket = communicationSocketFD;
+        struct ThreadArguments clientArgs;
+        clientArgs.socket = clientCommunicationSocketFD;
         clientArgs.communicationManager = this;
 
-        pthread_create(&handleServerMessageThread, nullptr, FrontCommunicationManager::staticHandleServerMessageThread, &clientArgs);
         pthread_create(&handleClientMessageThread, nullptr, FrontCommunicationManager::staticHandleClientMessageThread, &clientArgs);
     }
 

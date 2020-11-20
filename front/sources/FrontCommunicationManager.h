@@ -6,7 +6,8 @@
 #include <mutex>
 
 class FrontCommunicationManager;
-struct HandleNewClientArguments {
+
+struct ThreadArguments {
     FrontCommunicationManager *communicationManager;
     SocketFD socket;
 };
@@ -20,14 +21,18 @@ public:
     int startFront();
 
 private:
-    SocketFD serverSocket;
-    SocketFD setupClientSocket();
+    int frontID;
+
+    // Connection
+    SocketFD serverCommunicationSocket;
+    SocketFD setupConnectionSocketForPort(int port);
 
     // Threads
+    static void *staticExpectServerConnectionThread(void *expectServerConnectionArgs);
+    static void *staticHandleServerMessageThread(void *newServerArguments);
+    void handleServerMessageThread(ThreadArguments *pArguments);
     static void *staticHandleClientMessageThread(void *newClientArguments);
-    void handleClientMessageThread(HandleNewClientArguments *args);
-    static void *staticHandleServerMessageThread(void *newClientArguments);
-    void handleServerMessageThread(HandleNewClientArguments *pArguments);
+    void handleClientMessageThread(ThreadArguments *args);
 
     // Continuous buffer
     ContinuousBuffersMap continuousBuffers;
@@ -38,10 +43,6 @@ private:
 
     Packet readPacketFromSocket(SocketFD communicationSocket);
     int sendPacketToSocket(Packet packet, SocketFD socket);
-
-    void forwardPacketFromSocketToSocket(SocketFD fromSocket, SocketFD toSocket);
-
-    int connectToServer(const SocketConnectionInfo &connectionInfo);
 
     // Debug
     void logPacket(Packet packet);

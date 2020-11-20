@@ -10,7 +10,7 @@ struct ThreadParameter {
 };
 
 void  ClientMessagesManager::sendKeepAliveMessage() {
-    Message keepAliveMessage = Message::keepAliveWithUsername(userInfo.username);
+    Message keepAliveMessage = Message::keepAliveWithUsername(userInfo.username, clientNotSet, clientNotSet);
     int writeResult = communicationManager.writeSocketMessage(keepAliveMessage);
     if (writeResult < 0) {
         string errorPrefix = "Error(" + std::to_string(writeResult) + ") writing keep alive message to socket";
@@ -60,7 +60,7 @@ void* ClientMessagesManager::writeMessagesThread() {
     string messageString;
     int writeResult;
 
-    Message connectionMessage = Message(TypeConnection, now(), userInfo.groupName, userInfo.username, "");
+    Message connectionMessage = Message(TypeConnection, now(), clientNotSet, clientNotSet, userInfo.groupName, userInfo.username, "");
 
     // TODO: Throw or handle error
     communicationManager.writeConnectionMessageToSocket(connectionMessage);
@@ -71,7 +71,7 @@ void* ClientMessagesManager::writeMessagesThread() {
         if (messageString.length() >= MESSAGE_SIZE) {
             this->clientUI.displayMessageSizeError(messageString.length());
         } else {
-            Message message = Message(TypeMessage, now(), userInfo.groupName, userInfo.username, messageString);
+            Message message = Message(TypeMessage, now(), clientNotSet, clientNotSet, userInfo.groupName, userInfo.username, messageString);
             writeResult = communicationManager.writeSocketMessage(message);
             if (writeResult < 0) {
                 string errorPrefix = "Error(" + std::to_string(writeResult) + ") writing to socket";
