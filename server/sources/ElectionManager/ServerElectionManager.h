@@ -13,12 +13,14 @@ class ServerElectionManager {
 
 private:
     AvailableConnection serverConnections[4];
-    int myID = 40;
-    int elected = 219;
+    int myID = 45;
+    int elected = 40;
 
 public:
-    // Handle servers replicas
 
+    SocketFD electionConnection;
+
+    // Handle servers replicas
     void loadAvailableServersConnections();
 
     // Handle coordinator election
@@ -26,8 +28,12 @@ public:
 
     void mockConnectionsList();
     void handleElectionCommunication(AvailableConnection serverConnection);
-
     int connectServerToServer(const SocketConnectionInfo &connectionInfo);
+
+    void didReceiveElectionMessage(const string &candidateID);
+    void didReceiveElectedMessage(const string &candidateID);
+
+    int getElected();
 };
 
 

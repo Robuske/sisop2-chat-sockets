@@ -138,7 +138,21 @@ void *ServerCommunicationManager::handleNewClientConnection(HandleNewClientArgum
                                                           message.groupName);
             } else if (packet.type == TypeMessage) {
                 args->groupsManager->sendMessage(message);
+            } else if (packet.type == TypeElection) {
+                // Assuming that the empty state of the elected attribute
+                // is a number less than 0. If the elected attribute has an empty state
+                // this means that the election have already started. Otherwise we need
+                // to connect this server to its subsequent one in the available connections
+                // list.
+                if(this->electionManager.getElected() < 0) {
+                    this->electionManager.didReceiveElectionMessage(packet.text);
+                } else {
+                    this->electionManager.startElection();
+                }
+            } else if (packet.type == TypeElected) {
+                this->electionManager.didReceiveElectedMessage(packet.text);
             }
+
         } catch (int errorCode) {
             handleNewClientConnectionErrors(errorCode,
                                             communicationSocket,
@@ -250,7 +264,7 @@ int ServerCommunicationManager::startServer(int loadMessageCount) {
         return connectionSocketFDResult;
 
       this->electionManager.loadAvailableServersConnections();
-      //this->electionManager.startElection();
+      this->electionManager.startElection();
 
     struct sockaddr_in clientAddress;
     socklen_t clientSocketLength;

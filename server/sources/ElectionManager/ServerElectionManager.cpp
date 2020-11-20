@@ -80,18 +80,21 @@ void ServerElectionManager::startElection() {
         myIndex++;
     }
 
-    // Checking if its the last index in the array
+    // Checking whats the server im about to connect
 
     int numberOfConnections =  sizeof(this->serverConnections)/sizeof(AvailableConnection);
 
     AvailableConnection nextConnetion;
 
-    // Means that im the last connection in the list
-    if(myIndex == (numberOfConnections -1)) {
-        nextConnetion = this->serverConnections[0];
+    int nextConnectionIndex =  ((numberOfConnections -1) == myIndex) ? 0 : (myIndex + 1);
+
+    if(this->serverConnections[nextConnectionIndex].id == this->elected) {
+        nextConnectionIndex =  ((numberOfConnections -1) == nextConnectionIndex) ? 0 : (nextConnectionIndex + 1);
+        nextConnetion = this->serverConnections[nextConnectionIndex];
     } else {
-        nextConnetion = this->serverConnections[myIndex + 1];
+        nextConnetion = this->serverConnections[nextConnectionIndex];
     }
+
 
     this->handleElectionCommunication(nextConnetion);
 }
@@ -128,9 +131,21 @@ int ServerElectionManager::connectServerToServer(const SocketConnectionInfo& con
     return connectionResult;
 }
 
+void ServerElectionManager::didReceiveElectionMessage(const string &candidateID) {
+
+}
+
+void ServerElectionManager::didReceiveElectedMessage(const string &candidateID) {
+    this->elected = atoi(candidateID.c_str());
+
+}
+
+int ServerElectionManager::getElected() {
+    return this->elected;
+}
+
 void ServerElectionManager::handleElectionCommunication(AvailableConnection serverConnection) {
 
     SocketFD connectionResult = this->connectServerToServer(serverConnection.connectionInfo);
-
-
+    this->electionConnection = connectionResult;
 }
