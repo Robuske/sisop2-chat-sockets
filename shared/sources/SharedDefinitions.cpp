@@ -37,3 +37,10 @@ Packet continuousBufferRead(SocketFD communicationSocket, ContinuousBuffer conti
         }
     }
 }
+
+string dateStringFromTimestamp(std::time_t timestamp) {
+    struct tm *timeInfo = localtime (&timestamp);
+    char strBuffer[20];
+    strftime (strBuffer, 20,"%H:%M:%S",timeInfo);
+    return strBuffer;
+}

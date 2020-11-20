@@ -82,7 +82,7 @@ void ServerCommunicationManager::sendMessageToClients(Message message, const std
     }
 }
 
-void ServerCommunicationManager::handleNewClientConnectionErrors(int errorCode, SocketFD communicationSocket, const string& username, ServerGroupsManager* groupsManager) {
+void ServerCommunicationManager::handleNewClientConnectionErrors(int errorCode, SocketFD frontCommunicationSocket, const string &username) {
         // TODO: Handle errors somehow D=
         exit(EXIT_FAILURE);
 //    if (errorCode == ERROR_FRONT_DISCONNECTED) {
@@ -133,25 +133,36 @@ void *ServerCommunicationManager::handleNewFrontConnectionThread(ThreadArguments
             origin = packet.sender;
             updateLastPongForClient(origin);
             Message message = Message(packet);
+            userConnection.username = message.username;
+            userConnection.origin = origin;
+            userConnection.frontSocket = frontCommunicationSocket;
+
             if (packet.type == TypeConnection) {
-                userConnection.username = message.username;
-                userConnection.origin = origin;
-                userConnection.frontSocket = frontCommunicationSocket;
                 keepAliveThreadArguments.userConnection = userConnection;
 
-                pthread_create(&keepAliveThread, nullptr, ServerCommunicationManager::staticNewClientConnectionKeepAliveThread, &keepAliveThreadArguments);
                 this->groupsManager->handleUserConnection(userConnection, message.groupName);
+                // Handles user connection first to not create a keep alive thread if the connection is refused
+                pthread_create(&keepAliveThread, nullptr, ServerCommunicationManager::staticNewClientConnectionKeepAliveThread, &keepAliveThreadArguments);
+
+            } else if (packet.type == TypeDisconnection) {
+                this->terminateClientConnection(userConnection, groupsManager);
 
             } else if (packet.type == TypeMessage) {
                 this->groupsManager->sendMessage(message);
             }
+
         } catch (int errorCode) {
+            std::cout << "Error: " << errorCode << " while reading from socket: " << frontCommunicationSocket << std::endl;
+
+            if (errorCode == ERROR_MAX_USER_CONNECTIONS_REACHED || errorCode == ERROR_GROUP_NOT_FOUND) {
+                // The connection was denied or is trying to remove a connection that was already removed
+                continue;
+            }
+
             // FIXME: Support booth client and front errors
-            std::cout << "Error: " << errorCode << "while reading from socket: " << frontCommunicationSocket << std::endl;
-//            handleNewClientConnectionErrors(errorCode,
-//                                            frontCommunicationSocket,
-//                                            packet.username,
-//                                            args->groupsManager);
+            handleNewClientConnectionErrors(errorCode,
+                                            frontCommunicationSocket,
+                                            packet.username);
             break;
         }
     }
@@ -197,24 +208,26 @@ void *ServerCommunicationManager::newClientConnectionKeepAlive(KeepAliveThreadAr
     while (true) {
         sleep(TIMEOUT);
         try {
+            std::cout << "Timestamp " << dateStringFromTimestamp(now()) << std::endl;
             bool isConnectionValid = this->groupsManager->isConnectionValid(userConnection);
             if (!isConnectionValid) {
                 // Client desconectou no intervalo do timeout.
-                std::cout << "Client " << userConnection.origin.frontID << "-" << userConnection.origin.clientSocket << " already left" << std::endl;
+                std::cout << "Client " << userConnection.username << ":" << userConnection.origin.frontID << "-" << userConnection.origin.clientSocket << " already left" << std::endl;
                 break;
             }
 
             if (shouldTerminateClientConnection(userConnection.origin)) {
+                std::cout << "Client " << userConnection.username << ":" << userConnection.origin.frontID << "-" << userConnection.origin.clientSocket << " timed out" << std::endl;
                 terminateClientConnection(userConnection, this->groupsManager);
                 break;
             } else {
-                std::cout << "Pinging client " << userConnection.origin.frontID << "-" << userConnection.origin.clientSocket << std::endl;
+                std::cout << "Pinging client " << userConnection.username << ":" << userConnection.origin.frontID << "-" << userConnection.origin.clientSocket << std::endl;
                 updateLastPingForClient(userConnection.origin);
                 Message keepAliveMessage = Message::keepAliveWithUsername(userConnection.username, userConnection.origin, clientNotSet);
                 sendMessageToClients(keepAliveMessage, singleUserConnectionList);
             }
         } catch (int zapError) {
-            string errorPrefix = "Error(" + std::to_string(errno) + ", " + std::to_string(zapError) + ") from client(" + std::to_string(userConnection.origin.frontID) + "-" + std::to_string(userConnection.origin.clientSocket) + ")";
+            string errorPrefix = "Error(" + std::to_string(errno) + ", " + std::to_string(zapError) + ") from client(" + userConnection.username + ":" + std::to_string(userConnection.origin.frontID) + "-" + std::to_string(userConnection.origin.clientSocket) + ")";
             log(Error, errorPrefix);
             break;
         }

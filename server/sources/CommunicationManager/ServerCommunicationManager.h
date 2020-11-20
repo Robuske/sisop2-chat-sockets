@@ -64,7 +64,7 @@ private:
     Packet readPacketFromSocket(SocketFD communicationSocket);
 
     //  Handle errors
-    void handleNewClientConnectionErrors(int errorCode, SocketFD communicationSocket, const string& username, ServerGroupsManager* groupsManager);
+    void handleNewClientConnectionErrors(int errorCode, SocketFD frontCommunicationSocket, const string &username);
 
     // Connection termination
     void terminateClientConnection(UserConnection userConnection, ServerGroupsManager *groupsManager);

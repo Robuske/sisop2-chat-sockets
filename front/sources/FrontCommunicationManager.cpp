@@ -1,5 +1,6 @@
 #include "FrontCommunicationManager.h"
 #include "FrontDefinitions.h"
+#include "Message/Message.h"
 #include <iostream>
 #include <netinet/in.h>
 #include <pthread.h>
@@ -66,23 +67,38 @@ void *FrontCommunicationManager::staticHandleClientMessageThread(void *newClient
 }
 
 void FrontCommunicationManager::handleClientMessageThread(ThreadArguments *args) {
+    SocketFD clientSocket = args->socket;
     Packet packet;
     while (true) {
         try {
-            packet = this->readPacketFromSocket(args->socket);
+            packet = this->readPacketFromSocket(clientSocket);
             if (serverCommunicationSocket > 0) {
-                packet.sender.clientSocket = args->socket;
-                packet.sender.frontID = args->communicationManager->frontID;
+                packet.sender.clientSocket = clientSocket;
+                packet.sender.frontID = this->frontID;
                 std::cout << "Client sending message to server" << std::endl;
                 sendPacketToSocket(packet, serverCommunicationSocket);
             } else {
-                std::cout << "[WARNING]: No server available, will wait for 1 second" << std::endl;
+                std::cout << "[WARNING] No server available, will wait for 1 second" << std::endl;
                 // TODO: Send message to client asking to wait
                 sleep(1);
             }
         } catch (int error) {
-            std::cout << "Client read error: " << error << std::endl;
-            // TODO: Handle somehow?
+            std::cout << "[ERROR] Client read error: " << error << std::endl;
+
+            if (error == ERROR_SOCKET_DISCONNECTED) {
+                std::cout << "Will send disconnection message to server with last packet info:" << std::endl;
+                std::cout << "socket: " << clientSocket << std::endl;
+                std::cout << "username: " << packet.username << std::endl;
+                std::cout << "groupName: " << packet.groupName << std::endl;
+
+                Client client{ frontID, clientSocket };
+                Message message = Message(TypeDisconnection, now(), client, client, packet.groupName, packet.username, "Desconectou!");
+                sendPacketToSocket(message.asPacket(), serverCommunicationSocket);
+            } else {
+                std::cout << "Will NOT send disconnection message to server" << std::endl;
+            }
+
+            close(clientSocket);
             return;
         }
     }
@@ -95,25 +111,31 @@ void *FrontCommunicationManager::staticHandleServerMessageThread(void *newServer
 }
 
 void FrontCommunicationManager::handleServerMessageThread(ThreadArguments *args) {
-    serverCommunicationSocket = args->socket;
+    SocketFD serverSocket = args->socket;
+    serverCommunicationSocket = serverSocket;
 
     Packet packet;
     while (true) {
         try {
             packet = this->readPacketFromSocket(serverCommunicationSocket);
             // This makes sure this still is the valid server
-            if (serverCommunicationSocket == args->socket) {
-                // TODO: Check if it is disconnection message and drop client
-//                if (packet.type == TypeDisconnection) {
+            if (serverCommunicationSocket == serverSocket) {
+                if (packet.type == TypeDisconnection) {
                     // The SENDER is the one that was disconnected
-                    // Could just close the socket like this \/ but probably would create problems
-//                    close(packet.sender.clientSocket);
-//                }
+                    close(packet.sender.clientSocket);
+                }
+
                 std::cout << "Server sending message to client" << std::endl;
                 this->sendPacketToSocket(packet, packet.recipient.clientSocket);
+
+                if (packet.type == TypeMaxConnectionsReached) {
+                    std::cout << "Message was max connections, will close connection" << std::endl;
+                    close(packet.sender.clientSocket);
+                }
+
             } else {
                 std::cout << "[WARNING]: Invalid server sending message" << std::endl;
-                // TODO: Close connection
+                close(serverSocket);
                 return;
             }
         } catch (int error) {
@@ -154,14 +176,14 @@ void FrontCommunicationManager::logPacket(Packet packet) {
         std::cout << "Recipient - clientSocket: " << packet.recipient.clientSocket << std::endl;
         std::cout << "Username: " << packet.username << std::endl;
         std::cout << "Group name: " << packet.groupName << std::endl;
-        std::cout << "Timestamp: " << packet.timestamp << std::endl;
+        std::cout << "Timestamp: " << dateStringFromTimestamp(packet.timestamp) << std::endl;
         std::cout << "Text: " << packet.text << std::endl;
         std::cout << "--------------------------------" << std::endl;
     }
 }
 
 int FrontCommunicationManager::sendPacketToSocket(Packet packet, SocketFD socket) {
-    std::cout << "Enviando para socket " << socket << std::endl;
+    std::cout << "Sending to socket " << socket << std::endl;
     logPacket(packet);
     return write(socket, &packet, sizeof(Packet));
 }
@@ -179,7 +201,7 @@ Packet FrontCommunicationManager::readPacketFromSocket(SocketFD communicationSoc
         continuousBufferAccessControl[communicationSocket].unlock();
 
         if (readOperationResult == 0) {
-            throw ERROR_CLIENT_DISCONNECTED;
+            throw ERROR_SOCKET_DISCONNECTED;
 
         } else {
             throw readOperationResult;

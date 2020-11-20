@@ -21,7 +21,7 @@ using std::string;
 #define ERROR_SOCKET_CREATION -60
 #define ERROR_SOCKET_CONNECTION -65
 #define ERROR_SOCKET_WRITE -18
-#define ERROR_SOCKET_READ -20
+#define ERROR_SOCKET_READ -21
 #define CODE_SUCCESS 0
 
 #define NAME_SIZE 32
@@ -66,15 +66,17 @@ struct Packet {
     char text[MESSAGE_SIZE];
 };
 
-// Only forward definition to avoid duplicate symbols
-std::time_t now();
-Packet continuousBufferRead(SocketFD communicationSocket, ContinuousBuffer continuousBuffer);
-
 struct SocketConnectionInfo {
     string ipAddress;
     unsigned short port;
 };
 
+// Only forward definition to avoid duplicate symbols
+std::time_t now();
+string dateStringFromTimestamp(std::time_t timestamp);
+
 void clearScreen();
+
+Packet continuousBufferRead(SocketFD communicationSocket, ContinuousBuffer continuousBuffer);
 
 #endif // SISOP2_T1_SHAREDDEFINITIONS_H

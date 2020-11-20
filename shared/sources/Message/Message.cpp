@@ -23,7 +23,7 @@ Message::Message(Packet packet) {
 }
 
 Message Message::keepAliveWithUsername(string username, Client sender, Client recipient) {
-    return Message(TypeKeepAlive, 0, sender, recipient, "", username, "KEEP ALIVE MESSAGE");
+    return Message(TypeKeepAlive, now(), sender, recipient, "", username, "KEEP ALIVE MESSAGE");
 }
 
 Packet Message::asPacket() const {

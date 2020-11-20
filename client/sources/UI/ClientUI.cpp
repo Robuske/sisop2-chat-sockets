@@ -22,19 +22,12 @@ void ClientUI::displayTextInputIndicator(string userName) {
 }
 
 string ClientUI::buildTextMessage(Message message, string currentUserName) {
-    string dateString = this->dateStringFromTimestamp(message.timestamp);
+    string dateString = dateStringFromTimestamp(message.timestamp);
     string senderUsername = this->senderUsernameForMessageAndCurrentUsername(message, currentUserName);
     string msgPrefix = dateString + " [" + senderUsername + "] ";
     string finalMessage = msgPrefix + message.text;
 
     return finalMessage;
-}
-
-string ClientUI::dateStringFromTimestamp(std::time_t timestamp) {
-    struct tm *timeInfo = localtime (&timestamp);
-    char strBuffer[20];
-    strftime (strBuffer, 20,"%H:%M:%S",timeInfo);
-    return strBuffer;
 }
 
 string ClientUI::senderUsernameForMessageAndCurrentUsername(Message message, string currentUserName) {
