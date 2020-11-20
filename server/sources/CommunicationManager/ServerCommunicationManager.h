@@ -4,6 +4,7 @@
 #include "Message/Message.h"
 #include "ServerDefinitions.h"
 #include "SharedDefinitions.h"
+#include "ElectionManager/ServerElectionManager.h"
 #include <list>
 #include <map>
 #include <mutex>
@@ -28,6 +29,7 @@ typedef std::map<SocketFD, std::mutex> ContinuousBufferAccessControl;
 class ServerCommunicationManager {
 public:
     int startServer(int loadMessageCount);
+    int handleElectedStatus(string electedID);
 
     void sendMessageToClients(Message message, const std::list<UserConnection>& userConnections);
 
@@ -66,9 +68,9 @@ private:
     bool shouldTerminateSocketConnection(SocketFD socket);
     void closeSocketConnection(SocketFD socket);
 
-    // Handle servers replicas
-    AvailableConnections *serverConnections;
-    void loadAvailableServersConnections();
+    // Lider election
+
+    ServerElectionManager electionManager;
 };
 
 #endif //SISOP2_T1_SERVERCOMMUNICATIONMANAGER_H

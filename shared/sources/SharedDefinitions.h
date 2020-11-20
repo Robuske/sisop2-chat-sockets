@@ -31,7 +31,7 @@ using std::string;
 typedef int SocketFD;
 typedef std::vector<char> ContinuousBuffer;
 
-enum PacketType { TypeConnection, TypeDesconnection, TypeMessage, TypeKeepAlive, TypeMaxConnectionsReached };
+enum PacketType { TypeConnection, TypeDesconnection, TypeMessage, TypeKeepAlive, TypeMaxConnectionsReached, TypeElection, TypeElected };
 
 struct tUserInfo {
     string username;
@@ -67,9 +67,9 @@ Packet continuousBufferRead(SocketFD communicationSocket, ContinuousBuffer conti
 
 //typedef std::map<int , SocketConnectionInfo> AvailableConnections;
 
-typedef struct AvailableConnections {
+typedef struct AvailableConnection {
     int id;
     SocketConnectionInfo connectionInfo;
-} AvailableConnections;
+} AvailableConnection;
 
 #endif // SISOP2_T1_SHAREDDEFINITIONS_H
