@@ -6,21 +6,22 @@
 
 using std::string;
 
-
 class Message {
 public:
     PacketType packetType;
     std::time_t timestamp;
+    Client sender;
+    Client recipient;
     string groupName;
     string username;
     string text;
 
     // Constructors
-    Message(PacketType packetType, std::time_t timestamp, string groupName, string username, string text);
+    Message(PacketType packetType, std::time_t timestamp, Client sender, Client recipient, string groupName, string username, string text);
     explicit Message(Packet packet);
-    static Message keepAliveWithUsername(string username);
+    static Message keepAliveWithUsername(string username, Client sender, Client recipient);
 
-    const Packet asPacket();
+    Packet asPacket() const;
 };
 
 #endif //SISOP2_T1_MESSAGE_H

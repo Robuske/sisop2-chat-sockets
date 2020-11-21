@@ -6,15 +6,6 @@
 #include "GroupsAccessControl/GroupsAccessControl.h"
 #include "SharedDefinitions.h"
 
-struct UserConnection {
-    string username;
-    SocketFD socket;
-
-    bool operator==(const struct UserConnection& a) const {
-        return ( a.socket == this->socket && a.username == this->username );
-    }
-};
-
 struct Group {
     string name;
     std::list<UserConnection> clients;
@@ -39,9 +30,9 @@ private:
 
 public:
     void sendMessage(const Message& message);
-    string getUsernameForSocket(SocketFD socketFd);
-    void handleUserDisconnection(SocketFD socket, const string& username);
-    void handleUserConnection(const string& username, SocketFD socket, const string& group);
+    bool isConnectionValid(const UserConnection& userConnection);
+    void handleUserDisconnection(UserConnection userConnection);
+    void handleUserConnection(UserConnection userConnection, const string &groupName);
     ServerGroupsManager(int numberOfMessagesToLoadWhenUserJoined, ServerCommunicationManager *communicationManager);
 };
 

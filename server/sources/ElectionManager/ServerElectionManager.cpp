@@ -166,12 +166,12 @@ void ServerElectionManager::didReceiveElectionMessage(const string &candidateID)
 
     if(currentCandidate == this->myID) {
         // Send elected message
-        Message message = Message(TypeElected, now(), "", "", candidateID);
+        Message message = Message(TypeElected, now(), clientNotSet, clientNotSet, "", "", candidateID);
         this->sendMessageForCurrentElection(message);
     } else {
         // Find next candidate
         int nextCandidate = std::max(currentCandidate, this->myID);
-        Message message = Message(TypeElection, now(), "", "", std::to_string(nextCandidate));
+        Message message = Message(TypeElection, now(), clientNotSet, clientNotSet, "", "", std::to_string(nextCandidate));
         this->sendMessageForCurrentElection(message);
     }
 }
@@ -186,7 +186,7 @@ void ServerElectionManager::didReceiveElectedMessage(const string &candidateID) 
         std::cout << "Ganhou a eleicao" << this->elected << std::endl;
        // close(this->electionConnection);
     } else {
-        Message message = Message(TypeElected, now(), "", "", candidateID);
+        Message message = Message(TypeElected, now(), clientNotSet, clientNotSet, "", "", candidateID);
         this->sendMessageForCurrentElection(message);
     }
 }
@@ -212,5 +212,5 @@ void ServerElectionManager::setMyID(int myID) {
 }
 
 Message ServerElectionManager::getFirstCandidateDefaultMessage() {
-    return Message(TypeElection, now(), "", "", std::to_string(this->myID));
+    return Message(TypeElection, now(), clientNotSet, clientNotSet,"", "",std::to_string(this->myID));
 }
