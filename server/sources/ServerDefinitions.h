@@ -14,6 +14,7 @@
 
 #define ERROR_CONNECTING_SOCKET_SERVER_TO_SERVER -240
 
+
 struct UserConnection {
     string username;
     SocketFD frontSocket;

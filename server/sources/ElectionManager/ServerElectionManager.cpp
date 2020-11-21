@@ -12,7 +12,11 @@
 #include <netdb.h>
 #include <string>
 
-void ServerElectionManager::mockConnectionsList() {
+// When we are the responsibles
+
+AvailableConnection serverConfigFile[5];
+
+void loadServerConfigFile() {
 
     // Mock connections
     AvailableConnection fstConnection;
@@ -41,39 +45,18 @@ void ServerElectionManager::mockConnectionsList() {
     fifthConnection.connectionInfo.ipAddress = "localhost";
     fifthConnection.connectionInfo.port = 2004;
 
-    this->serverConnections[0] = fstConnection;
-    this->serverConnections[1] = sndConnection;
-    this->serverConnections[2] = thirdConnection;
-    this->serverConnections[3] = fourthConnection;
-    this->serverConnections[4] = fifthConnection;
+    serverConfigFile[0] = fstConnection;
+    serverConfigFile[1] = sndConnection;
+    serverConfigFile[2] = thirdConnection;
+    serverConfigFile[3] = fourthConnection;
+    serverConfigFile[4] = fifthConnection;
 }
 
-
-// MARK: - Instance methods
-void ServerElectionManager::loadAvailableServersConnections() {
-//    string path = "servers.txt";
-//    std::ifstream file(path.c_str());
-//
-//    // Defining the file size
-//    // To do so we need to set the file pointer to the EOF
-//
-//    const auto begin = file.tellg();
-//    file.seekg (0, std::ios::end);
-//    const auto end = file.tellg();
-//    const long long fileSize = end-begin;
-//
-//    //Rewinding file the file pointer previously located at the EOF
-//    file.seekg(0, std::ios::beg);
-//
-//    char *buffer = new char[fileSize]();
-//    file.read(buffer, fileSize);
-//    file.close();
-    this->mockConnectionsList();
-
-    //this->serverConnections = (AvailableConnection*) buffer;
+void ServerElectionManager::setupElectionManager(int serverID) {
+    loadServerConfigFile();
+    this->setServerID(serverID);
+    this->setupCoordinator();
 }
-
-// When we are the responsibles
 
 void ServerElectionManager::setupElection() {
     // Acessar minha lista de conexoes disponivel
@@ -84,29 +67,54 @@ void ServerElectionManager::setupElection() {
     // Getting my index in the connections list using myID as reference
     int myIndex = 0;
 
-    for (AvailableConnection &serverConnection:this->serverConnections) {
-        if (serverConnection.id == this->myID) break;
+    for (AvailableConnection &serverConnection: serverConfigFile) {
+        if (serverConnection.id == this->serverID) break;
         myIndex++;
     }
 
     // Checking whats the server im about to connect
 
-    int numberOfConnections =  sizeof(this->serverConnections)/sizeof(AvailableConnection);
+    int numberOfConnections =  sizeof(serverConfigFile)/sizeof(AvailableConnection);
 
     AvailableConnection nextConnetion;
 
     int nextConnectionIndex =  ((numberOfConnections -1) == myIndex) ? 0 : (myIndex + 1);
 
-    if(this->serverConnections[nextConnectionIndex].id == this->elected) {
+    if(serverConfigFile[nextConnectionIndex].id == this->elected) {
         nextConnectionIndex =  ((numberOfConnections -1) == nextConnectionIndex) ? 0 : (nextConnectionIndex + 1);
-        nextConnetion = this->serverConnections[nextConnectionIndex];
+        nextConnetion = serverConfigFile[nextConnectionIndex];
     } else {
-        nextConnetion = this->serverConnections[nextConnectionIndex];
+        nextConnetion = serverConfigFile[nextConnectionIndex];
     }
 
     this->elected = -1;
 
     this->setupElectionCommunication(nextConnetion);
+}
+
+void ServerElectionManager::setupCoordinator() {
+    int electedID = serverConfigFile[0].id;
+    this->elected = electedID;
+}
+
+bool ServerElectionManager::isCoordinator() {
+    return (this->elected == this->serverID);
+}
+
+SocketConnectionInfo ServerElectionManager::loadCoordinatorConnectionInfo() {
+    return this->searchConnectionInfoForServerID(this->elected);
+}
+
+SocketConnectionInfo ServerElectionManager::searchConnectionInfoForServerID(int serverID) {
+    // Getting my index in the connections list using myID as reference
+    int myIndex = 0;
+
+    for (AvailableConnection &serverConnection: serverConfigFile) {
+        if (serverConnection.id == serverID) break;
+        myIndex++;
+    }
+
+    return serverConfigFile[myIndex].connectionInfo;
 }
 
 
@@ -164,13 +172,13 @@ void ServerElectionManager::didReceiveElectionMessage(const string &candidateID)
 
     int currentCandidate = atoi(candidateID.c_str());
 
-    if(currentCandidate == this->myID) {
+    if(currentCandidate == this->serverID) {
         // Send elected message
         Message message = Message(TypeElected, now(), clientNotSet, clientNotSet, "", "", candidateID);
         this->sendMessageForCurrentElection(message);
     } else {
         // Find next candidate
-        int nextCandidate = std::max(currentCandidate, this->myID);
+        int nextCandidate = std::max(currentCandidate, this->serverID);
         Message message = Message(TypeElection, now(), clientNotSet, clientNotSet, "", "", std::to_string(nextCandidate));
         this->sendMessageForCurrentElection(message);
     }
@@ -181,7 +189,7 @@ void ServerElectionManager::didReceiveElectedMessage(const string &candidateID) 
     std::cout<<"Recebeu mensagem de eleito com candidate"<<candidateID.c_str()<< std::endl;
 
     this->elected = atoi(candidateID.c_str());
-    if(this->elected == this->myID) {
+    if(this->elected == this->serverID) {
         // do nothing and close socket
         std::cout << "Ganhou a eleicao" << this->elected << std::endl;
        // close(this->electionConnection);
@@ -207,10 +215,10 @@ void ServerElectionManager::setElected(int electedID) {
     this->elected = electedID;
 }
 
-void ServerElectionManager::setMyID(int myID) {
-    this->myID = myID;
+void ServerElectionManager::setServerID(int serverID) {
+    this->serverID = serverID;
 }
 
 Message ServerElectionManager::getFirstCandidateDefaultMessage() {
-    return Message(TypeElection, now(), clientNotSet, clientNotSet,"", "",std::to_string(this->myID));
+    return Message(TypeElection, now(), clientNotSet, clientNotSet,"", "",std::to_string(this->serverID));
 }

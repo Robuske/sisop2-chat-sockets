@@ -39,21 +39,17 @@ int main(int argc, char *argv[]) {
     }
 
 
-    string port = "2004";
-    int myID = 100;
-    int coordID = 219;
+    int serverID = 219;
     clearScreen();
 
     std::cout << "Iniciando servidor Zap" << std::endl;
-    std::cout << "Porta: " << port << std::endl;
-    std::cout << "My ID: " << myID << std::endl;
-    std::cout << "Coord ID: " << coordID << std::endl;
+    std::cout << "My ID: " << serverID << std::endl;
     std::cout << "Iniciando servidor Zap" << std::endl;
     std::cout << "Vai conectar no front hardcoded: " << PORT_FRONT_SERVER << std::endl;
     std::cout << "Enviando as # últimas mensagens enviadas no grupo: " << std::to_string(loadMessageCount) << std::endl;
 
 
-    int startServerResult = ServerCommunicationManager().startServer(loadMessageCount, myID, coordID,   std::stoul(port));
+    int startServerResult = ServerCommunicationManager().startServer(loadMessageCount, serverID);
     if (startServerResult < 0) {
         string errorPrefix = "Erro (" + std::to_string(startServerResult) + ") iniciando server";
         perror(errorPrefix.c_str());

@@ -31,17 +31,15 @@ typedef std::map<SocketFD, std::mutex> ContinuousBufferAccessControl;
 
 class ServerCommunicationManager {
 public:
-    int startServer(int loadMessageCount, int myID, int coordinatorID,  unsigned short port);
+    int startServer(int loadMessageCount, int serverID);
     void sendMessageToClients(Message message, const std::list<UserConnection>& userConnections);
-
-    void setupFronts();
-
-    int setupServerToServerPort(int myID, int coordinatorID, unsigned short port);
 
 private:
 
-    SocketFD setupServerSocket(unsigned short port);
+    SocketFD openServerToServerPort(unsigned short port);
     int connectToFront(const SocketConnectionInfo& connectionInfo);
+    void setupFronts();
+    int setupServerToServerConnection(SocketConnectionInfo connectionInfo);
 
     ServerGroupsManager *groupsManager;
 
@@ -83,6 +81,7 @@ private:
     ServerElectionManager electionManager;
     void startTestElection();
 
+    void setupMainConnection();
 };
 
 #endif //SISOP2_T1_SERVERCOMMUNICATIONMANAGER_H

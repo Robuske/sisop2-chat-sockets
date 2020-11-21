@@ -20,36 +20,39 @@
 class ServerElectionManager {
 
 private:
-    AvailableConnection serverConnections[5];
-    int myID;
+    int serverID;
     int elected;
 
 public:
 
-    unsigned short port;
 
     SocketFD electionConnection;
-
-    // Handle servers replicas
-    void loadAvailableServersConnections();
 
     // Handle coordinator election
     void setupElection();
 
-    void mockConnectionsList();
     void setupElectionCommunication(AvailableConnection serverConnection);
-     int connectServerToServer(const SocketConnectionInfo &connectionInfo);
+    int connectServerToServer(const SocketConnectionInfo &connectionInfo);
 
     void didReceiveElectionMessage(const string &candidateID);
     void didReceiveElectedMessage(const string &candidateID);
 
     int getElected();
-    void setMyID(int myID);
+    void setServerID(int serverID);
     void setElected(int electedID);
+
+    void setupCoordinator();
 
     int sendMessageForCurrentElection(Message message);
 
     Message getFirstCandidateDefaultMessage();
+
+    SocketConnectionInfo loadCoordinatorConnectionInfo();
+
+    SocketConnectionInfo searchConnectionInfoForServerID(int serverID);
+    void setupElectionManager(int serverID);
+
+    bool isCoordinator();
 };
 
 

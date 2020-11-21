@@ -286,30 +286,6 @@ void *ServerCommunicationManager::newClientConnectionKeepAlive(KeepAliveThreadAr
     return nullptr;
 }
 
-SocketFD ServerCommunicationManager::setupServerSocket(unsigned short port) {
-    SocketFD connectionSocketFD;
-    if ((connectionSocketFD = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-        return ERROR_SOCKET_CREATION;
-
-    struct sockaddr_in serverAddress{};
-    serverAddress.sin_family = AF_INET;
-    serverAddress.sin_port = htons(port);
-    serverAddress.sin_addr.s_addr = INADDR_ANY;
-
-    if (bind(connectionSocketFD, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0)
-        return ERROR_SOCKET_BINDING;
-
-    //    The backlog argument defines the maximum length to which the queue of
-    //    pending connections for sockfd may grow.  If a connection request
-    //    arrives when the queue is full, the client may receive an error with
-    //    an indication of ECONNREFUSED or, if the underlying protocol supports
-    //    retransmission, the request may be ignored so that a later reattempt
-    //    at connection succeeds.
-    int backlog = 100;
-    listen(connectionSocketFD, backlog);
-
-    return connectionSocketFD;
-}
 
 int ServerCommunicationManager::connectToFront(const SocketConnectionInfo& connectionInfo) {
 
@@ -345,17 +321,37 @@ int ServerCommunicationManager::connectToFront(const SocketConnectionInfo& conne
 }
 
 
-int ServerCommunicationManager::setupServerToServerPort(int myID, int coordinatorID, unsigned short port) {
+SocketFD ServerCommunicationManager::openServerToServerPort(unsigned short port) {
+    SocketFD connectionSocketFD;
+    if ((connectionSocketFD = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+        return ERROR_SOCKET_CREATION;
+
+    struct sockaddr_in serverAddress{};
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_port = htons(port);
+    serverAddress.sin_addr.s_addr = INADDR_ANY;
+
+    if (bind(connectionSocketFD, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0)
+        return ERROR_SOCKET_BINDING;
+
+    //    The backlog argument defines the maximum length to which the queue of
+    //    pending connections for sockfd may grow.  If a connection request
+    //    arrives when the queue is full, the client may receive an error with
+    //    an indication of ECONNREFUSED or, if the underlying protocol supports
+    //    retransmission, the request may be ignored so that a later reattempt
+    //    at connection succeeds.
+    int backlog = 100;
+    listen(connectionSocketFD, backlog);
+
+    return connectionSocketFD;
+}
+
+int ServerCommunicationManager::setupServerToServerConnection(SocketConnectionInfo connectionInfo) {
 
     SocketFD communicationSocketFD, connectionSocketFDResult;
-    connectionSocketFDResult = this->setupServerSocket(port);
+    connectionSocketFDResult = this->openServerToServerPort(connectionInfo.port);
     if (connectionSocketFDResult < 0)
         return connectionSocketFDResult;
-
-    this->electionManager.port = port;
-    this->electionManager.loadAvailableServersConnections();
-    this->electionManager.setMyID(myID);
-    this->electionManager.setElected(coordinatorID);
 
     struct sockaddr_in clientAddress;
     socklen_t clientSocketLength;
@@ -378,6 +374,7 @@ int ServerCommunicationManager::setupServerToServerPort(int myID, int coordinato
     }
 
 }
+
 
 void ServerCommunicationManager::setupFronts() {
     std::list<SocketConnectionInfo> connections;
@@ -411,10 +408,27 @@ void ServerCommunicationManager::setupFronts() {
     }
 }
 
-int ServerCommunicationManager::startServer(int loadMessageCount, int myID, int coordinatorID,  unsigned short port) {
-    groupsManager = new ServerGroupsManager(loadMessageCount, this);
+void ServerCommunicationManager::setupMainConnection() {
 
-    this->setupFronts();
-    auto serverConnectionResult = this->setupServerToServerPort(myID, coordinatorID, port);
-    return serverConnectionResult;
+    if(this->electionManager.isCoordinator()) {
+        std::cout << "WILL CONNECT TO FRONT" << std::endl;
+        setupFronts();
+    } else {
+        // connect to coordinator
+        std::cout << "CONNECT TO COORDINATOR" << std::endl;
+    }
+
+}
+
+int ServerCommunicationManager::startServer(int loadMessageCount, int serverID) {
+    groupsManager = new ServerGroupsManager(loadMessageCount, this);
+    this->electionManager.setupElectionManager(serverID);
+
+    this->setupMainConnection();
+
+   // SocketConnectionInfo serverConnectionInfo = this->electionManager.searchConnectionInfoForServerID(serverID);
+   // auto serverConnectionResult = this->setupServerToServerConnection(serverConnectionInfo);
+   // return serverConnectionResult;
+
+   while(true);
 }
