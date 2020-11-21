@@ -33,11 +33,11 @@ class ServerCommunicationManager {
 public:
     int startServer(int loadMessageCount, int serverID);
     void sendMessageToClients(Message message, const std::list<UserConnection>& userConnections);
+    int performConnectionTo(const SocketConnectionInfo& connectionInfo);
 
 private:
 
     SocketFD openServerToServerPort(unsigned short port);
-    int connectToFront(const SocketConnectionInfo& connectionInfo);
     void setupFronts();
     int setupServerToServerConnection(SocketConnectionInfo connectionInfo);
 
@@ -82,6 +82,8 @@ private:
     void startTestElection();
 
     void setupMainConnection();
+
+    void setupBackup();
 };
 
 #endif //SISOP2_T1_SERVERCOMMUNICATIONMANAGER_H

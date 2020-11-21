@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
     }
 
 
-    int serverID = 219;
+    int serverID = 100;
     clearScreen();
 
     std::cout << "Iniciando servidor Zap" << std::endl;

@@ -12,6 +12,8 @@
 #include <netdb.h>
 #include <string>
 
+#include "CommunicationManager/ServerCommunicationManager.h"
+
 // When we are the responsibles
 
 AvailableConnection serverConfigFile[5];
@@ -52,10 +54,11 @@ void loadServerConfigFile() {
     serverConfigFile[4] = fifthConnection;
 }
 
-void ServerElectionManager::setupElectionManager(int serverID) {
+void ServerElectionManager::setupElectionManager(int serverID, ServerCommunicationManager* serverCommunicationManager) {
     loadServerConfigFile();
     this->setServerID(serverID);
     this->setupCoordinator();
+    this->communicationManager = serverCommunicationManager;
 }
 
 void ServerElectionManager::setupElection() {
@@ -118,38 +121,38 @@ SocketConnectionInfo ServerElectionManager::searchConnectionInfoForServerID(int 
 }
 
 
-int ServerElectionManager::connectServerToServer(const SocketConnectionInfo& connectionInfo) {
-
-    SocketFD socketFD;
-    struct sockaddr_in front_addr{};
-    struct hostent *front;
-
-    front = gethostbyname(connectionInfo.ipAddress.c_str());
-    if (front == nullptr) {
-        string errorPrefix = "Error no such host '" + connectionInfo.ipAddress + "'";
-        perror(errorPrefix.c_str());
-        return ERROR_INVALID_HOST;
-    }
-
-    if ((socketFD = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-        string errorPrefix = "Error(" + std::to_string(socketFD) + ") opening socket";
-        perror(errorPrefix.c_str());
-        return ERROR_SOCKET_CREATION;
-    }
-
-    front_addr.sin_family = AF_INET;
-    front_addr.sin_port = htons(connectionInfo.port);
-    front_addr.sin_addr = *((struct in_addr *)front->h_addr);
-
-    int connectionResult = connect(socketFD, (struct sockaddr *) &front_addr, sizeof(front_addr));
-    if (connectionResult < 0) {
-        string errorPrefix = "Error(" + std::to_string(connectionResult) + ") connecting";
-        perror(errorPrefix.c_str());
-        return ERROR_CONNECTING_SOCKET_SERVER_TO_SERVER;
-    }
-
-    return socketFD;
-}
+//int ServerElectionManager::connectServerToServer(const SocketConnectionInfo& connectionInfo) {
+//
+//    SocketFD socketFD;
+//    struct sockaddr_in front_addr{};
+//    struct hostent *front;
+//
+//    front = gethostbyname(connectionInfo.ipAddress.c_str());
+//    if (front == nullptr) {
+//        string errorPrefix = "Error no such host '" + connectionInfo.ipAddress + "'";
+//        perror(errorPrefix.c_str());
+//        return ERROR_INVALID_HOST;
+//    }
+//
+//    if ((socketFD = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+//        string errorPrefix = "Error(" + std::to_string(socketFD) + ") opening socket";
+//        perror(errorPrefix.c_str());
+//        return ERROR_SOCKET_CREATION;
+//    }
+//
+//    front_addr.sin_family = AF_INET;
+//    front_addr.sin_port = htons(connectionInfo.port);
+//    front_addr.sin_addr = *((struct in_addr *)front->h_addr);
+//
+//    int connectionResult = connect(socketFD, (struct sockaddr *) &front_addr, sizeof(front_addr));
+//    if (connectionResult < 0) {
+//        string errorPrefix = "Error(" + std::to_string(connectionResult) + ") connecting";
+//        perror(errorPrefix.c_str());
+//        return ERROR_CONNECTING_SOCKET_SERVER_TO_SERVER;
+//    }
+//
+//    return socketFD;
+//}
 
 int ServerElectionManager::sendMessageForCurrentElection(Message message) {
     Packet packet = message.asPacket();
@@ -204,7 +207,7 @@ int ServerElectionManager::getElected() {
 }
 
 void ServerElectionManager::setupElectionCommunication(AvailableConnection serverConnection) {
-    SocketFD connectionResult = this->connectServerToServer(serverConnection.connectionInfo);
+    SocketFD connectionResult = this->communicationManager->performConnectionTo(serverConnection.connectionInfo);
     if (connectionResult < 0) {
         throw connectionResult;
     }

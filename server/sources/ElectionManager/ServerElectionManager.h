@@ -5,9 +5,12 @@
 #ifndef SISOP2_T1_SERVERELECTIONMANAGER_H
 #define SISOP2_T1_SERVERELECTIONMANAGER_H
 
+
 #include "Message/Message.h"
 #include "ServerDefinitions.h"
 #include "SharedDefinitions.h"
+
+class ServerCommunicationManager;
 
 
 /** Each time a server start a new election
@@ -20,11 +23,14 @@
 class ServerElectionManager {
 
 private:
-    int serverID;
+
     int elected;
+
+    ServerCommunicationManager* communicationManager;
 
 public:
 
+    int serverID;
 
     SocketFD electionConnection;
 
@@ -32,7 +38,6 @@ public:
     void setupElection();
 
     void setupElectionCommunication(AvailableConnection serverConnection);
-    int connectServerToServer(const SocketConnectionInfo &connectionInfo);
 
     void didReceiveElectionMessage(const string &candidateID);
     void didReceiveElectedMessage(const string &candidateID);
@@ -50,7 +55,7 @@ public:
     SocketConnectionInfo loadCoordinatorConnectionInfo();
 
     SocketConnectionInfo searchConnectionInfoForServerID(int serverID);
-    void setupElectionManager(int serverID);
+    void setupElectionManager(int serverID, ServerCommunicationManager* serverCommunicationManager);
 
     bool isCoordinator();
 };
