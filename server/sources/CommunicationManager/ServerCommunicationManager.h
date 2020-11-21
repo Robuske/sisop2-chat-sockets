@@ -10,17 +10,20 @@
 #include <vector>
 
 class ServerGroupsManager;
-struct UserConnection;
 class ServerCommunicationManager;
 
-struct HandleNewClientArguments {
+struct ThreadArguments {
     ServerCommunicationManager *communicationManager;
-    ServerGroupsManager *groupsManager;
-    SocketFD newClientSocket;
+    SocketFD socket;
 };
 
-typedef std::map<SocketFD, std::time_t> KeepAlive;
-typedef std::map<SocketFD, std::mutex> KeepAliveAccessControl;
+struct KeepAliveThreadArguments {
+    UserConnection userConnection;
+    ServerCommunicationManager *communicationManager;
+};
+
+typedef std::map<Client, std::time_t> ClientKeepAlive;
+typedef std::map<Client, std::mutex> ClientKeepAliveAccessControl;
 
 typedef std::map<SocketFD, ContinuousBuffer> ContinuousBuffersMap;
 typedef std::map<SocketFD, std::mutex> ContinuousBufferAccessControl;
@@ -32,40 +35,40 @@ public:
     void sendMessageToClients(Message message, const std::list<UserConnection>& userConnections);
 
 private:
-    SocketFD setupServerSocket();
+    int connectToFront(const SocketConnectionInfo& connectionInfo);
+
+    ServerGroupsManager *groupsManager;
 
     // Ping/pong for keep alive
-    KeepAlive socketsLastPing;
-    KeepAlive socketsLastPong;
-    void updateLastPingForSocket(SocketFD socket);
-    void updateLastPongForSocket(SocketFD socket);
+    ClientKeepAlive clientsLastPing;
+    ClientKeepAlive clientsLastPong;
+    void updateLastPingForClient(Client client);
+    void updateLastPongForClient(Client client);
 
     // Continuous buffer
     ContinuousBuffersMap continuousBuffers;
     void resetContinuousBufferFor(SocketFD socket);
 
     // Mutexes
-    KeepAliveAccessControl pingAccessControl;
-    KeepAliveAccessControl pongAccessControl;
+    ClientKeepAliveAccessControl pingAccessControl;
+    ClientKeepAliveAccessControl pongAccessControl;
     ContinuousBufferAccessControl continuousBufferAccessControl;
 
     // Threads
-    static void *staticHandleNewClientConnectionThread(void *newClientArguments);
-    void *handleNewClientConnection(HandleNewClientArguments *args);
+    static void *staticHandleNewFrontConnectionThread(void *newClientArguments);
+    void *handleNewFrontConnectionThread(ThreadArguments *args);
     static void *staticNewClientConnectionKeepAliveThread(void *newClientArguments);
-    void *newClientConnectionKeepAlive(HandleNewClientArguments *args);
+    void *newClientConnectionKeepAlive(KeepAliveThreadArguments *args);
 
     // Socket methods
     Packet readPacketFromSocket(SocketFD communicationSocket);
 
     //  Handle errors
-    void handleNewClientConnectionErrors(int errorCode,SocketFD communicationSocket, const string& username, ServerGroupsManager* groupsManager);
+    void handleNewClientConnectionErrors(int errorCode, SocketFD frontCommunicationSocket, const string &username);
 
     // Connection termination
-    void terminateClientConnection(SocketFD socketFileDescriptor, string username, ServerGroupsManager* groupsManager);
-    bool shouldTerminateSocketConnection(SocketFD socket);
-    void closeSocketConnection(SocketFD socket);
-
+    void terminateClientConnection(UserConnection userConnection, ServerGroupsManager *groupsManager);
+    bool shouldTerminateClientConnection(Client client);
 };
 
 #endif //SISOP2_T1_SERVERCOMMUNICATIONMANAGER_H

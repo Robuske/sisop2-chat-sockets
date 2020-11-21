@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
     string username = "Client " + std::to_string(random + 1);
     string groupName = "Group " + std::to_string(random%2 + 1);
     string serverIPAddress = "localhost";
-    string port = std::to_string(PORT);
+    string port = std::to_string(PORT_FRONT_CLIENT);
     switch (argc) {
         case 2:
             username = argv[1];
@@ -102,6 +102,7 @@ int main(int argc, char *argv[]) {
     // TODO: Use correct port
     connectionInfo.port = std::stoul(port);
 
+    clearScreen();
     int sessionResult = ClientMessagesManager().startClient(connectionInfo, userInfo);
     if(sessionResult > 0) {
         std::cout << "Success connecting!" << std::endl;

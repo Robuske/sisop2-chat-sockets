@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="WithoutGoogle" pattern="file[sisop2-t1]:shared//*||file[sisop2-t1]:front//*||file[sisop2-t1]:client//*||file[sisop2-t1]:server//*||file[sisop2-t1]:docs//*||file[sisop2-t1]:.github//*||file[sisop2-t1]:.idea//*" />
+</component>

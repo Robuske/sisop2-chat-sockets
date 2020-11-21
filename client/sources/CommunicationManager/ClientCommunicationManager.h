@@ -9,11 +9,6 @@
 
 using std::string;
 
-struct SocketConnectionInfo {
-    string ipAddress;
-    unsigned short port;
-};
-
 class ClientCommunicationManager {
 
 private:

@@ -54,11 +54,7 @@ void ServerGroupsManager::loadInitialMessagesForNewUserConnection(UserConnection
 }
 
 // This can throw
-void ServerGroupsManager::handleUserConnection(const string& username, SocketFD socket, const string& groupName) {
-    UserConnection userConnection;
-    userConnection.username = username;
-    userConnection.socket = socket;
-
+void ServerGroupsManager::handleUserConnection(UserConnection userConnection, const string &groupName) {
     std::list<UserConnection> userConnectionsToSendConnectionMessage;
     bool groupFound = false;
 
@@ -67,9 +63,9 @@ void ServerGroupsManager::handleUserConnection(const string& username, SocketFD 
     this->allGroupsAccessControl.lockAccessForGroup(ALL_GROUPS);
     /// Adicionar a verificacao de numero de conexoes dentro do mutex
 
-    if(checkForUsersMaxConnections(username)) {
+    if(checkForUsersMaxConnections(userConnection.username)) {
         this->allGroupsAccessControl.unlockAccessForGroup(ALL_GROUPS);
-        this->handleUserConnectionLimitReached(username, groupName, userConnection);
+        this->handleUserConnectionLimitReached(userConnection.username, groupName, userConnection);
         throw ERROR_MAX_USER_CONNECTIONS_REACHED;
     }
 
@@ -97,14 +93,14 @@ void ServerGroupsManager::handleUserConnection(const string& username, SocketFD 
 
     this->loadInitialMessagesForNewUserConnection(userConnection, groupName);
 
-    Message message = Message(TypeConnection, now(), groupName, username, "Conectou!");
+    Message message = Message(TypeConnection, now(), userConnection.origin, clientNotSet, groupName, userConnection.username, "Conectou!");
 
     communicationManager->sendMessageToClients(message, userConnectionsToSendConnectionMessage);
 }
 
 // This can throw
-void ServerGroupsManager::handleUserDisconnection(SocketFD socket, const string& username) {
-    std::list<UserConnection> userConnectionsToSendConnectionMessage;
+void ServerGroupsManager::handleUserDisconnection(UserConnection userConnection) {
+    std::list<UserConnection> userConnectionsToSendDisconnectionMessage;
     string groupName;
     bool groupFound = false;
 
@@ -114,11 +110,11 @@ void ServerGroupsManager::handleUserDisconnection(SocketFD socket, const string&
         /// MARK: Critical session access
         this->groupsListAccessControl.lockAccessForGroup(currentGroup.name);
         for (UserConnection &currentUserConnection:currentGroup.clients) {
-            if (currentUserConnection.socket == socket) {
+            if (currentUserConnection == userConnection) {
                 groupFound = true;
                 groupName = currentGroup.name;
                 currentGroup.clients.remove(currentUserConnection);
-                userConnectionsToSendConnectionMessage = currentGroup.clients;
+                userConnectionsToSendDisconnectionMessage = currentGroup.clients;
                 break;
             }
         }
@@ -131,8 +127,8 @@ void ServerGroupsManager::handleUserDisconnection(SocketFD socket, const string&
         throw ERROR_GROUP_NOT_FOUND;
     }
 
-    Message message = Message(TypeDesconnection, now(), groupName, username, "Desconectou!");
-    communicationManager->sendMessageToClients(message, userConnectionsToSendConnectionMessage);
+    Message message = Message(TypeDisconnection, now(), userConnection.origin, clientNotSet, groupName, userConnection.username, "Desconectou!");
+    communicationManager->sendMessageToClients(message, userConnectionsToSendDisconnectionMessage);
 }
 
 ServerGroupsManager::ServerGroupsManager(int numberOfMessagesToLoadWhenUserJoined, ServerCommunicationManager *communicationManager) {
@@ -141,7 +137,7 @@ ServerGroupsManager::ServerGroupsManager(int numberOfMessagesToLoadWhenUserJoine
 }
 
 void ServerGroupsManager::handleUserConnectionLimitReached(const string &username, const string &groupName, const UserConnection &userConnection) {
-    Message message = Message(TypeMaxConnectionsReached, now(), groupName, username, "Conexão recusada. Você já está conectado no número máximo de dispositivos (" + std::to_string(MAX_CONNECTIONS_COUNT) + ")");
+    Message message = Message(TypeMaxConnectionsReached, now(), userConnection.origin, clientNotSet, groupName, username, "Conexão recusada. Você já está conectado no número máximo de dispositivos (" + std::to_string(MAX_CONNECTIONS_COUNT) + ")");
     std::list<Message> singleMessageList;
     singleMessageList.push_back(message);
     this->sendMessagesToSpecificUser(userConnection, singleMessageList);
@@ -163,21 +159,20 @@ bool ServerGroupsManager::checkForUsersMaxConnections(const string &username) {
     return (connectionsCount >= MAX_CONNECTIONS_COUNT);
 }
 
-string ServerGroupsManager::getUsernameForSocket(SocketFD socketFd) {
+bool ServerGroupsManager::isConnectionValid(const UserConnection& userConnection) {
     this->allGroupsAccessControl.lockAccessForGroup(ALL_GROUPS);
     for (Group &currentGroup:groups) {
         this->groupsListAccessControl.lockAccessForGroup(currentGroup.name);
         for (UserConnection &currentUserConnection:currentGroup.clients) {
-            if (currentUserConnection.socket == socketFd) {
+            if (currentUserConnection == userConnection) {
                 this->groupsListAccessControl.unlockAccessForGroup(currentGroup.name);
                 this->allGroupsAccessControl.unlockAccessForGroup(ALL_GROUPS);
-                return currentUserConnection.username;
+                return true;
             }
         }
         this->groupsListAccessControl.unlockAccessForGroup(currentGroup.name);
     }
     this->allGroupsAccessControl.unlockAccessForGroup(ALL_GROUPS);
 
-    // Precisa ser "", usar nullptr mata o server
-    return "";
+    return false;
 }
