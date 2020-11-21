@@ -15,7 +15,6 @@
 void ServerElectionManager::mockConnectionsList() {
 
     // Mock connections
-
     AvailableConnection fstConnection;
     fstConnection.id = 219;
     fstConnection.connectionInfo.ipAddress = "localhost";
@@ -143,43 +142,6 @@ int ServerElectionManager::connectServerToServer(const SocketConnectionInfo& con
 
     return socketFD;
 }
-
-
-//int ServerElectionManager::connectServerToServer(const SocketConnectionInfo& connectionInfo) {
-//    SocketFD sockFd;
-//    struct sockaddr_in serv_addr{};
-//    struct hostent *server;
-//
-//    server = gethostbyname(connectionInfo.ipAddress.c_str());
-//    if (server == nullptr) {
-//        string errorPrefix = "Error no such host '" + connectionInfo.ipAddress + "'";
-//        perror(errorPrefix.c_str());
-//        return ERROR_INVALID_HOST;
-//    }
-//
-//    if ((sockFd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-//        string errorPrefix = "Error(" + std::to_string(sockFd) + ") opening socket";
-//        perror(errorPrefix.c_str());
-//        return ERROR_SOCKET_CREATION;
-//    }
-//
-//    serv_addr.sin_family = AF_INET;
-//    serv_addr.sin_port = htons(connectionInfo.port);
-//    serv_addr.sin_addr = *((struct in_addr *)server->h_addr);
-//
-//    int connectionResult = connect(sockFd,(struct sockaddr *) &serv_addr,sizeof(serv_addr));
-//
-//    std::cout << "CONNECTION RESULT" << connectionResult << std::endl;
-//
-//    if (connectionResult < 0) {
-//        string errorPrefix = "Error(" + std::to_string(connectionResult) + ") connecting";
-//        perror(errorPrefix.c_str());
-//        return ERROR_CONNECTING_SOCKET_SERVER_TO_SERVER;
-//    }
-//
-//
-//    return connectionResult;
-//}
 
 int ServerElectionManager::sendMessageForCurrentElection(Message message) {
     Packet packet = message.asPacket();
