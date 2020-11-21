@@ -141,6 +141,9 @@ void FrontCommunicationManager::handleServerMessageThread(ThreadArguments *args)
         } catch (int error) {
             std::cout << "Server read error: " << error << std::endl;
             // TODO: Handle somehow?
+            if(serverCommunicationSocket == serverSocket) {
+                serverCommunicationSocket = -1;
+            }
             return;
         }
     }

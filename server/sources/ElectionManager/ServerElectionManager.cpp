@@ -195,11 +195,12 @@ void ServerElectionManager::didReceiveElectedMessage(const string &candidateID) 
     if(this->elected == this->serverID) {
         // do nothing and close socket
         std::cout << "Ganhou a eleicao" << this->elected << std::endl;
-       // close(this->electionConnection);
     } else {
         Message message = Message(TypeElected, now(), clientNotSet, clientNotSet, "", "", candidateID);
         this->sendMessageForCurrentElection(message);
     }
+
+    close(this->electionConnection);
 }
 
 int ServerElectionManager::getElected() {

@@ -148,13 +148,21 @@ void *ServerCommunicationManager::handleNewServerConnectionThread(ThreadArgument
 
                 case TypeElected:
                     this->electionManager.didReceiveElectedMessage(packet.text);
-                    break;
+                    this->setupMainConnection();
+                    return nullptr;
+
             }
 
         } catch (int errorCode) {
-            handleNewClientConnectionErrors(errorCode,
-                                            communicationSocket,
-                                            packet.username);
+
+            if(errorCode == ERROR_FRONT_DISCONNECTED) {
+                std::cout << "CONNECTION CLOSED" << std::endl;
+            } else {
+                std::cout << "CONNECTION CLOSED WITH ERROR " << errorCode << std::endl;
+                perror("READ ERROR");
+                exit(EXIT_FAILURE);
+            }
+
             break;
         }
     }
@@ -183,10 +191,10 @@ void *ServerCommunicationManager::handleNewFrontConnectionThread(ThreadArguments
             userConnection.frontSocket = frontCommunicationSocket;
 
             if (packet.type == TypeConnection) {
+                std::cout << "DID RECEIVE CONNECTION" << std::endl;
                 keepAliveThreadArguments.userConnection = userConnection;
 
                 this->groupsManager->handleUserConnection(userConnection, message.groupName);
-               // this->startTestElection();
                 // Handles user connection first to not create a keep alive thread if the connection is refused
                 pthread_create(&keepAliveThread, nullptr, ServerCommunicationManager::staticNewClientConnectionKeepAliveThread, &keepAliveThreadArguments);
 
