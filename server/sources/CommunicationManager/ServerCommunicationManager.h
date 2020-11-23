@@ -34,6 +34,7 @@ public:
     int startServer(int loadMessageCount, int serverID);
     void sendMessageToClients(Message message, const std::list<UserConnection>& userConnections);
     int performConnectionTo(const SocketConnectionInfo& connectionInfo);
+    ServerElectionManager electionManager;
 
 private:
 
@@ -78,7 +79,6 @@ private:
     bool shouldTerminateClientConnection(Client client);
 
     // Election
-    ServerElectionManager electionManager;
     void startElection();
 
     void setupMainConnection();
