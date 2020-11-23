@@ -409,21 +409,20 @@ void ServerCommunicationManager::setupFronts() {
     for (const SocketConnectionInfo &connectionInfo: connections) {
         communicationSocket = performConnectionTo(connectionInfo);
         if (communicationSocket <= 0) {
-            string errorPrefix = "Error(" + std::to_string(communicationSocket) + ") connecting server to:\nfront: " + connectionInfo.ipAddress + ":" + std::to_string(connectionInfo.port);
+            string errorPrefix = "Error(" + std::to_string(communicationSocket) + ") connecting server to: " + connectionInfo.ipAddress + ":" + std::to_string(connectionInfo.port);
             perror(errorPrefix.c_str());
             throw communicationSocket;
         }
 
         std::cout << "Successful connection to:" << std::endl;
-        std::cout << "front: " << connectionInfo.ipAddress << ":" << connectionInfo.port << std::endl;
-        std::cout << "communicationSocket: " << communicationSocket << std::endl;
+        std::cout << "Front: " << connectionInfo.ipAddress << ":" << connectionInfo.port << std::endl;
+        std::cout << "CommunicationSocket: " << communicationSocket << std::endl;
 
         struct ThreadArguments args;
         args.socket = communicationSocket;
         args.communicationManager = this;
 
         pthread_t connectionThread;
-
         pthread_create(&connectionThread, nullptr, ServerCommunicationManager::staticHandleNewFrontConnectionThread, &args);
     }
 }
