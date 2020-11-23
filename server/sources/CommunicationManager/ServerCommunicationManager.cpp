@@ -190,19 +190,27 @@ void *ServerCommunicationManager::handleNewFrontConnectionThread(ThreadArguments
             userConnection.origin = origin;
             userConnection.frontSocket = frontCommunicationSocket;
 
-            if (packet.type == TypeConnection) {
-                std::cout << "DID RECEIVE CONNECTION" << std::endl;
-                keepAliveThreadArguments.userConnection = userConnection;
 
-                this->groupsManager->handleUserConnection(userConnection, message.groupName);
-                // Handles user connection first to not create a keep alive thread if the connection is refused
-                pthread_create(&keepAliveThread, nullptr, ServerCommunicationManager::staticNewClientConnectionKeepAliveThread, &keepAliveThreadArguments);
+            switch (packet.type) {
+                case TypeConnection:
+                    std::cout << "DID RECEIVE CONNECTION" << std::endl;
+                    keepAliveThreadArguments.userConnection = userConnection;
 
-            } else if (packet.type == TypeDisconnection) {
-                this->terminateClientConnection(userConnection, groupsManager);
+                    this->groupsManager->handleUserConnection(userConnection, message.groupName);
+                    // Handles user connection first to not create a keep alive thread if the connection is refused
+                    pthread_create(&keepAliveThread, nullptr, ServerCommunicationManager::staticNewClientConnectionKeepAliveThread, &keepAliveThreadArguments);
+                    break;
 
-            } else if (packet.type == TypeMessage) {
-                this->groupsManager->sendMessage(message);
+                case TypeDisconnection:
+                    this->terminateClientConnection(userConnection, groupsManager);
+                    break;
+
+                case TypeMessage:
+                    this->groupsManager->sendMessage(message);
+                    break;
+
+                default:
+                    break;
             }
 
         } catch (int errorCode) {
