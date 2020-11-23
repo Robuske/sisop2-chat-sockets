@@ -2,6 +2,7 @@
 #define SISOP2_T1_SERVERDEFINITIONS_H
 
 #define MAX_CONNECTIONS_COUNT 2
+#define ELECTION_RUNNING -1
 
 #define SUCCESSFUL_OPERATION 1
 
@@ -14,6 +15,7 @@
 
 #define ERROR_CONNECTING_SOCKET_SERVER_TO_SERVER -240
 
+#define SERVER_REPLICAS_NUMBER 5
 
 struct UserConnection {
     string username;

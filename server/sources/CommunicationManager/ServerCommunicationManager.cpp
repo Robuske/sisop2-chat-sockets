@@ -224,7 +224,7 @@ void *ServerCommunicationManager::handleNewFrontConnectionThread(ThreadArguments
     return nullptr;
 }
 
-void ServerCommunicationManager::startTestElection() {
+void ServerCommunicationManager::startElection() {
     this->electionManager.setupElection();
     Message firstElectionMessage = this->electionManager.getFirstCandidateDefaultMessage();
     std::cout<<"Começou a eleicao "<< firstElectionMessage.text << std::endl;
@@ -420,27 +420,27 @@ void ServerCommunicationManager::setupFronts() {
     }
 }
 
-void ServerCommunicationManager::setupBackup() {
-    SocketConnectionInfo coordinatorConnectionInfo = this->electionManager.loadCoordinatorConnectionInfo();
-    SocketFD communicationSocket = performConnectionTo(coordinatorConnectionInfo);
-    if (communicationSocket <= 0) {
-        string errorPrefix = "Error(" + std::to_string(communicationSocket) + ") connecting server to:\ncoordinator: " + coordinatorConnectionInfo.ipAddress + ":" + std::to_string(coordinatorConnectionInfo.port);
-        perror(errorPrefix.c_str());
-        throw communicationSocket;
-    }
-
-    std::cout << "Successful connection to:" << std::endl;
-    std::cout << "coordinator: " << coordinatorConnectionInfo.ipAddress << ":" << coordinatorConnectionInfo.port << std::endl;
-    std::cout << "communicationSocket: " << communicationSocket << std::endl;
-
-    struct ThreadArguments args;
-    args.socket = communicationSocket;
-    args.communicationManager = this;
-
-    pthread_t connectionThread;
-
-   // pthread_create(&connectionThread, nullptr, ServerCommunicationManager::staticHandleNewFrontConnectionThread, &args);
-}
+//void ServerCommunicationManager::setupBackup() {
+//    SocketConnectionInfo coordinatorConnectionInfo = this->electionManager.loadCoordinatorConnectionInfo();
+//    SocketFD communicationSocket = performConnectionTo(coordinatorConnectionInfo);
+//    if (communicationSocket <= 0) {
+//        string errorPrefix = "Error(" + std::to_string(communicationSocket) + ") connecting server to:\ncoordinator: " + coordinatorConnectionInfo.ipAddress + ":" + std::to_string(coordinatorConnectionInfo.port);
+//        perror(errorPrefix.c_str());
+//        throw communicationSocket;
+//    }
+//
+//    std::cout << "Successful connection to:" << std::endl;
+//    std::cout << "coordinator: " << coordinatorConnectionInfo.ipAddress << ":" << coordinatorConnectionInfo.port << std::endl;
+//    std::cout << "communicationSocket: " << communicationSocket << std::endl;
+//
+//    struct ThreadArguments args;
+//    args.socket = communicationSocket;
+//    args.communicationManager = this;
+//
+//    pthread_t connectionThread;
+//
+//   // pthread_create(&connectionThread, nullptr, ServerCommunicationManager::staticHandleNewFrontConnectionThread, &args);
+//}
 
 
 void ServerCommunicationManager::setupMainConnection() {
@@ -465,6 +465,4 @@ int ServerCommunicationManager::startServer(int loadMessageCount, int serverID) 
     SocketConnectionInfo serverConnectionInfo = this->electionManager.searchConnectionInfoForServerID(serverID);
     auto serverConnectionResult = this->setupServerToServerConnection(serverConnectionInfo);
     return serverConnectionResult;
-
-   while(true);
 }

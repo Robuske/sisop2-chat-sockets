@@ -14,9 +14,8 @@
 
 #include "CommunicationManager/ServerCommunicationManager.h"
 
-// When we are the responsibles
 
-AvailableConnection serverConfigFile[5];
+AvailableConnection serverConfigFile[SERVER_REPLICAS_NUMBER];
 
 void loadServerConfigFile() {
 
@@ -79,20 +78,20 @@ void ServerElectionManager::setupElection() {
 
     int numberOfConnections =  sizeof(serverConfigFile)/sizeof(AvailableConnection);
 
-    AvailableConnection nextConnetion;
+    AvailableConnection nextConnection;
 
     int nextConnectionIndex =  ((numberOfConnections -1) == myIndex) ? 0 : (myIndex + 1);
 
     if(serverConfigFile[nextConnectionIndex].id == this->elected) {
         nextConnectionIndex =  ((numberOfConnections -1) == nextConnectionIndex) ? 0 : (nextConnectionIndex + 1);
-        nextConnetion = serverConfigFile[nextConnectionIndex];
+        nextConnection = serverConfigFile[nextConnectionIndex];
     } else {
-        nextConnetion = serverConfigFile[nextConnectionIndex];
+        nextConnection = serverConfigFile[nextConnectionIndex];
     }
 
-    this->elected = -1;
+    this->elected = ELECTION_RUNNING;
 
-    this->setupElectionCommunication(nextConnetion);
+    this->setupElectionCommunication(nextConnection);
 }
 
 void ServerElectionManager::setupCoordinator() {
@@ -121,39 +120,6 @@ SocketConnectionInfo ServerElectionManager::searchConnectionInfoForServerID(int 
 }
 
 
-//int ServerElectionManager::connectServerToServer(const SocketConnectionInfo& connectionInfo) {
-//
-//    SocketFD socketFD;
-//    struct sockaddr_in front_addr{};
-//    struct hostent *front;
-//
-//    front = gethostbyname(connectionInfo.ipAddress.c_str());
-//    if (front == nullptr) {
-//        string errorPrefix = "Error no such host '" + connectionInfo.ipAddress + "'";
-//        perror(errorPrefix.c_str());
-//        return ERROR_INVALID_HOST;
-//    }
-//
-//    if ((socketFD = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-//        string errorPrefix = "Error(" + std::to_string(socketFD) + ") opening socket";
-//        perror(errorPrefix.c_str());
-//        return ERROR_SOCKET_CREATION;
-//    }
-//
-//    front_addr.sin_family = AF_INET;
-//    front_addr.sin_port = htons(connectionInfo.port);
-//    front_addr.sin_addr = *((struct in_addr *)front->h_addr);
-//
-//    int connectionResult = connect(socketFD, (struct sockaddr *) &front_addr, sizeof(front_addr));
-//    if (connectionResult < 0) {
-//        string errorPrefix = "Error(" + std::to_string(connectionResult) + ") connecting";
-//        perror(errorPrefix.c_str());
-//        return ERROR_CONNECTING_SOCKET_SERVER_TO_SERVER;
-//    }
-//
-//    return socketFD;
-//}
-
 int ServerElectionManager::sendMessageForCurrentElection(Message message) {
     Packet packet = message.asPacket();
     return write(this->electionConnection, &packet, sizeof(Packet));
@@ -169,7 +135,7 @@ void ServerElectionManager::didReceiveElectionMessage(const string &candidateID)
 
     std::cout<< "Recebeu mensagem de eleicao com candidate" << candidateID.c_str() << std::endl;
 
-    if(this->elected > 0) {
+    if(this->elected != ELECTION_RUNNING) {
         this->setupElection();
     }
 
@@ -192,8 +158,7 @@ void ServerElectionManager::didReceiveElectedMessage(const string &candidateID) 
     std::cout<<"Recebeu mensagem de eleito com candidate"<<candidateID.c_str()<< std::endl;
 
     this->elected = atoi(candidateID.c_str());
-    if(this->elected == this->serverID) {
-        // do nothing and close socket
+    if (this->elected == this->serverID) {
         std::cout << "Ganhou a eleicao" << this->elected << std::endl;
     } else {
         Message message = Message(TypeElected, now(), clientNotSet, clientNotSet, "", "", candidateID);
@@ -224,5 +189,5 @@ void ServerElectionManager::setServerID(int serverID) {
 }
 
 Message ServerElectionManager::getFirstCandidateDefaultMessage() {
-    return Message(TypeElection, now(), clientNotSet, clientNotSet,"", "",std::to_string(this->serverID));
+    return Message(TypeElection, now(), clientNotSet, clientNotSet, "", "", std::to_string(this->serverID));
 }

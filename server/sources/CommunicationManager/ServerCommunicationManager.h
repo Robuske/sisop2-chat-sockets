@@ -79,7 +79,7 @@ private:
 
     // Election
     ServerElectionManager electionManager;
-    void startTestElection();
+    void startElection();
 
     void setupMainConnection();
 

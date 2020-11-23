@@ -83,14 +83,12 @@ Packet continuousBufferRead(SocketFD communicationSocket, ContinuousBuffer conti
 // Definitions for the front end and server connections configuration files
 
 /**
- * Map: AvailableConnections
- * Responsible to store all the connection information of the front-end and server
+ * Struct: AvailableConnections
+ * Responsible to store the connection information of a server
  * to make it possible the creation of coordinator elections and to manage
- * Client -> Front End | Front End -> Server | Server -> Server connections
- * @attributes [server/frontEnd id, ConnectionInfo]
+ * Front End -> Server | Server -> Server connections
+ * @attributes [ServerID, ConnectionInfo]
  */
-
-//typedef std::map<int , SocketConnectionInfo> AvailableConnections;
 
 typedef struct AvailableConnection {
     int id;
