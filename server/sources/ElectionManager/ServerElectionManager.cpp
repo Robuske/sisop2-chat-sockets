@@ -21,27 +21,26 @@ void loadServerConfigFile() {
 
     // Mock connections
     AvailableConnection fstConnection;
-    fstConnection.id = 219;
+    fstConnection.id = 10;
     fstConnection.connectionInfo.ipAddress = "localhost";
     fstConnection.connectionInfo.port = 2000;
 
-    AvailableConnection  sndConnection;
-    sndConnection.id = 12;
+    AvailableConnection sndConnection;
+    sndConnection.id = 20;
     sndConnection.connectionInfo.ipAddress = "localhost";
     sndConnection.connectionInfo.port = 2001;
 
-    AvailableConnection  thirdConnection;
-    thirdConnection.id = 45;
+    AvailableConnection thirdConnection;
+    thirdConnection.id = 30;
     thirdConnection.connectionInfo.ipAddress = "localhost";
     thirdConnection.connectionInfo.port = 2002;
 
-
-    AvailableConnection  fourthConnection;
-    fourthConnection.id = 6;
+    AvailableConnection fourthConnection;
+    fourthConnection.id = 40;
     fourthConnection.connectionInfo.ipAddress = "localhost";
     fourthConnection.connectionInfo.port = 2003;
 
-    AvailableConnection  fifthConnection;
+    AvailableConnection fifthConnection;
     fifthConnection.id = 100;
     fifthConnection.connectionInfo.ipAddress = "localhost";
     fifthConnection.connectionInfo.port = 2004;
