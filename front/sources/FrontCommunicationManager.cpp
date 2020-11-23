@@ -149,42 +149,6 @@ void FrontCommunicationManager::handleServerMessageThread(ThreadArguments *args)
     }
 }
 
-string FrontCommunicationManager::packetTypeAsString(PacketType packetType) {
-    switch (packetType) {
-        case TypeConnection:
-            return "Connection";
-
-        case TypeDisconnection:
-            return "Disconnection";
-
-        case TypeMessage:
-            return "Message";
-
-        case TypeKeepAlive:
-            return "Keep Alive";
-
-        case TypeMaxConnectionsReached:
-            return "Max Connections Reached";
-    }
-}
-
-void FrontCommunicationManager::logPacket(Packet packet) {
-    bool debug = true;
-    if (debug) {
-        std::cout << "------------- Packet -----------" << std::endl;
-        std::cout << "Type: " << packetTypeAsString(packet.type) << std::endl;
-        std::cout << "Sender - frontID: " << packet.sender.frontID << std::endl;
-        std::cout << "Sender - clientSocket: " << packet.sender.clientSocket << std::endl;
-        std::cout << "Recipient - frontID: " << packet.recipient.frontID << std::endl;
-        std::cout << "Recipient - clientSocket: " << packet.recipient.clientSocket << std::endl;
-        std::cout << "Username: " << packet.username << std::endl;
-        std::cout << "Group name: " << packet.groupName << std::endl;
-        std::cout << "Timestamp: " << dateStringFromTimestamp(packet.timestamp) << std::endl;
-        std::cout << "Text: " << packet.text << std::endl;
-        std::cout << "--------------------------------" << std::endl;
-    }
-}
-
 int FrontCommunicationManager::sendPacketToSocket(Packet packet, SocketFD socket) {
     std::cout << "Sending to socket " << socket << std::endl;
     logPacket(packet);
