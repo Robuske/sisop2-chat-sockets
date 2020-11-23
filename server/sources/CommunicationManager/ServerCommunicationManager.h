@@ -83,7 +83,12 @@ private:
 
     void setupMainConnection();
 
-    void setupBackup();
+    void setupAsBackup();
+
+    void forwardPacketToBackups(Packet packet);
+    std::list<SocketFD> backupServers;
+
+    SocketFD setupConnection(const SocketConnectionInfo &connectionInfo);
 };
 
 #endif //SISOP2_T1_SERVERCOMMUNICATIONMANAGER_H
