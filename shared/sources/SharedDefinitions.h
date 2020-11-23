@@ -4,6 +4,7 @@
 #include <ctime>
 #include <string>
 #include <vector>
+#include <map>
 
 using std::string;
 
@@ -33,7 +34,7 @@ using std::string;
 typedef int SocketFD;
 typedef std::vector<char> ContinuousBuffer;
 
-enum PacketType { TypeConnection, TypeDisconnection, TypeMessage, TypeKeepAlive, TypeMaxConnectionsReached };
+enum PacketType { TypeConnection, TypeDisconnection, TypeMessage, TypeKeepAlive, TypeMaxConnectionsReached, TypeElection, TypeElected };
 
 struct tUserInfo {
     string username;
@@ -78,5 +79,20 @@ string dateStringFromTimestamp(std::time_t timestamp);
 void clearScreen();
 
 Packet continuousBufferRead(SocketFD communicationSocket, ContinuousBuffer continuousBuffer);
+
+// Definitions for the front end and server connections configuration files
+
+/**
+ * Struct: AvailableConnections
+ * Responsible to store the connection information of a server
+ * to make it possible the creation of coordinator elections and to manage
+ * Front End -> Server | Server -> Server connections
+ * @attributes [ServerID, ConnectionInfo]
+ */
+
+typedef struct AvailableConnection {
+    int id;
+    SocketConnectionInfo connectionInfo;
+} AvailableConnection;
 
 #endif // SISOP2_T1_SHAREDDEFINITIONS_H

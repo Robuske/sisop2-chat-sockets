@@ -4,6 +4,7 @@
 #include "Message/Message.h"
 #include "ServerDefinitions.h"
 #include "SharedDefinitions.h"
+#include "ElectionManager/ServerElectionManager.h"
 #include <list>
 #include <map>
 #include <mutex>
@@ -30,12 +31,15 @@ typedef std::map<SocketFD, std::mutex> ContinuousBufferAccessControl;
 
 class ServerCommunicationManager {
 public:
-    int startServer(int loadMessageCount);
-
+    int startServer(int loadMessageCount, int serverID);
     void sendMessageToClients(Message message, const std::list<UserConnection>& userConnections);
+    int performConnectionTo(const SocketConnectionInfo& connectionInfo);
 
 private:
-    int connectToFront(const SocketConnectionInfo& connectionInfo);
+
+    SocketFD openServerToServerPort(unsigned short port);
+    void setupFronts();
+    int setupServerToServerConnection(SocketConnectionInfo connectionInfo);
 
     ServerGroupsManager *groupsManager;
 
@@ -60,6 +64,9 @@ private:
     static void *staticNewClientConnectionKeepAliveThread(void *newClientArguments);
     void *newClientConnectionKeepAlive(KeepAliveThreadArguments *args);
 
+    static void *staticHandleNewServerConnectionThread(void *newClientArguments);
+    void *handleNewServerConnectionThread(ThreadArguments *args);
+
     // Socket methods
     Packet readPacketFromSocket(SocketFD communicationSocket);
 
@@ -69,6 +76,14 @@ private:
     // Connection termination
     void terminateClientConnection(UserConnection userConnection, ServerGroupsManager *groupsManager);
     bool shouldTerminateClientConnection(Client client);
+
+    // Election
+    ServerElectionManager electionManager;
+    void startElection();
+
+    void setupMainConnection();
+
+    void setupBackup();
 };
 
 #endif //SISOP2_T1_SERVERCOMMUNICATIONMANAGER_H

@@ -7,23 +7,26 @@
 #include <pthread.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <fstream>
+#include <netdb.h>
 
 enum eLogLevel { Info, Debug, Error } typedef LogLevel;
 void log(LogLevel logLevel, const string& msg) {
     switch (logLevel) {
         case Info:
-            std::cout << "INFO:: " << msg << std::endl;
-            break;
+        std::cout << "INFO:: " << msg << std::endl;
+        break;
 
         case Debug:
-            std::cout << "DEBUG:: " << msg << std::endl;
-            break;
+        std::cout << "DEBUG:: " << msg << std::endl;
+        break;
 
         case Error:
-            perror(msg.c_str());
-            break;
+        perror(msg.c_str());
+        break;
     }
 }
+
 
 // MARK: - Static methods
 void *ServerCommunicationManager::staticHandleNewFrontConnectionThread(void *newClientArguments) {
@@ -38,7 +41,11 @@ void *ServerCommunicationManager::staticNewClientConnectionKeepAliveThread(void 
     return nullptr;
 }
 
-// MARK: - Instance methods
+void *ServerCommunicationManager::staticHandleNewServerConnectionThread(void *newClientArguments) {
+    auto* t = static_cast<ThreadArguments*>(newClientArguments);
+    t->communicationManager->handleNewServerConnectionThread(t);
+    return nullptr;
+}
 
 void ServerCommunicationManager::terminateClientConnection(UserConnection userConnection, ServerGroupsManager *groupsManager) {
     groupsManager->handleUserDisconnection(userConnection);
@@ -83,8 +90,8 @@ void ServerCommunicationManager::sendMessageToClients(Message message, const std
 }
 
 void ServerCommunicationManager::handleNewClientConnectionErrors(int errorCode, SocketFD frontCommunicationSocket, const string &username) {
-        // TODO: Handle errors somehow D=
-        exit(EXIT_FAILURE);
+    // TODO: Handle errors somehow D=
+    exit(EXIT_FAILURE);
 //    if (errorCode == ERROR_FRONT_DISCONNECTED) {
 //        exit(EXIT_FAILURE);
 //        try {
@@ -117,6 +124,52 @@ void ServerCommunicationManager::handleNewClientConnectionErrors(int errorCode, 
 //    }
 }
 
+void *ServerCommunicationManager::handleNewServerConnectionThread(ThreadArguments *args) {
+    SocketFD communicationSocket = args->socket;
+
+    Packet packet{};
+
+    while(true) {
+        try {
+            packet = readPacketFromSocket(communicationSocket);
+            std::cout << "PACKET TEXT "<< packet.text << std::endl;
+            Message message = Message(packet);
+
+            switch(packet.type) {
+                case TypeConnection:
+                    break;
+
+                case TypeMessage:
+                    break;
+
+                case TypeElection:
+                    this->electionManager.didReceiveElectionMessage(packet.text);
+                    break;
+
+                case TypeElected:
+                    this->electionManager.didReceiveElectedMessage(packet.text);
+                    this->setupMainConnection();
+                    return nullptr;
+
+            }
+
+        } catch (int errorCode) {
+
+            if(errorCode == ERROR_FRONT_DISCONNECTED) {
+                std::cout << "CONNECTION CLOSED" << std::endl;
+            } else {
+                std::cout << "CONNECTION CLOSED WITH ERROR " << errorCode << std::endl;
+                perror("READ ERROR");
+                exit(EXIT_FAILURE);
+            }
+
+            break;
+        }
+    }
+
+    return nullptr;
+}
+
 void *ServerCommunicationManager::handleNewFrontConnectionThread(ThreadArguments *args) {
     SocketFD frontCommunicationSocket = args->socket;
 
@@ -138,6 +191,7 @@ void *ServerCommunicationManager::handleNewFrontConnectionThread(ThreadArguments
             userConnection.frontSocket = frontCommunicationSocket;
 
             if (packet.type == TypeConnection) {
+                std::cout << "DID RECEIVE CONNECTION" << std::endl;
                 keepAliveThreadArguments.userConnection = userConnection;
 
                 this->groupsManager->handleUserConnection(userConnection, message.groupName);
@@ -168,6 +222,14 @@ void *ServerCommunicationManager::handleNewFrontConnectionThread(ThreadArguments
     }
 
     return nullptr;
+}
+
+void ServerCommunicationManager::startElection() {
+    this->electionManager.setupElection();
+    Message firstElectionMessage = this->electionManager.getFirstCandidateDefaultMessage();
+    std::cout<<"Começou a eleicao "<< firstElectionMessage.text << std::endl;
+    auto writeResult = this->electionManager.sendMessageForCurrentElection(firstElectionMessage);
+    std::cout<<"Write election message result" << writeResult << std::endl;
 }
 
 void ServerCommunicationManager::updateLastPingForClient(Client client) {
@@ -236,7 +298,8 @@ void *ServerCommunicationManager::newClientConnectionKeepAlive(KeepAliveThreadAr
     return nullptr;
 }
 
-int ServerCommunicationManager::connectToFront(const SocketConnectionInfo& connectionInfo) {
+
+int ServerCommunicationManager::performConnectionTo(const SocketConnectionInfo& connectionInfo) {
 
     SocketFD socketFD;
     struct sockaddr_in front_addr{};
@@ -269,24 +332,78 @@ int ServerCommunicationManager::connectToFront(const SocketConnectionInfo& conne
     return socketFD;
 }
 
-int ServerCommunicationManager::startServer(int loadMessageCount) {
-    groupsManager = new ServerGroupsManager(loadMessageCount, this);
 
+SocketFD ServerCommunicationManager::openServerToServerPort(unsigned short port) {
+    SocketFD connectionSocketFD;
+    if ((connectionSocketFD = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+        return ERROR_SOCKET_CREATION;
+
+    struct sockaddr_in serverAddress{};
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_port = htons(port);
+    serverAddress.sin_addr.s_addr = INADDR_ANY;
+
+    if (bind(connectionSocketFD, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0)
+        return ERROR_SOCKET_BINDING;
+
+    //    The backlog argument defines the maximum length to which the queue of
+    //    pending connections for sockfd may grow.  If a connection request
+    //    arrives when the queue is full, the client may receive an error with
+    //    an indication of ECONNREFUSED or, if the underlying protocol supports
+    //    retransmission, the request may be ignored so that a later reattempt
+    //    at connection succeeds.
+    int backlog = 100;
+    listen(connectionSocketFD, backlog);
+
+    return connectionSocketFD;
+}
+
+int ServerCommunicationManager::setupServerToServerConnection(SocketConnectionInfo connectionInfo) {
+
+    SocketFD communicationSocketFD, connectionSocketFDResult;
+    connectionSocketFDResult = this->openServerToServerPort(connectionInfo.port);
+    if (connectionSocketFDResult < 0)
+        return connectionSocketFDResult;
+
+    struct sockaddr_in clientAddress;
+    socklen_t clientSocketLength;
+    while(true) {
+        clientSocketLength = sizeof(struct sockaddr_in);
+        if ((communicationSocketFD = accept(connectionSocketFDResult, (struct sockaddr *) &clientAddress, &clientSocketLength)) == -1)
+            return ERROR_SOCKET_ACCEPT_CONNECTION;
+
+        resetContinuousBufferFor(communicationSocketFD);
+
+        struct ThreadArguments args;
+        args.socket = communicationSocketFD;
+        args.communicationManager = this;
+
+        // Não estamos usando o id da thread depois, só estamos passando um valor porque usar nullptr no primeiro parâmetro da um warning
+        pthread_t keepAliveThread, connectionThread;
+
+        // pthread_create(&keepAliveThread, nullptr, ServerCommunicationManager::staticNewClientConnectionKeepAliveThread, &args);
+        pthread_create(&connectionThread, nullptr, ServerCommunicationManager::staticHandleNewServerConnectionThread, &args);
+    }
+
+}
+
+
+void ServerCommunicationManager::setupFronts() {
     std::list<SocketConnectionInfo> connections;
     // TODO: Load fronts from config file
-    SocketConnectionInfo hardCodedconnectionInfo;
-    hardCodedconnectionInfo.ipAddress = "localhost";
-    hardCodedconnectionInfo.port = PORT_FRONT_SERVER;
-    connections.push_back(hardCodedconnectionInfo);
+    SocketConnectionInfo hardCodedConnectionInfo;
+    hardCodedConnectionInfo.ipAddress = "localhost";
+    hardCodedConnectionInfo.port = PORT_FRONT_SERVER;
+    connections.push_back(hardCodedConnectionInfo);
 
     SocketFD communicationSocket;
 
     for (const SocketConnectionInfo &connectionInfo: connections) {
-        communicationSocket = connectToFront(connectionInfo);
+        communicationSocket = performConnectionTo(connectionInfo);
         if (communicationSocket <= 0) {
             string errorPrefix = "Error(" + std::to_string(communicationSocket) + ") connecting server to:\nfront: " + connectionInfo.ipAddress + ":" + std::to_string(connectionInfo.port);
             perror(errorPrefix.c_str());
-            return communicationSocket;
+            throw communicationSocket;
         }
 
         std::cout << "Successful connection to:" << std::endl;
@@ -301,9 +418,51 @@ int ServerCommunicationManager::startServer(int loadMessageCount) {
 
         pthread_create(&connectionThread, nullptr, ServerCommunicationManager::staticHandleNewFrontConnectionThread, &args);
     }
+}
 
-    // TODO: Probably would be more correct to wait all threads? Not sure
-    while (true);
+//void ServerCommunicationManager::setupBackup() {
+//    SocketConnectionInfo coordinatorConnectionInfo = this->electionManager.loadCoordinatorConnectionInfo();
+//    SocketFD communicationSocket = performConnectionTo(coordinatorConnectionInfo);
+//    if (communicationSocket <= 0) {
+//        string errorPrefix = "Error(" + std::to_string(communicationSocket) + ") connecting server to:\ncoordinator: " + coordinatorConnectionInfo.ipAddress + ":" + std::to_string(coordinatorConnectionInfo.port);
+//        perror(errorPrefix.c_str());
+//        throw communicationSocket;
+//    }
+//
+//    std::cout << "Successful connection to:" << std::endl;
+//    std::cout << "coordinator: " << coordinatorConnectionInfo.ipAddress << ":" << coordinatorConnectionInfo.port << std::endl;
+//    std::cout << "communicationSocket: " << communicationSocket << std::endl;
+//
+//    struct ThreadArguments args;
+//    args.socket = communicationSocket;
+//    args.communicationManager = this;
+//
+//    pthread_t connectionThread;
+//
+//   // pthread_create(&connectionThread, nullptr, ServerCommunicationManager::staticHandleNewFrontConnectionThread, &args);
+//}
 
-    return 0;
+
+void ServerCommunicationManager::setupMainConnection() {
+
+    if(this->electionManager.isCoordinator()) {
+        std::cout << "WILL CONNECT TO FRONT" << std::endl;
+        setupFronts();
+    } else {
+        // connect to coordinator
+        std::cout << "WILL CONNECT TO COORDINATOR" << std::endl;
+       // setupBackup();
+    }
+}
+
+
+int ServerCommunicationManager::startServer(int loadMessageCount, int serverID) {
+    groupsManager = new ServerGroupsManager(loadMessageCount, this);
+    this->electionManager.setupElectionManager(serverID, this);
+
+    this->setupMainConnection();
+
+    SocketConnectionInfo serverConnectionInfo = this->electionManager.searchConnectionInfoForServerID(serverID);
+    auto serverConnectionResult = this->setupServerToServerConnection(serverConnectionInfo);
+    return serverConnectionResult;
 }

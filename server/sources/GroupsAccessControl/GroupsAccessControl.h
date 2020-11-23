@@ -25,5 +25,4 @@ public:
     void unlockAccessForGroup(const string& groupName);
 };
 
-
 #endif //SISOP2_T1_GROUPSACCESSCONTROL_H
