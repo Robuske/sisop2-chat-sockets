@@ -132,12 +132,12 @@ void ServerElectionManager::didReceiveElectionMessage(const string &candidateID)
     // to connect this server to its subsequent in the available connections
     // list.
 
-    std::cout<< "Recebeu mensagem de eleicao com candidate " << candidateID.c_str() << std::endl;
 
     if (this->elected != ELECTION_RUNNING) {
         this->setupElection();
     }
 
+    std::cout<< "Recebeu mensagem de ELEICAO com candidate " << candidateID.c_str() << std::endl;
     int currentCandidate = atoi(candidateID.c_str());
 
     if (currentCandidate == this->serverID) {

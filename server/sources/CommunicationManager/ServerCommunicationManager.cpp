@@ -80,6 +80,7 @@ Packet ServerCommunicationManager::readPacketFromSocket(SocketFD communicationSo
 }
 
 void ServerCommunicationManager::sendMessageToClients(Message message, const std::list<UserConnection>& userConnections) {
+    std::cout << "sendMessageToClients is coordinator: " << this->electionManager.isCoordinator() << std::endl;
     if (!this->electionManager.isCoordinator()) {
         return;
     }
@@ -437,6 +438,7 @@ void ServerCommunicationManager::setupFronts() {
             throw communicationSocket;
         }
 
+        std::cout << now() << std::endl;
         std::cout << "Successful connection to" << connectionInfo.ipAddress << ":" << connectionInfo.port << std::endl;
         std::cout << "\tCommunicationSocket: " << communicationSocket << std::endl;
 
@@ -460,6 +462,7 @@ void ServerCommunicationManager::setupAsBackup() {
         throw communicationSocket;
     }
 
+    std::cout << now() << std::endl;
     std::cout << "Successful connection to " << coordinatorConnectionInfo.ipAddress << ":" << coordinatorConnectionInfo.port << std::endl;
     std::cout << "\tCommunicationSocket: " << communicationSocket << std::endl;
 

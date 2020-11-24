@@ -45,6 +45,8 @@ void *FrontCommunicationManager::staticExpectServerConnectionThread(void *expect
             perror("Server Connection Accept Error");
             exit(EXIT_FAILURE);
         }
+
+        std::cout << "Recebeu conexao do server com socket " << serverCommunicationSocketFD << std::endl;
         // TODO: Maybe add a lock for the serverCommunicationSocket property?
         // Not setting to the correct value yet because we haven't started the read thread
         threadArguments->communicationManager->serverCommunicationSocket = -1;
