@@ -82,7 +82,7 @@ void ServerElectionManager::setupElection() {
     int nextConnectionIndex =  ((numberOfConnections -1) == myIndex) ? 0 : (myIndex + 1);
 
     if(serverConfigFile[nextConnectionIndex].id == this->elected) {
-        nextConnectionIndex =  ((numberOfConnections -1) == nextConnectionIndex) ? 0 : (nextConnectionIndex + 1);
+        nextConnectionIndex = ((numberOfConnections -1) == nextConnectionIndex) ? 0 : (nextConnectionIndex + 1);
         nextConnection = serverConfigFile[nextConnectionIndex];
     } else {
         nextConnection = serverConfigFile[nextConnectionIndex];
@@ -132,15 +132,15 @@ void ServerElectionManager::didReceiveElectionMessage(const string &candidateID)
     // to connect this server to its subsequent in the available connections
     // list.
 
-    std::cout<< "Recebeu mensagem de eleicao com candidate" << candidateID.c_str() << std::endl;
+    std::cout<< "Recebeu mensagem de eleicao com candidate " << candidateID.c_str() << std::endl;
 
-    if(this->elected != ELECTION_RUNNING) {
+    if (this->elected != ELECTION_RUNNING) {
         this->setupElection();
     }
 
     int currentCandidate = atoi(candidateID.c_str());
 
-    if(currentCandidate == this->serverID) {
+    if (currentCandidate == this->serverID) {
         // Send elected message
         Message message = Message(TypeElected, now(), clientNotSet, clientNotSet, "", "", candidateID);
         this->sendMessageForCurrentElection(message);
@@ -153,8 +153,7 @@ void ServerElectionManager::didReceiveElectionMessage(const string &candidateID)
 }
 
 void ServerElectionManager::didReceiveElectedMessage(const string &candidateID) {
-
-    std::cout<<"Recebeu mensagem de eleito com candidate"<<candidateID.c_str()<< std::endl;
+    std::cout << "Recebeu mensagem de ELEITO com candidate " << candidateID.c_str() << std::endl;
 
     this->elected = atoi(candidateID.c_str());
     if (this->elected == this->serverID) {

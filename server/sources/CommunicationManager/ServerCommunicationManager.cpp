@@ -259,9 +259,8 @@ void ServerCommunicationManager::forwardPacketToBackups(Packet packet) {
 void ServerCommunicationManager::startElection() {
     this->electionManager.setupElection();
     Message firstElectionMessage = this->electionManager.getFirstCandidateDefaultMessage();
-    std::cout<<"Começou a eleicao "<< firstElectionMessage.text << std::endl;
-    auto writeResult = this->electionManager.sendMessageForCurrentElection(firstElectionMessage);
-    std::cout<<"Write election message result" << writeResult << std::endl;
+    std::cout << "Começou a eleição " << firstElectionMessage.text << std::endl;
+    this->electionManager.sendMessageForCurrentElection(firstElectionMessage);
 }
 
 void ServerCommunicationManager::updateLastPingForClient(Client client) {
@@ -334,7 +333,7 @@ void *ServerCommunicationManager::newClientConnectionKeepAlive(KeepAliveThreadAr
 int ServerCommunicationManager::performConnectionTo(const SocketConnectionInfo& connectionInfo) {
 
     SocketFD socketFD;
-    struct sockaddr_in front_addr{};
+    struct sockaddr_in socketAddress{};
     struct hostent *front;
 
     front = gethostbyname(connectionInfo.ipAddress.c_str());
@@ -350,11 +349,11 @@ int ServerCommunicationManager::performConnectionTo(const SocketConnectionInfo& 
         return ERROR_SOCKET_CREATION;
     }
 
-    front_addr.sin_family = AF_INET;
-    front_addr.sin_port = htons(connectionInfo.port);
-    front_addr.sin_addr = *((struct in_addr *)front->h_addr);
+    socketAddress.sin_family = AF_INET;
+    socketAddress.sin_port = htons(connectionInfo.port);
+    socketAddress.sin_addr = *((struct in_addr *)front->h_addr);
 
-    int connectionResult = connect(socketFD, (struct sockaddr *) &front_addr, sizeof(front_addr));
+    int connectionResult = connect(socketFD, (struct sockaddr *) &socketAddress, sizeof(socketAddress));
     if (connectionResult < 0) {
         string errorPrefix = "Error(" + std::to_string(connectionResult) + ") connecting";
         perror(errorPrefix.c_str());
@@ -399,7 +398,7 @@ int ServerCommunicationManager::setupServerToServerConnection(SocketConnectionIn
 
     struct sockaddr_in clientAddress;
     socklen_t clientSocketLength;
-    while(true) {
+    while (true) {
         clientSocketLength = sizeof(struct sockaddr_in);
         if ((communicationSocketFD = accept(connectionSocketFDResult, (struct sockaddr *) &clientAddress, &clientSocketLength)) == -1)
             return ERROR_SOCKET_ACCEPT_CONNECTION;
@@ -439,9 +438,8 @@ void ServerCommunicationManager::setupFronts() {
             throw communicationSocket;
         }
 
-        std::cout << "Successful connection to:" << std::endl;
-        std::cout << "Front: " << connectionInfo.ipAddress << ":" << connectionInfo.port << std::endl;
-        std::cout << "CommunicationSocket: " << communicationSocket << std::endl;
+        std::cout << "Successful connection to" << connectionInfo.ipAddress << ":" << connectionInfo.port << std::endl;
+        std::cout << "\tCommunicationSocket: " << communicationSocket << std::endl;
 
         struct ThreadArguments args;
         args.socket = communicationSocket;
@@ -463,9 +461,8 @@ void ServerCommunicationManager::setupAsBackup() {
         throw communicationSocket;
     }
 
-    std::cout << "Successful connection to:" << std::endl;
-    std::cout << "Coordinator: " << coordinatorConnectionInfo.ipAddress << ":" << coordinatorConnectionInfo.port << std::endl;
-    std::cout << "CommunicationSocket: " << communicationSocket << std::endl;
+    std::cout << "Successful connection to " << coordinatorConnectionInfo.ipAddress << ":" << coordinatorConnectionInfo.port << std::endl;
+    std::cout << "\tCommunicationSocket: " << communicationSocket << std::endl;
 
     struct ThreadArguments args;
     args.socket = communicationSocket;
