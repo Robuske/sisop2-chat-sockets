@@ -41,7 +41,7 @@ void loadServerConfigFile() {
     fourthConnection.connectionInfo.port = 2003;
 
     AvailableConnection fifthConnection;
-    fifthConnection.id = 100;
+    fifthConnection.id = 50;
     fifthConnection.connectionInfo.ipAddress = "localhost";
     fifthConnection.connectionInfo.port = 2004;
 
