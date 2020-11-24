@@ -32,6 +32,8 @@ void log(LogLevel logLevel, const string& msg) {
 // MARK: - Static methods
 void *ServerCommunicationManager::staticHandleNewFrontConnectionThread(void *newClientArguments) {
     auto* t = static_cast<ThreadArguments*>(newClientArguments);
+    std::cout << "STATIC socket: " << t->socket << std::endl;
+    std::cout << "STATIC getElected: " << t->communicationManager->electionManager.getElected() << std::endl;
     t->communicationManager->handleNewFrontConnectionThread(t);
     return nullptr;
 }
@@ -224,6 +226,11 @@ void *ServerCommunicationManager::handleNewFrontConnectionThread(ThreadArguments
 
         } catch (int errorCode) {
             std::cout << "Error: " << errorCode << " while reading from socket: " << frontCommunicationSocket << std::endl;
+            if (!this->electionManager.isCoordinator())  {
+                close(frontCommunicationSocket); // precisa memo memo?
+                startElection();
+                return nullptr;
+            }
 
             if (errorCode == ERROR_MAX_USER_CONNECTIONS_REACHED || errorCode == ERROR_GROUP_NOT_FOUND) {
                 // The connection was denied or is trying to remove a connection that was already removed

@@ -132,23 +132,37 @@ void ServerElectionManager::didReceiveElectionMessage(const string &candidateID)
     // to connect this server to its subsequent in the available connections
     // list.
 
-
-    if (this->elected != ELECTION_RUNNING) {
-        this->setupElection();
-    }
-
     std::cout<< "Recebeu mensagem de ELEICAO com candidate " << candidateID.c_str() << std::endl;
     int currentCandidate = atoi(candidateID.c_str());
+    if (currentCandidate > this->serverID) {
+        if (this->elected != ELECTION_RUNNING) {
+            this->setupElection();
+            this->elected = ELECTION_RUNNING;
+        }
 
-    if (currentCandidate == this->serverID) {
-        // Send elected message
-        Message message = Message(TypeElected, now(), clientNotSet, clientNotSet, "", "", candidateID);
-        this->sendMessageForCurrentElection(message);
-    } else {
-        // Find next candidate
-        int nextCandidate = std::max(currentCandidate, this->serverID);
+        int nextCandidate = currentCandidate;
         Message message = Message(TypeElection, now(), clientNotSet, clientNotSet, "", "", std::to_string(nextCandidate));
         this->sendMessageForCurrentElection(message);
+    } else if (currentCandidate == this->serverID) {
+        std::cout << "Vou me enviar como eleito " << currentCandidate << std::endl;
+        this->elected = this->serverID;
+
+        Message message = Message(TypeElected, now(), clientNotSet, clientNotSet, "", "", candidateID);
+        this->sendMessageForCurrentElection(message);
+    } else if (currentCandidate < this->serverID) {
+        if (this->elected != ELECTION_RUNNING) {
+            this->setupElection();
+            this->elected = ELECTION_RUNNING;
+
+            int nextCandidate = this->serverID;
+            Message message = Message(TypeElection, now(), clientNotSet, clientNotSet, "", "", std::to_string(nextCandidate));
+            this->sendMessageForCurrentElection(message);
+        } else {
+            // do nothing baby
+        }
+    } else {
+        std::cout << "Algo muito errado aconteceu e nao precerbemos" << std::endl;
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -158,6 +172,7 @@ void ServerElectionManager::didReceiveElectedMessage(const string &candidateID) 
     this->elected = atoi(candidateID.c_str());
     if (this->elected == this->serverID) {
         std::cout << "Ganhou a eleicao" << this->elected << std::endl;
+        // avisa o front
     } else {
         Message message = Message(TypeElected, now(), clientNotSet, clientNotSet, "", "", candidateID);
         this->sendMessageForCurrentElection(message);
