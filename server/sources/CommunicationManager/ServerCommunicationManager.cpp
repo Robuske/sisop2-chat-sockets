@@ -137,7 +137,7 @@ void *ServerCommunicationManager::handleNewServerConnectionThread(ThreadArgument
     while(true) {
         try {
             packet = readPacketFromSocket(communicationSocket);
-            std::cout << "PACKET TEXT "<< packet.text << std::endl;
+            std::cout << "PACKET TEXT " << packet.text << std::endl;
             Message message = Message(packet);
 
             switch(packet.type) {
@@ -155,7 +155,6 @@ void *ServerCommunicationManager::handleNewServerConnectionThread(ThreadArgument
                     this->electionManager.didReceiveElectedMessage(packet.text);
                     this->setupMainConnection();
                     return nullptr;
-
             }
 
         } catch (int errorCode) {
