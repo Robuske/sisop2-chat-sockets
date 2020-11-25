@@ -1,20 +1,26 @@
-# SISOP2-T1
+# SISOP2 - Trabalho Final
 
 ## Entrega do Projeto
 
-- [Vídeo da Apresentação](https://youtu.be/avFRqZCdSqw)
-- [Relatório](docs/T1-Relatório.pdf)
+- Parte 1
+    - [Vídeo da Apresentação](https://youtu.be/avFRqZCdSqw)
+    - [Relatório](docs/T1-Relatório.pdf)
+- Parte 2
+    - [Vídeo da Apresentação]()
+    - [Relatório](docs/T2-Relatório.pdf)
 
 ## Dependency Tree
 
 - shared_lib
-  - shared_tests
-  - server_lib
-    - server
-    - server_tests
-  - client_lib
-    - client
-    - client_tests
+    - shared_tests
+    - server_lib
+        - server
+        - server_tests
+    - client_lib
+        - client
+        - client_tests
+    - front_lib
+        - front
 
 CLion should show a _configuration_ for each of these targets, libs can only be compiled, but the others can run too. 
 
