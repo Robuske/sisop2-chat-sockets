@@ -1,5 +1,7 @@
 # SISOP2 - Trabalho Final
 
+Chat utilizando sockets
+
 ## Entrega do Projeto
 
 - Parte 1
