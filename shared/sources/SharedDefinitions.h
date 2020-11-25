@@ -95,4 +95,7 @@ typedef struct AvailableConnection {
     SocketConnectionInfo connectionInfo;
 } AvailableConnection;
 
+string packetTypeAsString(PacketType packetType);
+void logPacket(Packet packet);
+
 #endif // SISOP2_T1_SHAREDDEFINITIONS_H

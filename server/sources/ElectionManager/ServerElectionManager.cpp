@@ -21,28 +21,27 @@ void loadServerConfigFile() {
 
     // Mock connections
     AvailableConnection fstConnection;
-    fstConnection.id = 219;
+    fstConnection.id = 10;
     fstConnection.connectionInfo.ipAddress = "localhost";
     fstConnection.connectionInfo.port = 2000;
 
-    AvailableConnection  sndConnection;
-    sndConnection.id = 12;
+    AvailableConnection sndConnection;
+    sndConnection.id = 20;
     sndConnection.connectionInfo.ipAddress = "localhost";
     sndConnection.connectionInfo.port = 2001;
 
-    AvailableConnection  thirdConnection;
-    thirdConnection.id = 45;
+    AvailableConnection thirdConnection;
+    thirdConnection.id = 30;
     thirdConnection.connectionInfo.ipAddress = "localhost";
     thirdConnection.connectionInfo.port = 2002;
 
-
-    AvailableConnection  fourthConnection;
-    fourthConnection.id = 6;
+    AvailableConnection fourthConnection;
+    fourthConnection.id = 40;
     fourthConnection.connectionInfo.ipAddress = "localhost";
     fourthConnection.connectionInfo.port = 2003;
 
-    AvailableConnection  fifthConnection;
-    fifthConnection.id = 100;
+    AvailableConnection fifthConnection;
+    fifthConnection.id = 50;
     fifthConnection.connectionInfo.ipAddress = "localhost";
     fifthConnection.connectionInfo.port = 2004;
 
@@ -83,7 +82,7 @@ void ServerElectionManager::setupElection() {
     int nextConnectionIndex =  ((numberOfConnections -1) == myIndex) ? 0 : (myIndex + 1);
 
     if(serverConfigFile[nextConnectionIndex].id == this->elected) {
-        nextConnectionIndex =  ((numberOfConnections -1) == nextConnectionIndex) ? 0 : (nextConnectionIndex + 1);
+        nextConnectionIndex = ((numberOfConnections -1) == nextConnectionIndex) ? 0 : (nextConnectionIndex + 1);
         nextConnection = serverConfigFile[nextConnectionIndex];
     } else {
         nextConnection = serverConfigFile[nextConnectionIndex];
@@ -133,33 +132,47 @@ void ServerElectionManager::didReceiveElectionMessage(const string &candidateID)
     // to connect this server to its subsequent in the available connections
     // list.
 
-    std::cout<< "Recebeu mensagem de eleicao com candidate" << candidateID.c_str() << std::endl;
-
-    if(this->elected != ELECTION_RUNNING) {
-        this->setupElection();
-    }
-
+    std::cout<< "Recebeu mensagem de ELEICAO com candidate " << candidateID.c_str() << std::endl;
     int currentCandidate = atoi(candidateID.c_str());
+    if (currentCandidate > this->serverID) {
+        if (this->elected != ELECTION_RUNNING) {
+            this->setupElection();
+            this->elected = ELECTION_RUNNING;
+        }
 
-    if(currentCandidate == this->serverID) {
-        // Send elected message
-        Message message = Message(TypeElected, now(), clientNotSet, clientNotSet, "", "", candidateID);
-        this->sendMessageForCurrentElection(message);
-    } else {
-        // Find next candidate
-        int nextCandidate = std::max(currentCandidate, this->serverID);
+        int nextCandidate = currentCandidate;
         Message message = Message(TypeElection, now(), clientNotSet, clientNotSet, "", "", std::to_string(nextCandidate));
         this->sendMessageForCurrentElection(message);
+    } else if (currentCandidate == this->serverID) {
+        std::cout << "Vou me enviar como eleito " << currentCandidate << std::endl;
+        this->elected = this->serverID;
+
+        Message message = Message(TypeElected, now(), clientNotSet, clientNotSet, "", "", candidateID);
+        this->sendMessageForCurrentElection(message);
+    } else if (currentCandidate < this->serverID) {
+        if (this->elected != ELECTION_RUNNING) {
+            this->setupElection();
+            this->elected = ELECTION_RUNNING;
+
+            int nextCandidate = this->serverID;
+            Message message = Message(TypeElection, now(), clientNotSet, clientNotSet, "", "", std::to_string(nextCandidate));
+            this->sendMessageForCurrentElection(message);
+        } else {
+            // do nothing baby
+        }
+    } else {
+        std::cout << "Algo muito errado aconteceu e nao precerbemos" << std::endl;
+        exit(EXIT_FAILURE);
     }
 }
 
 void ServerElectionManager::didReceiveElectedMessage(const string &candidateID) {
-
-    std::cout<<"Recebeu mensagem de eleito com candidate"<<candidateID.c_str()<< std::endl;
+    std::cout << "Recebeu mensagem de ELEITO com candidate " << candidateID.c_str() << std::endl;
 
     this->elected = atoi(candidateID.c_str());
     if (this->elected == this->serverID) {
         std::cout << "Ganhou a eleicao" << this->elected << std::endl;
+        // avisa o front
     } else {
         Message message = Message(TypeElected, now(), clientNotSet, clientNotSet, "", "", candidateID);
         this->sendMessageForCurrentElection(message);

@@ -2,6 +2,10 @@
 #include "ServerGroupsManager.h"
 
 void ServerGroupsManager::sendMessage(const Message& message) {
+    if (!this->communicationManager->electionManager.isCoordinator()) {
+        return;
+    }
+
     bool groupFound = false;
     string groupName = message.groupName;
     Group groupToSendMessage;

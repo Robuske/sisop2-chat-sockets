@@ -43,10 +43,6 @@ private:
 
     Packet readPacketFromSocket(SocketFD communicationSocket);
     int sendPacketToSocket(Packet packet, SocketFD socket);
-
-    // Debug
-    void logPacket(Packet packet);
-    string packetTypeAsString(PacketType packetType);
 };
 
 #endif //SISOP2_T1_FRONTCOMMUNICATIONMANAGER_H

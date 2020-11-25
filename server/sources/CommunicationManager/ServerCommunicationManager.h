@@ -34,6 +34,7 @@ public:
     int startServer(int loadMessageCount, int serverID);
     void sendMessageToClients(Message message, const std::list<UserConnection>& userConnections);
     int performConnectionTo(const SocketConnectionInfo& connectionInfo);
+    ServerElectionManager electionManager;
 
 private:
 
@@ -78,12 +79,16 @@ private:
     bool shouldTerminateClientConnection(Client client);
 
     // Election
-    ServerElectionManager electionManager;
     void startElection();
 
     void setupMainConnection();
 
-    void setupBackup();
+    void setupAsBackup();
+
+    void forwardPacketToBackups(Packet packet);
+    std::list<SocketFD> backupServers;
+
+    SocketFD setupConnection(const SocketConnectionInfo &connectionInfo);
 };
 
 #endif //SISOP2_T1_SERVERCOMMUNICATIONMANAGER_H
