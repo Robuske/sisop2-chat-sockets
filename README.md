@@ -6,7 +6,7 @@
     - [Vídeo da Apresentação](https://youtu.be/avFRqZCdSqw)
     - [Relatório](docs/T1-Relatório.pdf)
 - Parte 2
-    - [Vídeo da Apresentação]()
+    - [Vídeo da Apresentação](https://youtu.be/IXSbYAFZrOY)
     - [Relatório](docs/T2-Relatório.pdf)
 
 ## Dependency Tree
